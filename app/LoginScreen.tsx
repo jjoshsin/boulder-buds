@@ -143,7 +143,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
               ) : (
                 <>
                   <Text style={styles.googleIcon}>✉️</Text>
-                  <Text style={styles.googleButtonText}>Continue with Google</Text>
+                  <Text style={styles.googleButtonText}>Sign in with Google</Text>
                 </>
               )}
             </TouchableOpacity>

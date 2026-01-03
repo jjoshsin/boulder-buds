@@ -1,9 +1,6 @@
-// ============================================
-// FILE: services/authService.ts
-// ============================================
 import * as SecureStore from 'expo-secure-store';
 
-const API_URL = 'http://localhost:3000'; // Change to your backend URL
+const API_URL = 'http://192.168.1.166:3000'; // My IP Address
 
 export interface User {
   id: string;
@@ -88,6 +85,37 @@ class AuthService {
   async logout(): Promise<void> {
     await SecureStore.deleteItemAsync('authToken');
     await SecureStore.deleteItemAsync('user');
+  }
+
+  async updateUserProfile(userId: string, displayName: string, birthday: string): Promise<User> {
+    try {
+      const token = await this.getStoredToken();  
+      const response = await fetch(`${API_URL}/users/${userId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          displayName,
+          birthday,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update profile');
+      }
+
+      const updatedUser: User = await response.json();
+      
+      // Update stored user
+      await SecureStore.setItemAsync('user', JSON.stringify(updatedUser));
+      
+      return updatedUser;
+    } catch (error) {
+      console.error('Update profile error:', error);
+      throw error;
+    }
   }
 }
 

@@ -1,3 +1,5 @@
+// To run backend use command: npm run start:dev
+
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 

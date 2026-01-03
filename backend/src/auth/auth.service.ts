@@ -19,54 +19,101 @@ export class AuthService {
     });
   }
 
-  async validateAppleToken(identityToken: string, appleUserId: string) {
-    try {
-      const decodedToken = jwt.decode(identityToken, { complete: true }) as any;
-      
-      if (!decodedToken) {
-        throw new UnauthorizedException('Invalid token');
-      }
+async validateAppleToken(identityToken: string, appleUserId: string) {
+  try {
+    // ============================================
+    // DEVELOPMENT MODE (Expo Go)
+    // Comment this out when building with EAS
+    // ============================================
+    console.log('🍎 Apple Sign In - Development Mode (Expo Go)');
+    
+    let user = await this.prisma.user.findUnique({
+      where: { appleId: appleUserId },
+    });
 
-      const key = await this.appleJwksClient.getSigningKey(decodedToken.header.kid);
-      const signingKey = key.getPublicKey();
-
-      const verified = jwt.verify(identityToken, signingKey, {
-        audience: process.env.APPLE_CLIENT_ID,
-        issuer: 'https://appleid.apple.com',
-      }) as any;
-
-      let user = await this.prisma.user.findUnique({
-        where: { appleId: appleUserId },
-      });
-
-      if (!user) {
-        user = await this.prisma.user.create({
-          data: {
-            appleId: appleUserId,
-            email: verified.email || `${appleUserId}@appleid.com`,
-            displayName: 'Climber',
-          },
-        });
-      }
-
-      const token = this.jwtService.sign({
-        sub: user.id,
-        email: user.email,
-      });
-
-      return {
-        token,
-        user: {
-          id: user.id,
-          email: user.email,
-          displayName: user.displayName,
+    if (!user) {
+      user = await this.prisma.user.create({
+        data: {
+          appleId: appleUserId,
+          email: `${appleUserId}@appleid.com`,
+          displayName: 'Climber',
         },
-      };
-    } catch (error) {
-      console.error('Apple auth error:', error);
-      throw new UnauthorizedException('Invalid Apple token');
+      });
     }
+
+    const token = this.jwtService.sign({
+      sub: user.id,
+      email: user.email,
+    });
+
+    return {
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        displayName: user.displayName,
+      },
+    };
+    // ============================================
+    // END DEVELOPMENT MODE
+    // ============================================
+
+    /* ============================================
+    // PRODUCTION MODE (EAS Build / App Store)
+    // Uncomment this when building with EAS
+    // ============================================
+    
+    const decodedToken = jwt.decode(identityToken, { complete: true }) as any;
+    
+    if (!decodedToken) {
+      throw new UnauthorizedException('Invalid token');
+    }
+
+    const key = await this.appleJwksClient.getSigningKey(decodedToken.header.kid);
+    const signingKey = key.getPublicKey();
+
+    const verified = jwt.verify(identityToken, signingKey, {
+      audience: process.env.APPLE_CLIENT_ID,
+      issuer: 'https://appleid.apple.com',
+    }) as any;
+
+    let user = await this.prisma.user.findUnique({
+      where: { appleId: appleUserId },
+    });
+
+    if (!user) {
+      user = await this.prisma.user.create({
+        data: {
+          appleId: appleUserId,
+          email: verified.email || `${appleUserId}@appleid.com`,
+          displayName: 'Climber',
+        },
+      });
+    }
+
+    const token = this.jwtService.sign({
+      sub: user.id,
+      email: user.email,
+    });
+
+    return {
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        displayName: user.displayName,
+      },
+    };
+    
+    ============================================
+    END PRODUCTION MODE
+    ============================================ */
+
+  } catch (error) {
+    console.error('Apple auth error:', error);
+    throw new UnauthorizedException('Invalid Apple token');
   }
+}
 
   async validateGoogleToken(idToken: string) {
     try {
