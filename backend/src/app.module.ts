@@ -1,7 +1,3 @@
-// ============================================
-// UPDATE: backend/src/app.module.ts
-// Add UsersModule
-// ============================================
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';

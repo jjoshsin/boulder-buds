@@ -27,7 +27,7 @@ export const styles = StyleSheet.create({
     marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.15,
     shadowRadius: 10,
     elevation: 8,
   },
@@ -43,13 +43,13 @@ export const styles = StyleSheet.create({
   title: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#1F2937',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 18,
     fontWeight: '500',
-    color: '#9CA3AF',
+    color: '#6B7280',
   },
   authSection: {
     gap: 16,
@@ -58,7 +58,7 @@ export const styles = StyleSheet.create({
     height: 56,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
   },
@@ -70,7 +70,7 @@ export const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: 'rgba(156, 163, 175, 0.3)',
+    backgroundColor: '#E5E7EB',
   },
   dividerText: {
     fontSize: 14,
@@ -83,16 +83,16 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     height: 56,
-    backgroundColor: '#333842',
+    backgroundColor: '#F3F4F6',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(156, 163, 175, 0.3)',
+    borderColor: '#E5E7EB',
     gap: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   googleIcon: {
     fontSize: 20,
@@ -100,7 +100,7 @@ export const styles = StyleSheet.create({
   googleButtonText: {
     fontSize: 17,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: '#1F2937',
   },
   terms: {
     fontSize: 11,
@@ -110,11 +110,12 @@ export const styles = StyleSheet.create({
   },
   termsLink: {
     textDecorationLine: 'underline',
+    color: '#6B7280',
   },
   footer: {
     fontSize: 14,
     fontWeight: '500',
-    color: 'rgba(156, 163, 175, 0.7)',
+    color: '#9CA3AF',
     textAlign: 'center',
   },
 });

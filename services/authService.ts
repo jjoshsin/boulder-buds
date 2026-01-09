@@ -1,6 +1,6 @@
 import * as SecureStore from 'expo-secure-store';
 
-const API_URL = 'http://192.168.1.166:3000'; // My IP Address
+const API_URL = 'http://localhost:3000'; // Change to your backend URL
 
 export interface User {
   id: string;
@@ -89,7 +89,8 @@ class AuthService {
 
   async updateUserProfile(userId: string, displayName: string, birthday: string): Promise<User> {
     try {
-      const token = await this.getStoredToken();  
+      const token = await this.getStoredToken();
+      
       const response = await fetch(`${API_URL}/users/${userId}`, {
         method: 'PATCH',
         headers: {
@@ -114,6 +115,31 @@ class AuthService {
       return updatedUser;
     } catch (error) {
       console.error('Update profile error:', error);
+      throw error;
+    }
+  }
+
+  async updateUserPreferences(
+    userId: string, 
+    preferences: { climbingLevel: string; climbingType: string }
+  ): Promise<void> {
+    try {
+      const token = await this.getStoredToken();
+      
+      const response = await fetch(`${API_URL}/users/${userId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(preferences),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update preferences');
+      }
+    } catch (error) {
+      console.error('Update preferences error:', error);
       throw error;
     }
   }

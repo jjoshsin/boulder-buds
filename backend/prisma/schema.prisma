@@ -8,15 +8,17 @@ datasource db {
 }
 
 model User {
-  id          String   @id @default(uuid())
-  email       String   @unique
-  displayName String
-  appleId     String?  @unique
-  googleId    String?  @unique
-  borough     String?
-  birthday    String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(uuid())
+  email         String   @unique
+  displayName   String
+  appleId       String?  @unique
+  googleId      String?  @unique
+  borough       String?
+  birthday      String?
+  climbingLevel String?
+  climbingType  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
   
   @@map("users")
 }

@@ -1,0 +1,94 @@
+import { StyleSheet } from 'react-native';
+
+export const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1F2937',
+  },
+  skipButton: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FF8C00',
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 32,
+  },
+  questionSection: {
+    marginBottom: 40,
+  },
+  questionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 16,
+  },
+  comingSoon: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    fontStyle: 'italic',
+  },
+  optionsContainer: {
+    gap: 12,
+  },
+  optionButton: {
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    backgroundColor: '#F9FAFB',
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+  },
+  optionButtonSelected: {
+    backgroundColor: '#FFF7ED',
+    borderColor: '#FF8C00',
+  },
+  optionText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#6B7280',
+    textAlign: 'center',
+  },
+  optionTextSelected: {
+    color: '#FF8C00',
+    fontWeight: '600',
+  },
+  continueButton: {
+    height: 56,
+    backgroundColor: '#FF8C00',
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 24,
+    marginBottom: 40,
+    shadowColor: '#FF8C00',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  continueButtonDisabled: {
+    backgroundColor: '#D1D5DB',
+    shadowOpacity: 0,
+  },
+  continueButtonText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+});

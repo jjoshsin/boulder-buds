@@ -1,7 +1,3 @@
-// ============================================
-// UPDATE: backend/src/auth/auth.module.ts
-// Add JwtStrategy to providers
-// ============================================
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';

@@ -1,6 +1,3 @@
-// ============================================
-// FILE: app/WelcomeScreen.tsx
-// ============================================
 import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
@@ -17,7 +14,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { styles } from '../styles/WelcomeScreen.styles';
 import authService from '../services/authService';
 
-export default function WelcomeScreen() {
+interface WelcomeScreenProps {
+  onBack: () => void;
+  onContinue: () => void;
+}
+
+export default function WelcomeScreen({ onBack, onContinue }: WelcomeScreenProps) {
   const [showForm, setShowForm] = useState(false);
   const [username, setUsername] = useState('');
   const [birthday, setBirthday] = useState('');
@@ -34,36 +36,27 @@ export default function WelcomeScreen() {
   }, []);
 
   const startAnimation = () => {
-    // Step 1: Fade in title in center
+    // Step 1: Fade in title at top (aligned with button)
     Animated.timing(titleOpacity, {
       toValue: 1,
       duration: 800,
       useNativeDriver: true,
     }).start(() => {
-      // Step 2: Wait a moment, then slide up
+      // Step 2: Wait a moment, then show form
       setTimeout(() => {
+        setShowForm(true);
         Animated.parallel([
-          Animated.timing(titlePosition, {
-            toValue: -200, // Move up
+          Animated.timing(formOpacity, {
+            toValue: 1,
             duration: 600,
             useNativeDriver: true,
           }),
-        ]).start(() => {
-          // Step 3: Show form after title is at top
-          setShowForm(true);
-          Animated.parallel([
-            Animated.timing(formOpacity, {
-              toValue: 1,
-              duration: 600,
-              useNativeDriver: true,
-            }),
-            Animated.timing(formTranslateY, {
-              toValue: 0,
-              duration: 600,
-              useNativeDriver: true,
-            }),
-          ]).start();
-        });
+          Animated.timing(formTranslateY, {
+            toValue: 0,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+        ]).start();
       }, 800);
     });
   };
@@ -88,7 +81,7 @@ export default function WelcomeScreen() {
       await authService.updateUserProfile(user.id, username, birthday);
       
       console.log('Profile updated successfully!');
-      // TODO: Navigate to main app (Gym List screen)
+      onContinue();
       
     } catch (error) {
       console.error('Profile update error:', error);
@@ -101,19 +94,18 @@ export default function WelcomeScreen() {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <SafeAreaView style={styles.container}>
-        <View style={styles.content}>
-          {/* Animated Title */}
-          <Animated.View
-            style={[
-              styles.titleContainer,
-              {
-                opacity: titleOpacity,
-                transform: [{ translateY: titlePosition }],
-              },
-            ]}
-          >
-            <Text style={styles.title}>Let's get Started!</Text>
+        {/* Header Row with Back Button and Title */}
+        <View style={styles.headerRow}>
+          <TouchableOpacity style={styles.backButton} onPress={onBack} activeOpacity={0.7}>
+            <Text style={styles.backButtonText}>←</Text>
+          </TouchableOpacity>
+
+          <Animated.View style={[styles.titleContainer, { opacity: titleOpacity }]}>
+            <Text style={styles.title}>Let's get Started</Text>
           </Animated.View>
+        </View>
+
+        <View style={styles.content}>
 
           {/* Form */}
           {showForm && (

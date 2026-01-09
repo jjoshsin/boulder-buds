@@ -85,7 +85,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
 
   return (
     <LinearGradient
-      colors={['#121419', '#1E2329', '#121419']}
+      colors={['#FFFFFF', '#F9FAFB', '#FFFFFF']}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.container}
@@ -139,11 +139,11 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
               activeOpacity={0.8}
             >
               {loadingProvider === 'google' ? (
-                <ActivityIndicator color="#FFFFFF" />
+                <ActivityIndicator color="#1F2937" />
               ) : (
                 <>
                   <Text style={styles.googleIcon}>✉️</Text>
-                  <Text style={styles.googleButtonText}>Sign in with Google</Text>
+                  <Text style={styles.googleButtonText}>Continue with Google</Text>
                 </>
               )}
             </TouchableOpacity>

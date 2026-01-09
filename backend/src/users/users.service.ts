@@ -1,6 +1,3 @@
-// ============================================
-// FILE: backend/src/users/users.service.ts
-// ============================================
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -10,7 +7,13 @@ export class UsersService {
 
   async updateProfile(
     userId: string,
-    data: { displayName?: string; birthday?: string; borough?: string },
+    data: { 
+      displayName?: string; 
+      birthday?: string; 
+      borough?: string;
+      climbingLevel?: string;
+      climbingType?: string;
+    },
   ) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -26,6 +29,8 @@ export class UsersService {
         displayName: data.displayName,
         birthday: data.birthday,
         borough: data.borough,
+        climbingLevel: data.climbingLevel,
+        climbingType: data.climbingType,
       },
     });
 

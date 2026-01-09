@@ -3,21 +3,48 @@ import { StyleSheet } from 'react-native';
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121419',
+    backgroundColor: '#FFFFFF',
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    height: 60,
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  backButtonText: {
+    fontSize: 28,
+    color: '#1F2937',
+    fontWeight: '600',
+  },
+  titleContainer: {
+    flex: 1,
+    alignItems: 'center',
+    marginLeft: -44,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    textAlign: 'center',
   },
   content: {
     flex: 1,
     justifyContent: 'center',
     paddingHorizontal: 32,
-  },
-  titleContainer: {
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 42,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    textAlign: 'center',
   },
   formContainer: {
     marginTop: 20,
@@ -28,18 +55,18 @@ export const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#E5E7EB',
+    color: '#374151',
     marginBottom: 8,
   },
   input: {
     height: 56,
-    backgroundColor: '#1F2937',
+    backgroundColor: '#F9FAFB',
     borderRadius: 12,
     paddingHorizontal: 16,
     fontSize: 16,
-    color: '#FFFFFF',
+    color: '#1F2937',
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: '#E5E7EB',
   },
   continueButton: {
     height: 56,
@@ -55,7 +82,7 @@ export const styles = StyleSheet.create({
     elevation: 8,
   },
   continueButtonDisabled: {
-    backgroundColor: '#4B5563',
+    backgroundColor: '#D1D5DB',
     shadowOpacity: 0,
   },
   continueButtonText: {
