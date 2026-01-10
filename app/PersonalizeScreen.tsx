@@ -11,14 +11,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { styles } from '../styles/PersonalizeScreen.styles';
 import authService from '../services/authService';
 
-interface PersonalizeScreenProps {
-  onComplete: () => void;
-}
-
 type ClimbingLevel = 'beginner' | 'intermediate' | 'advanced' | 'pro' | 'prefer_not_to_say';
 type ClimbingType = 'bouldering' | 'rope' | 'both';
 
-export default function PersonalizeScreen({ onComplete }: PersonalizeScreenProps) {
+export default function PersonalizeScreen({ 
+  onComplete, 
+  onBack 
+}: { 
+  onComplete: () => void; 
+  onBack: () => void; 
+}) {
   const [climbingLevel, setClimbingLevel] = useState<ClimbingLevel | null>(null);
   const [climbingType, setClimbingType] = useState<ClimbingType | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -105,8 +107,13 @@ export default function PersonalizeScreen({ onComplete }: PersonalizeScreenProps
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={onBack} activeOpacity={0.7}>
+          <Text style={styles.backButtonText}>←</Text>
+        </TouchableOpacity>
+
         <Text style={styles.headerTitle}>Help us personalize</Text>
-        <TouchableOpacity onPress={handleSkip} activeOpacity={0.7}>
+
+        <TouchableOpacity onPress={handleSkip} activeOpacity={0.7} style={styles.skipButtonContainer}>
           <Text style={styles.skipButton}>Skip</Text>
         </TouchableOpacity>
       </View>
@@ -159,4 +166,4 @@ export default function PersonalizeScreen({ onComplete }: PersonalizeScreenProps
       </ScrollView>
     </SafeAreaView>
   );
-}
+};

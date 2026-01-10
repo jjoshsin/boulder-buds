@@ -1,6 +1,6 @@
 import * as SecureStore from 'expo-secure-store';
 
-const API_URL = 'http://localhost:3000'; // Change to your backend URL
+const API_URL = 'http://192.168.1.166:3000'; // Change to your backend URL
 
 export interface User {
   id: string;
@@ -143,11 +143,31 @@ class AuthService {
       throw error;
     }
   }
+
+  async checkProfileComplete(userId: string): Promise<boolean> {
+    try {
+      const token = await this.getStoredToken();
+      
+      const response = await fetch(`${API_URL}/users/${userId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        return false;
+      }
+
+      const user = await response.json();
+      
+      // Check if user has completed profile (only needs displayName and birthday)
+      return !!(user.displayName && user.birthday && user.displayName !== 'Climber');
+    } catch (error) {
+      console.error('Check profile error:', error);
+      return false;
+    }
+  }
 }
 
 export default new AuthService();
-
-// ============================================
-// INSTALL SECURE STORE:
-// npx expo install expo-secure-store
-// ============================================
