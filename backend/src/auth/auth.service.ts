@@ -21,24 +21,32 @@ export class AuthService {
 
 async validateAppleToken(identityToken: string, appleUserId: string) {
   try {
-    // ============================================
-    // DEVELOPMENT MODE (Expo Go)
-    // Comment this out when building with EAS
-    // ============================================
     console.log('🍎 Apple Sign In - Development Mode (Expo Go)');
+    console.log('User ID:', appleUserId);
+    
+    // DEVELOPMENT MODE: Skip token verification in Expo Go
+    // In production with EAS Build, uncomment the production code
+    
+    // Try to find user by email (using appleUserId since we don't have verified email in dev mode)
+    const email = `${appleUserId}@appleid.com`;
+    console.log('Looking for user with email:', email);
     
     let user = await this.prisma.user.findUnique({
-      where: { appleId: appleUserId },
+      where: { email: email },
     });
 
     if (!user) {
+      console.log('User not found, creating new user');
       user = await this.prisma.user.create({
         data: {
           appleId: appleUserId,
-          email: `${appleUserId}@appleid.com`,
+          email: email,
           displayName: 'Climber',
         },
       });
+      console.log('New user created:', user.id);
+    } else {
+      console.log('Existing user found:', user.id);
     }
 
     const token = this.jwtService.sign({
@@ -54,6 +62,10 @@ async validateAppleToken(identityToken: string, appleUserId: string) {
         displayName: user.displayName,
       },
     };
+  } catch (error) {
+    console.error('Apple auth error:', error);
+    throw new UnauthorizedException('Invalid Apple token');
+  }
     // ============================================
     // END DEVELOPMENT MODE
     // ============================================
@@ -108,11 +120,6 @@ async validateAppleToken(identityToken: string, appleUserId: string) {
     ============================================
     END PRODUCTION MODE
     ============================================ */
-
-  } catch (error) {
-    console.error('Apple auth error:', error);
-    throw new UnauthorizedException('Invalid Apple token');
-  }
 }
 
   async validateGoogleToken(idToken: string) {

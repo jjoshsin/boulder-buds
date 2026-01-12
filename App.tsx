@@ -31,10 +31,15 @@ export default function App() {
       const token = await authService.getStoredToken();
       const user = await authService.getStoredUser();
       
+      console.log('🔍 Checking auth status...');
+      console.log('Token exists:', !!token);
+      console.log('User:', user);
+      
       if (token && user) {
         setIsAuthenticated(true);
         // Check if user has completed their profile
         const profileComplete = await authService.checkProfileComplete(user.id);
+        console.log('Profile complete:', profileComplete);
         setHasCompletedProfile(profileComplete);
       }
     } catch (error) {
@@ -44,18 +49,26 @@ export default function App() {
     }
   };
 
-  const handleLoginSuccess = () => {
+  const handleLoginSuccess = async () => {
     setIsAuthenticated(true);
-    setHasCompletedProfile(false);
+    
+    // Check if user already has a complete profile
+    const user = await authService.getStoredUser();
+    if (user) {
+      const profileComplete = await authService.checkProfileComplete(user.id);
+      console.log('After login - Profile complete:', profileComplete);
+      setHasCompletedProfile(profileComplete);
+    }
   };
 
   const handleWelcomeComplete = async () => {
-    // Mark profile as complete and check preferences
+    // After welcome is complete, check if profile is done
     const user = await authService.getStoredUser();
     if (user) {
       const profileComplete = await authService.checkProfileComplete(user.id);
       if (profileComplete) {
-        // Profile is complete, check if they want to do preferences
+        // Profile is complete after welcome screen
+        setHasCompletedProfile(true);
         setShowPersonalize(true);
       }
     }
@@ -86,6 +99,12 @@ export default function App() {
     // You can add a splash screen here later
     return null;
   }
+
+  console.log('📱 Navigation State:', {
+    isAuthenticated,
+    hasCompletedProfile,
+    showPersonalize,
+  });
 
   return (
     <>
