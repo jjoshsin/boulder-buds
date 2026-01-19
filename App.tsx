@@ -3,15 +3,18 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import { View, Text, TouchableOpacity } from 'react-native';
+import LandingScreen from './app/LandingScreen';
+import SignUpScreen from './app/SignUpScreen';
 import LoginScreen from './app/LoginScreen';
-import WelcomeScreen from './app/WelcomeScreen';
 import PersonalizeScreen from './app/PersonalizeScreen';
 import authService from './services/authService';
 
 export type RootStackParamList = {
+  Landing: undefined;
+  SignUp: undefined;
   Login: undefined;
-  Welcome: undefined;
   Personalize: undefined;
+  GymList: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -19,7 +22,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [hasCompletedProfile, setHasCompletedProfile] = useState(false);
-  const [showPersonalize, setShowPersonalize] = useState(false);
+  const [currentScreen, setCurrentScreen] = useState<'landing' | 'signup' | 'login'>('landing');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -49,6 +52,11 @@ export default function App() {
     }
   };
 
+  const handleSignUpSuccess = async () => {
+    setIsAuthenticated(true);
+    setHasCompletedProfile(false); // New users need to complete profile
+  };
+
   const handleLoginSuccess = async () => {
     setIsAuthenticated(true);
     
@@ -61,25 +69,7 @@ export default function App() {
     }
   };
 
-  const handleWelcomeComplete = async () => {
-    // After welcome is complete, check if profile is done
-    const user = await authService.getStoredUser();
-    if (user) {
-      const profileComplete = await authService.checkProfileComplete(user.id);
-      if (profileComplete) {
-        // Profile is complete after welcome screen
-        setHasCompletedProfile(true);
-        setShowPersonalize(true);
-      }
-    }
-  };
-
-  const handlePersonalizeBack = () => {
-    setShowPersonalize(false);
-  };
-
   const handlePersonalizeComplete = async () => {
-    setShowPersonalize(false);
     // Recheck profile status
     const user = await authService.getStoredUser();
     if (user) {
@@ -92,18 +82,16 @@ export default function App() {
     await authService.logout();
     setIsAuthenticated(false);
     setHasCompletedProfile(false);
-    setShowPersonalize(false);
+    setCurrentScreen('landing');
   };
 
   if (isLoading) {
-    // You can add a splash screen here later
     return null;
   }
 
   console.log('📱 Navigation State:', {
     isAuthenticated,
     hasCompletedProfile,
-    showPersonalize,
   });
 
   return (
@@ -115,11 +103,40 @@ export default function App() {
           }}
         >
           {!isAuthenticated ? (
-            <Stack.Screen name="Login">
-              {(props) => <LoginScreen {...props} onLoginSuccess={handleLoginSuccess} />}
-            </Stack.Screen>
+            <>
+              {currentScreen === 'landing' && (
+                <Stack.Screen name="Landing">
+                  {() => (
+                    <LandingScreen 
+                      onGetStarted={() => setCurrentScreen('signup')}
+                      onLogin={() => setCurrentScreen('login')}
+                    />
+                  )}
+                </Stack.Screen>
+              )}
+              {currentScreen === 'signup' && (
+                <Stack.Screen name="SignUp">
+                  {() => (
+                    <SignUpScreen 
+                      onBack={() => setCurrentScreen('landing')}
+                      onContinue={handleSignUpSuccess}
+                    />
+                  )}
+                </Stack.Screen>
+              )}
+              {currentScreen === 'login' && (
+                <Stack.Screen name="Login">
+                  {() => (
+                    <LoginScreen 
+                      onBack={() => setCurrentScreen('landing')}
+                      onLoginSuccess={handleLoginSuccess}
+                    />
+                  )}
+                </Stack.Screen>
+              )}
+            </>
           ) : hasCompletedProfile ? (
-            <Stack.Screen name="Welcome">
+            <Stack.Screen name="GymList">
               {() => (
                 <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' }}>
                   <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#1F2937' }}>
@@ -134,23 +151,19 @@ export default function App() {
                 </View>
               )}
             </Stack.Screen>
-          ) : !showPersonalize ? (
-            <Stack.Screen name="Welcome">
-              {(props) => <WelcomeScreen {...props} onBack={handleLogout} onContinue={handleWelcomeComplete} />}
-            </Stack.Screen>
           ) : (
             <Stack.Screen name="Personalize">
               {() => (
                 <PersonalizeScreen 
                   onComplete={handlePersonalizeComplete}
-                  onBack={handlePersonalizeBack}
+                  onBack={handleLogout}
                 />
               )}
             </Stack.Screen>
           )}
         </Stack.Navigator>
       </NavigationContainer>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
     </>
   );
 }

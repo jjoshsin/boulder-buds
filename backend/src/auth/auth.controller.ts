@@ -5,13 +5,13 @@ import { AuthService } from './auth.service';
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  @Post('apple')
-  async appleSignIn(@Body() body: { identityToken: string; user: string }) {
-    return this.authService.validateAppleToken(body.identityToken, body.user);
+  @Post('signup')
+  async signUp(@Body() body: { email: string; displayName: string; password: string; age: string }) {
+    return this.authService.signUp(body.email, body.displayName, body.password, body.age);
   }
 
-  @Post('google')
-  async googleSignIn(@Body() body: { idToken: string }) {
-    return this.authService.validateGoogleToken(body.idToken);
+  @Post('login')
+  async login(@Body() body: { email: string; password: string }) {
+    return this.authService.login(body.email, body.password);
   }
 }

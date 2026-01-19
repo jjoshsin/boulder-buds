@@ -14,6 +14,70 @@ export interface AuthResponse {
 }
 
 class AuthService {
+  async signUp(email: string, username: string, password: string, age: string): Promise<AuthResponse> {
+    try {
+      const response = await fetch(`${API_URL}/auth/signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          displayName: username,
+          password,
+          age,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Sign up failed');
+      }
+
+      const data: AuthResponse = await response.json();
+      
+      // Store token securely
+      await SecureStore.setItemAsync('authToken', data.token);
+      await SecureStore.setItemAsync('user', JSON.stringify(data.user));
+
+      return data;
+    } catch (error: any) {
+      console.error('Sign up error:', error);
+      throw error;
+    }
+  }
+
+  async login(email: string, password: string): Promise<AuthResponse> {
+    try {
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Login failed');
+      }
+
+      const data: AuthResponse = await response.json();
+      
+      // Store token securely
+      await SecureStore.setItemAsync('authToken', data.token);
+      await SecureStore.setItemAsync('user', JSON.stringify(data.user));
+
+      return data;
+    } catch (error: any) {
+      console.error('Login error:', error);
+      throw error;
+    }
+  }
+  
   async signInWithApple(identityToken: string, user: string): Promise<AuthResponse> {
     try {
       const response = await fetch(`${API_URL}/auth/apple`, {

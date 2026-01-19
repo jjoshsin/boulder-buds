@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { styles } from '../styles/WelcomeScreen.styles';
+import { styles } from '../styles/SignUpScreen.styles';
 import authService from '../services/authService';
 
 interface WelcomeScreenProps {
@@ -21,8 +21,11 @@ interface WelcomeScreenProps {
 
 export default function WelcomeScreen({ onBack, onContinue }: WelcomeScreenProps) {
   const [showForm, setShowForm] = useState(false);
+  const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
-  const [birthday, setBirthday] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [age, setAge] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   // Animation values
@@ -62,30 +65,33 @@ export default function WelcomeScreen({ onBack, onContinue }: WelcomeScreenProps
   };
 
   const handleContinue = async () => {
-    if (!username.trim() || !birthday.trim()) {
+    if (!email.trim() || !username.trim() || !password.trim() || !confirmPassword.trim() || !age.trim()) {
       Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert('Error', 'Passwords do not match');
+      return;
+    }
+
+    if (password.length < 8) {
+      Alert.alert('Error', 'Password must be at least 8 characters');
       return;
     }
 
     try {
       setIsLoading(true);
       
-      // Get stored user data
-      const user = await authService.getStoredUser();
-      if (!user) {
-        Alert.alert('Error', 'User not found. Please sign in again.');
-        return;
-      }
-
-      // Update user profile
-      await authService.updateUserProfile(user.id, username, birthday);
+      // Create account with email/password
+      await authService.signUp(email, username, password, age);
       
-      console.log('Profile updated successfully!');
+      console.log('Account created successfully!');
       onContinue();
       
-    } catch (error) {
-      console.error('Profile update error:', error);
-      Alert.alert('Error', 'Failed to update profile. Please try again.');
+    } catch (error: any) {
+      console.error('Sign up error:', error);
+      Alert.alert('Error', error.message || 'Failed to create account. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -118,9 +124,24 @@ export default function WelcomeScreen({ onBack, onContinue }: WelcomeScreenProps
                 },
               ]}
             >
+              {/* Email Input */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Email</Text>
+                <TextInput
+                  style={styles.input}
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="you@example.com"
+                  placeholderTextColor="#6B7280"
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  autoCorrect={false}
+                />
+              </View>
+
               {/* Username Input */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Enter Username</Text>
+                <Text style={styles.label}>Username</Text>
                 <TextInput
                   style={styles.input}
                   value={username}
@@ -132,16 +153,44 @@ export default function WelcomeScreen({ onBack, onContinue }: WelcomeScreenProps
                 />
               </View>
 
-              {/* Birthday Input */}
+              {/* Password Input */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Enter Birthday</Text>
+                <Text style={styles.label}>Password</Text>
                 <TextInput
                   style={styles.input}
-                  value={birthday}
-                  onChangeText={setBirthday}
-                  placeholder="MM/DD/YYYY"
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="At least 8 characters"
                   placeholderTextColor="#6B7280"
-                  keyboardType="numbers-and-punctuation"
+                  secureTextEntry
+                  autoCapitalize="none"
+                />
+              </View>
+
+              {/* Confirm Password Input */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Confirm Password</Text>
+                <TextInput
+                  style={styles.input}
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  placeholder="Re-enter password"
+                  placeholderTextColor="#6B7280"
+                  secureTextEntry
+                  autoCapitalize="none"
+                />
+              </View>
+
+              {/* Age Input */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Age</Text>
+                <TextInput
+                  style={styles.input}
+                  value={age}
+                  onChangeText={setAge}
+                  placeholder="18"
+                  placeholderTextColor="#6B7280"
+                  keyboardType="number-pad"
                 />
               </View>
 
@@ -149,10 +198,10 @@ export default function WelcomeScreen({ onBack, onContinue }: WelcomeScreenProps
               <TouchableOpacity
                 style={[
                   styles.continueButton,
-                  (!username || !birthday || isLoading) && styles.continueButtonDisabled,
+                  (!email || !username || !password || !confirmPassword || !age || isLoading) && styles.continueButtonDisabled,
                 ]}
                 onPress={handleContinue}
-                disabled={!username || !birthday || isLoading}
+                disabled={!email || !username || !password || !confirmPassword || !age || isLoading}
                 activeOpacity={0.8}
               >
                 {isLoading ? (

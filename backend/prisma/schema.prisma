@@ -10,7 +10,9 @@ datasource db {
 model User {
   id            String   @id @default(uuid())
   email         String   @unique
+  password      String   // New: hashed password
   displayName   String
+  age           String?  // New: user's age
   appleId       String?  @unique
   googleId      String?  @unique
   borough       String?
