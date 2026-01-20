@@ -27,6 +27,13 @@ export default function WelcomeScreen({ onBack, onContinue }: WelcomeScreenProps
   const [confirmPassword, setConfirmPassword] = useState('');
   const [age, setAge] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Error states
+  const [emailError, setEmailError] = useState('');
+  const [usernameError, setUsernameError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
+  const [ageError, setAgeError] = useState('');
 
   // Animation values
   const titlePosition = useRef(new Animated.Value(0)).current;
@@ -64,19 +71,114 @@ export default function WelcomeScreen({ onBack, onContinue }: WelcomeScreenProps
     });
   };
 
+  // Validation functions
+  const validateEmail = (text: string) => {
+    setEmail(text);
+    if (text && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text)) {
+      setEmailError('Please enter a valid email');
+    } else {
+      setEmailError('');
+    }
+  };
+
+  const validateUsername = (text: string) => {
+    setUsername(text);
+    if (text && text.length < 3) {
+      setUsernameError('Username must be at least 3 characters');
+    } else {
+      setUsernameError('');
+    }
+  };
+
+  const validatePassword = (text: string) => {
+    setPassword(text);
+    if (text && text.length < 8) {
+      setPasswordError('Password must be at least 8 characters');
+    } else {
+      setPasswordError('');
+    }
+    // Also revalidate confirm password if it's already filled
+    if (confirmPassword && text !== confirmPassword) {
+      setConfirmPasswordError('Passwords do not match');
+    } else {
+      setConfirmPasswordError('');
+    }
+  };
+
+  const validateConfirmPassword = (text: string) => {
+    setConfirmPassword(text);
+    if (text && text !== password) {
+      setConfirmPasswordError('Passwords do not match');
+    } else {
+      setConfirmPasswordError('');
+    }
+  };
+
+  const validateAge = (text: string) => {
+    setAge(text);
+    const ageNum = parseInt(text);
+    if (text && (isNaN(ageNum) || ageNum < 13 || ageNum > 120)) {
+      setAgeError('Please enter a valid age (13-120)');
+    } else {
+      setAgeError('');
+    }
+  };
+
   const handleContinue = async () => {
-    if (!email.trim() || !username.trim() || !password.trim() || !confirmPassword.trim() || !age.trim()) {
-      Alert.alert('Error', 'Please fill in all fields');
-      return;
+    // Clear previous errors
+    setEmailError('');
+    setUsernameError('');
+    setPasswordError('');
+    setConfirmPasswordError('');
+    setAgeError('');
+
+    // Validate all fields
+    let hasError = false;
+
+    if (!email.trim()) {
+      setEmailError('Email is required');
+      hasError = true;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setEmailError('Please enter a valid email');
+      hasError = true;
     }
 
-    if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
-      return;
+    if (!username.trim()) {
+      setUsernameError('Username is required');
+      hasError = true;
+    } else if (username.length < 3) {
+      setUsernameError('Username must be at least 3 characters');
+      hasError = true;
     }
 
-    if (password.length < 8) {
-      Alert.alert('Error', 'Password must be at least 8 characters');
+    if (!password.trim()) {
+      setPasswordError('Password is required');
+      hasError = true;
+    } else if (password.length < 8) {
+      setPasswordError('Password must be at least 8 characters');
+      hasError = true;
+    }
+
+    if (!confirmPassword.trim()) {
+      setConfirmPasswordError('Please confirm your password');
+      hasError = true;
+    } else if (password !== confirmPassword) {
+      setConfirmPasswordError('Passwords do not match');
+      hasError = true;
+    }
+
+    if (!age.trim()) {
+      setAgeError('Age is required');
+      hasError = true;
+    } else {
+      const ageNum = parseInt(age);
+      if (isNaN(ageNum) || ageNum < 13 || ageNum > 120) {
+        setAgeError('Please enter a valid age (13-120)');
+        hasError = true;
+      }
+    }
+
+    if (hasError) {
       return;
     }
 
@@ -91,7 +193,8 @@ export default function WelcomeScreen({ onBack, onContinue }: WelcomeScreenProps
       
     } catch (error: any) {
       console.error('Sign up error:', error);
-      Alert.alert('Error', error.message || 'Failed to create account. Please try again.');
+      // Display server error as email error (likely duplicate email)
+      setEmailError(error.message || 'Failed to create account. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -128,70 +231,75 @@ export default function WelcomeScreen({ onBack, onContinue }: WelcomeScreenProps
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Email</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, emailError && styles.inputError]}
                   value={email}
-                  onChangeText={setEmail}
+                  onChangeText={validateEmail}
                   placeholder="you@example.com"
                   placeholderTextColor="#6B7280"
                   autoCapitalize="none"
                   keyboardType="email-address"
                   autoCorrect={false}
                 />
+                {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
               </View>
 
               {/* Username Input */}
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Username</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, usernameError && styles.inputError]}
                   value={username}
-                  onChangeText={setUsername}
+                  onChangeText={validateUsername}
                   placeholder="climber123"
                   placeholderTextColor="#6B7280"
                   autoCapitalize="none"
                   autoCorrect={false}
                 />
+                {usernameError ? <Text style={styles.errorText}>{usernameError}</Text> : null}
               </View>
 
               {/* Password Input */}
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Password</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, passwordError && styles.inputError]}
                   value={password}
-                  onChangeText={setPassword}
+                  onChangeText={validatePassword}
                   placeholder="At least 8 characters"
                   placeholderTextColor="#6B7280"
                   secureTextEntry
                   autoCapitalize="none"
                 />
+                {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
               </View>
 
               {/* Confirm Password Input */}
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Confirm Password</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, confirmPasswordError && styles.inputError]}
                   value={confirmPassword}
-                  onChangeText={setConfirmPassword}
+                  onChangeText={validateConfirmPassword}
                   placeholder="Re-enter password"
                   placeholderTextColor="#6B7280"
                   secureTextEntry
                   autoCapitalize="none"
                 />
+                {confirmPasswordError ? <Text style={styles.errorText}>{confirmPasswordError}</Text> : null}
               </View>
 
               {/* Age Input */}
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Age</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, ageError && styles.inputError]}
                   value={age}
-                  onChangeText={setAge}
+                  onChangeText={validateAge}
                   placeholder="18"
                   placeholderTextColor="#6B7280"
                   keyboardType="number-pad"
                 />
+                {ageError ? <Text style={styles.errorText}>{ageError}</Text> : null}
               </View>
 
               {/* Continue Button */}

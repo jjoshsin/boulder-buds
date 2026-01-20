@@ -54,7 +54,9 @@ export default function App() {
 
   const handleSignUpSuccess = async () => {
     setIsAuthenticated(true);
-    setHasCompletedProfile(false); // New users need to complete profile
+    // Email/password users complete their profile during signup, so they can skip personalize
+    // But we'll show personalize to let them set climbing preferences (optional)
+    setHasCompletedProfile(false);
   };
 
   const handleLoginSuccess = async () => {
@@ -70,12 +72,8 @@ export default function App() {
   };
 
   const handlePersonalizeComplete = async () => {
-    // Recheck profile status
-    const user = await authService.getStoredUser();
-    if (user) {
-      const profileComplete = await authService.checkProfileComplete(user.id);
-      setHasCompletedProfile(profileComplete);
-    }
+    // Mark profile as complete and go to gym list
+    setHasCompletedProfile(true);
   };
 
   const handleLogout = async () => {

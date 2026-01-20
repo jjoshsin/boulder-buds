@@ -26,40 +26,39 @@ export default function PersonalizeScreen({
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSkip = () => {
-    onComplete();
-  };
+  onComplete();
+};
 
-  const handleContinue = async () => {
-    if (!climbingLevel || !climbingType) {
-      Alert.alert('Missing Information', 'Please answer all questions or skip.');
+const handleContinue = async () => {  
+  if (!climbingLevel || !climbingType) {
+    Alert.alert('Missing Information', 'Please answer all questions or skip.');
+    return;
+  }
+
+  try {
+    setIsLoading(true);
+    
+    const user = await authService.getStoredUser();
+    if (!user) {
+      Alert.alert('Error', 'User not found. Please sign in again.');
       return;
     }
 
-    try {
-      setIsLoading(true);
-      
-      const user = await authService.getStoredUser();
-      if (!user) {
-        Alert.alert('Error', 'User not found. Please sign in again.');
-        return;
-      }
+    // Save preferences to backend
+    await authService.updateUserPreferences(user.id, {
+      climbingLevel,
+      climbingType,
+    });
 
-      // Save preferences to backend
-      await authService.updateUserPreferences(user.id, {
-        climbingLevel,
-        climbingType,
-      });
-
-      console.log('Preferences saved:', { climbingLevel, climbingType });
-      onComplete();
-      
-    } catch (error) {
-      console.error('Save preferences error:', error);
-      Alert.alert('Error', 'Failed to save preferences. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    onComplete();
+    
+  } catch (error) {
+    console.error('Save preferences error:', error);
+    Alert.alert('Error', 'Failed to save preferences. Please try again.');
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const renderLevelOption = (level: ClimbingLevel, label: string) => (
     <TouchableOpacity

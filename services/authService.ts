@@ -225,8 +225,9 @@ class AuthService {
 
       const user = await response.json();
       
-      // Check if user has completed profile (only needs displayName and birthday)
-      return !!(user.displayName && user.birthday && user.displayName !== 'Climber');
+      // Check if user has completed basic profile (email/password users already have displayName and age from signup)
+      // Profile is considered complete if they have displayName (which they do from signup)
+      return !!(user.displayName && user.displayName !== 'Climber');
     } catch (error) {
       console.error('Check profile error:', error);
       return false;

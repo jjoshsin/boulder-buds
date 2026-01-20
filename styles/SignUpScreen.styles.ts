@@ -43,14 +43,15 @@ export const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     paddingHorizontal: 32,
+    paddingTop: 20,
   },
   formContainer: {
-    marginTop: 20,
+    marginTop: 10,
   },
   inputGroup: {
-    marginBottom: 24,
+    marginBottom: 16,
   },
   label: {
     fontSize: 16,
@@ -67,6 +68,16 @@ export const styles = StyleSheet.create({
     color: '#1F2937',
     borderWidth: 1,
     borderColor: '#E5E7EB',
+  },
+  inputError: {
+    borderColor: '#EF4444',
+    backgroundColor: '#FEF2F2',
+  },
+  errorText: {
+    fontSize: 13,
+    color: '#EF4444',
+    marginTop: 4,
+    marginLeft: 4,
   },
   continueButton: {
     height: 56,
