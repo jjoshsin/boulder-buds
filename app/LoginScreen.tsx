@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -22,10 +21,49 @@ export default function LoginScreen({ onBack, onLoginSuccess }: LoginScreenProps
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Error states
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  
+  // Track touched fields
+  const [touchedFields, setTouchedFields] = useState({
+    email: false,
+    password: false,
+  });
+
+  const validateEmail = (text: string) => {
+    setEmail(text);
+    if (!text) {
+      setEmailError('Email is required');
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text)) {
+      setEmailError('Please enter a valid email');
+    } else {
+      setEmailError('');
+    }
+  };
+
+  const validatePassword = (text: string) => {
+    setPassword(text);
+    if (!text) {
+      setPasswordError('Password is required');
+    } else {
+      setPasswordError('');
+    }
+  };
 
   const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
-      Alert.alert('Error', 'Please enter email and password');
+    // Mark all fields as touched
+    setTouchedFields({
+      email: true,
+      password: true,
+    });
+
+    // Validate
+    validateEmail(email);
+    validatePassword(password);
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !password) {
       return;
     }
 
@@ -39,7 +77,9 @@ export default function LoginScreen({ onBack, onLoginSuccess }: LoginScreenProps
       
     } catch (error: any) {
       console.error('Login error:', error);
-      Alert.alert('Error', error.message || 'Failed to log in. Please try again.');
+      // Show error under password field
+      setPasswordError(error.message || 'Invalid email or password');
+      setTouchedFields(prev => ({ ...prev, password: true }));
     } finally {
       setIsLoading(false);
     }
@@ -67,29 +107,39 @@ export default function LoginScreen({ onBack, onLoginSuccess }: LoginScreenProps
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Email</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, touchedFields.email && emailError && styles.inputError]}
               value={email}
-              onChangeText={setEmail}
+              onChangeText={validateEmail}
+              onBlur={() => {
+                setTouchedFields(prev => ({ ...prev, email: true }));
+                validateEmail(email);
+              }}
               placeholder="you@example.com"
               placeholderTextColor="#6B7280"
               autoCapitalize="none"
               keyboardType="email-address"
               autoCorrect={false}
             />
+            {touchedFields.email && emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
           </View>
 
           {/* Password Input */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Password</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, touchedFields.password && passwordError && styles.inputError]}
               value={password}
-              onChangeText={setPassword}
+              onChangeText={validatePassword}
+              onBlur={() => {
+                setTouchedFields(prev => ({ ...prev, password: true }));
+                validatePassword(password);
+              }}
               placeholder="Enter your password"
               placeholderTextColor="#6B7280"
               secureTextEntry
               autoCapitalize="none"
             />
+            {touchedFields.password && passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
           </View>
 
           {/* Login Button */}

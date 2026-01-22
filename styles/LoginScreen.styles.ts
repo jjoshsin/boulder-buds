@@ -50,7 +50,7 @@ export const styles = StyleSheet.create({
     marginBottom: 32,
   },
   inputGroup: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   label: {
     fontSize: 16,
@@ -67,6 +67,16 @@ export const styles = StyleSheet.create({
     color: '#1F2937',
     borderWidth: 1,
     borderColor: '#E5E7EB',
+  },
+  inputError: {
+    borderColor: '#EF4444',
+    backgroundColor: '#FEF2F2',
+  },
+  errorText: {
+    fontSize: 13,
+    color: '#EF4444',
+    marginTop: 4,
+    marginLeft: 4,
   },
   loginButton: {
     height: 56,
