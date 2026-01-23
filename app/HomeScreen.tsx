@@ -1,0 +1,199 @@
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  ActivityIndicator,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { styles } from '../styles/HomeScreen.styles';
+
+interface Gym {
+  id: string;
+  name: string;
+  borough: string;
+  distance?: string;
+  rating?: number;
+  reviewCount?: number;
+  tags?: string[];
+  photo?: string;
+}
+
+export default function HomeScreen() {
+  const [popularGyms, setPopularGyms] = useState<Gym[]>([]);
+  const [nearbyGyms, setNearbyGyms] = useState<Gym[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchHomeData();
+  }, []);
+
+  const fetchHomeData = async () => {
+    try {
+      // TODO: Fetch from backend
+      // Mock data for now
+      setPopularGyms([
+        {
+          id: '1',
+          name: 'Brooklyn Boulders',
+          borough: 'Brooklyn',
+          rating: 4.5,
+          reviewCount: 24,
+          tags: ['Comp Style', 'Great Setting'],
+          photo: 'https://via.placeholder.com/300x200',
+        },
+        {
+          id: '2',
+          name: 'Vital Climbing',
+          borough: 'Brooklyn',
+          rating: 4.7,
+          reviewCount: 18,
+          tags: ['Beginner Friendly'],
+          photo: 'https://via.placeholder.com/300x200',
+        },
+      ]);
+
+      setNearbyGyms([
+        {
+          id: '1',
+          name: 'Brooklyn Boulders Gowanus',
+          borough: 'Brooklyn',
+          distance: '0.8 mi',
+          rating: 4.5,
+          reviewCount: 24,
+          tags: ['Comp Style', 'Spray Wall'],
+        },
+        {
+          id: '2',
+          name: 'Vital Climbing Gym',
+          borough: 'Brooklyn',
+          distance: '1.2 mi',
+          rating: 4.7,
+          reviewCount: 18,
+          tags: ['Beginner Friendly', 'Moon Board'],
+        },
+        {
+          id: '3',
+          name: 'The Cliffs at LIC',
+          borough: 'Queens',
+          distance: '2.4 mi',
+          rating: 4.6,
+          reviewCount: 31,
+          tags: ['Great Café', 'Yoga Classes'],
+        },
+      ]);
+    } catch (error) {
+      console.error('Error fetching home data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const renderPopularGym = (gym: Gym) => (
+    <TouchableOpacity key={gym.id} style={styles.popularCard} activeOpacity={0.8}>
+      <View style={styles.popularImage}>
+        <View style={styles.placeholder}>
+          <Text style={styles.placeholderText}>📸</Text>
+        </View>
+      </View>
+      <View style={styles.popularInfo}>
+        <Text style={styles.popularName} numberOfLines={1}>
+          {gym.name}
+        </Text>
+        <View style={styles.ratingRow}>
+          <Text style={styles.rating}>⭐ {gym.rating}</Text>
+          <Text style={styles.reviewCount}>({gym.reviewCount})</Text>
+        </View>
+        {gym.tags && gym.tags.length > 0 && (
+          <Text style={styles.tag} numberOfLines={1}>
+            {gym.tags[0]}
+          </Text>
+        )}
+      </View>
+    </TouchableOpacity>
+  );
+
+  const renderNearbyGym = (gym: Gym) => (
+    <TouchableOpacity key={gym.id} style={styles.nearbyCard} activeOpacity={0.8}>
+      <View style={styles.nearbyContent}>
+        <View style={styles.nearbyHeader}>
+          <Text style={styles.nearbyName} numberOfLines={1}>
+            {gym.name}
+          </Text>
+          <Text style={styles.distance}>{gym.distance}</Text>
+        </View>
+        <View style={styles.nearbyMeta}>
+          <Text style={styles.rating}>⭐ {gym.rating}</Text>
+          <Text style={styles.metaSeparator}>•</Text>
+          <Text style={styles.tags}>{gym.tags?.join(' • ')}</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#FF8C00" />
+      </View>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Boulder Buds</Text>
+        <TouchableOpacity style={styles.searchButton}>
+          <Text style={styles.searchIcon}>🔍</Text>
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {/* Popular This Week */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>🔥 Popular This Week</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalScroll}
+          >
+            {popularGyms.map(renderPopularGym)}
+          </ScrollView>
+        </View>
+
+        {/* Near You */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>📍 Near You</Text>
+          {nearbyGyms.map(renderNearbyGym)}
+        </View>
+
+        {/* Recent Activity */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>👥 Recent Activity</Text>
+          <View style={styles.activityCard}>
+            <Text style={styles.activityText}>
+              <Text style={styles.activityUser}>alex_climbs</Text> checked in at{' '}
+              <Text style={styles.activityGym}>Brooklyn Boulders</Text>
+            </Text>
+            <Text style={styles.activityRating}>⭐⭐⭐⭐⭐</Text>
+            <Text style={styles.activityReview}>"Sick new problems this week!"</Text>
+            <Text style={styles.activityTime}>2 hours ago</Text>
+          </View>
+
+          <View style={styles.activityCard}>
+            <Text style={styles.activityText}>
+              <Text style={styles.activityUser}>sarah_sends</Text> reviewed{' '}
+              <Text style={styles.activityGym}>Vital Climbing</Text>
+            </Text>
+            <Text style={styles.activityRating}>⭐⭐⭐⭐</Text>
+            <Text style={styles.activityReview}>"Great for beginners!"</Text>
+            <Text style={styles.activityTime}>5 hours ago</Text>
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}

@@ -21,6 +21,54 @@ model User {
   climbingType  String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-  
+  reviews       Review[]
+
   @@map("users")
+}
+
+model Gym {
+  id          String   @id @default(uuid())
+  name        String
+  address     String
+  borough     String   // Manhattan, Brooklyn, Queens, Bronx, Staten Island
+  latitude    Float
+  longitude   Float
+  photos      String[] // Array of image URLs
+  amenities   String[] // ["kilter_board", "spray_wall", "cafe", "showers"]
+  priceRange  Int      // 1 = $, 2 = $$, 3 = $$$
+  climbingTypes String[] // ["bouldering", "rope"]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  reviews     Review[]
+  
+  @@map("gyms")
+}
+
+model Review {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  gymId           String
+  gym             Gym      @relation(fields: [gymId], references: [id])
+  
+  // Ratings (1-5)
+  overallRating   Float
+  settingQuality  Float?
+  difficulty      Float?   // 1 = very soft, 5 = very stiff
+  variety         Float?
+  crowding        Float?
+  cleanliness     Float?
+  vibe            Float?
+  
+  // Content
+  reviewText      String?
+  photos          String[]
+  tags            String[] // ["soft_grades", "comp_style", "beginner_friendly"]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("reviews")
+  @@unique([userId, gymId]) // One review per gym per user
 }

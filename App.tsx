@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StatusBar } from 'expo-status-bar';
 import { View, Text, TouchableOpacity } from 'react-native';
 import LandingScreen from './app/LandingScreen';
 import SignUpScreen from './app/SignUpScreen';
 import LoginScreen from './app/LoginScreen';
 import PersonalizeScreen from './app/PersonalizeScreen';
+import HomeScreen from './app/HomeScreen';
+import ExploreScreen from './app/ExploreScreen';
+import PostScreen from './app/PostScreen';
+import ProfileScreen from './app/ProfileScreen';
 import authService from './services/authService';
 
 export type RootStackParamList = {
@@ -14,10 +19,93 @@ export type RootStackParamList = {
   SignUp: undefined;
   Login: undefined;
   Personalize: undefined;
-  GymList: undefined;
+  MainTabs: undefined;
+};
+
+export type TabParamList = {
+  Home: undefined;
+  Explore: undefined;
+  Post: undefined;
+  Profile: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+const Tab = createBottomTabNavigator<TabParamList>();
+
+function MainTabs({ onLogout }: { onLogout: () => void }) {
+  return (
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: '#FF8C00',
+        tabBarInactiveTintColor: '#9CA3AF',
+        tabBarStyle: {
+          backgroundColor: '#FFFFFF',
+          borderTopWidth: 1,
+          borderTopColor: '#E5E7EB',
+          height: 60,
+          paddingBottom: 8,
+          paddingTop: 8,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '600',
+        },
+      }}
+    >
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Text style={{ fontSize: 24, color }}>🏠</Text>
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Explore"
+        component={ExploreScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Text style={{ fontSize: 24, color }}>🔍</Text>
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Post"
+        component={PostScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <View
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: 24,
+                backgroundColor: '#FF8C00',
+                justifyContent: 'center',
+                alignItems: 'center',
+                marginTop: -20,
+              }}
+            >
+              <Text style={{ fontSize: 28, color: '#FFFFFF' }}>+</Text>
+            </View>
+          ),
+          tabBarLabel: '',
+        }}
+      />
+      <Tab.Screen
+        name="Profile"
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Text style={{ fontSize: 24, color }}>👤</Text>
+          ),
+        }}
+      >
+        {() => <ProfileScreen onLogout={onLogout} />}
+      </Tab.Screen>
+    </Tab.Navigator>
+  );
+}
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -40,7 +128,6 @@ export default function App() {
       
       if (token && user) {
         setIsAuthenticated(true);
-        // Check if user has completed their profile
         const profileComplete = await authService.checkProfileComplete(user.id);
         console.log('Profile complete:', profileComplete);
         setHasCompletedProfile(profileComplete);
@@ -54,15 +141,12 @@ export default function App() {
 
   const handleSignUpSuccess = async () => {
     setIsAuthenticated(true);
-    // Email/password users complete their profile during signup, so they can skip personalize
-    // But we'll show personalize to let them set climbing preferences (optional)
     setHasCompletedProfile(false);
   };
 
   const handleLoginSuccess = async () => {
     setIsAuthenticated(true);
     
-    // Check if user already has a complete profile
     const user = await authService.getStoredUser();
     if (user) {
       const profileComplete = await authService.checkProfileComplete(user.id);
@@ -72,7 +156,6 @@ export default function App() {
   };
 
   const handlePersonalizeComplete = async () => {
-    // Mark profile as complete and go to gym list
     setHasCompletedProfile(true);
   };
 
@@ -134,20 +217,8 @@ export default function App() {
               )}
             </>
           ) : hasCompletedProfile ? (
-            <Stack.Screen name="GymList">
-              {() => (
-                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' }}>
-                  <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#1F2937' }}>
-                    Gym List Coming Soon!
-                  </Text>
-                  <TouchableOpacity 
-                    onPress={handleLogout}
-                    style={{ marginTop: 20, padding: 12, backgroundColor: '#FF8C00', borderRadius: 8 }}
-                  >
-                    <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>Logout</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
+            <Stack.Screen name="MainTabs">
+              {() => <MainTabs onLogout={handleLogout} />}
             </Stack.Screen>
           ) : (
             <Stack.Screen name="Personalize">
