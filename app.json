@@ -7,22 +7,21 @@
     "userInterfaceStyle": "dark",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.yourcompany.boulderbuds",
-      "usesAppleSignIn": true
+      "bundleIdentifier": "com.boulderbuds.app"
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#121419"
       },
-      "package": "com.yourcompany.boulderbuds"
+      "package": "com.boulderbuds.app"
     },
     "plugins": [
-      "expo-secure-store"
-    ],
-    "extra": {
-      "eas": {
-        "projectId": "10c8372a-bcff-4f00-827b-d75034133f8b"
-      }
-    }
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow Boulder Buds to use your location to show nearby gyms."
+        }
+      ]
+    ]
   }
 }

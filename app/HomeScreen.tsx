@@ -6,20 +6,11 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { styles } from '../styles/HomeScreen.styles';
-
-interface Gym {
-  id: string;
-  name: string;
-  borough: string;
-  distance?: string;
-  rating?: number;
-  reviewCount?: number;
-  tags?: string[];
-  photo?: string;
-}
+import gymService, { Gym } from '../services/gymService';
 
 export default function HomeScreen() {
   const [popularGyms, setPopularGyms] = useState<Gym[]>([]);
@@ -32,60 +23,20 @@ export default function HomeScreen() {
 
   const fetchHomeData = async () => {
     try {
-      // TODO: Fetch from backend
-      // Mock data for now
-      setPopularGyms([
-        {
-          id: '1',
-          name: 'Brooklyn Boulders',
-          borough: 'Brooklyn',
-          rating: 4.5,
-          reviewCount: 24,
-          tags: ['Comp Style', 'Great Setting'],
-          photo: 'https://via.placeholder.com/300x200',
-        },
-        {
-          id: '2',
-          name: 'Vital Climbing',
-          borough: 'Brooklyn',
-          rating: 4.7,
-          reviewCount: 18,
-          tags: ['Beginner Friendly'],
-          photo: 'https://via.placeholder.com/300x200',
-        },
+      setIsLoading(true);
+      
+      // Fetch real data from backend
+      const [popular, nearby] = await Promise.all([
+        gymService.getPopularGyms(),
+        gymService.getNearbyGyms(),
       ]);
 
-      setNearbyGyms([
-        {
-          id: '1',
-          name: 'Brooklyn Boulders Gowanus',
-          borough: 'Brooklyn',
-          distance: '0.8 mi',
-          rating: 4.5,
-          reviewCount: 24,
-          tags: ['Comp Style', 'Spray Wall'],
-        },
-        {
-          id: '2',
-          name: 'Vital Climbing Gym',
-          borough: 'Brooklyn',
-          distance: '1.2 mi',
-          rating: 4.7,
-          reviewCount: 18,
-          tags: ['Beginner Friendly', 'Moon Board'],
-        },
-        {
-          id: '3',
-          name: 'The Cliffs at LIC',
-          borough: 'Queens',
-          distance: '2.4 mi',
-          rating: 4.6,
-          reviewCount: 31,
-          tags: ['Great Café', 'Yoga Classes'],
-        },
-      ]);
+      setPopularGyms(popular);
+      setNearbyGyms(nearby);
+      
     } catch (error) {
       console.error('Error fetching home data:', error);
+      Alert.alert('Error', 'Failed to load gyms. Please try again.');
     } finally {
       setIsLoading(false);
     }

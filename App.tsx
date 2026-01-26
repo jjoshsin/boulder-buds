@@ -43,13 +43,14 @@ function MainTabs({ onLogout }: { onLogout: () => void }) {
           backgroundColor: '#FFFFFF',
           borderTopWidth: 1,
           borderTopColor: '#E5E7EB',
-          height: 60,
-          paddingBottom: 8,
+          height: 70,
+          paddingBottom: 12,
           paddingTop: 8,
         },
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '600',
+          marginTop: 4,
         },
       }}
     >
@@ -57,7 +58,7 @@ function MainTabs({ onLogout }: { onLogout: () => void }) {
         name="Home"
         component={HomeScreen}
         options={{
-          tabBarIcon: ({ color, size }) => (
+          tabBarIcon: ({ color }) => (
             <Text style={{ fontSize: 24, color }}>🏠</Text>
           ),
         }}
@@ -66,7 +67,7 @@ function MainTabs({ onLogout }: { onLogout: () => void }) {
         name="Explore"
         component={ExploreScreen}
         options={{
-          tabBarIcon: ({ color, size }) => (
+          tabBarIcon: ({ color }) => (
             <Text style={{ fontSize: 24, color }}>🔍</Text>
           ),
         }}
@@ -75,28 +76,17 @@ function MainTabs({ onLogout }: { onLogout: () => void }) {
         name="Post"
         component={PostScreen}
         options={{
-          tabBarIcon: ({ color, size }) => (
-            <View
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: 24,
-                backgroundColor: '#FF8C00',
-                justifyContent: 'center',
-                alignItems: 'center',
-                marginTop: -20,
-              }}
-            >
-              <Text style={{ fontSize: 28, color: '#FFFFFF' }}>+</Text>
+          tabBarIcon: ({ color }) => (
+            <View style={{ marginTop: -2 }}>
+              <Text style={{ fontSize: 28, color }}>➕</Text>
             </View>
           ),
-          tabBarLabel: '',
         }}
       />
       <Tab.Screen
         name="Profile"
         options={{
-          tabBarIcon: ({ color, size }) => (
+          tabBarIcon: ({ color }) => (
             <Text style={{ fontSize: 24, color }}>👤</Text>
           ),
         }}
