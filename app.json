@@ -7,19 +7,30 @@
     "userInterfaceStyle": "dark",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.boulderbuds.app"
+      "bundleIdentifier": "com.boulderbuds.app",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Boulder Buds needs access to your photo library to upload gym photos.",
+        "NSCameraUsageDescription": "Boulder Buds needs access to your camera to take gym photos."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#121419"
       },
-      "package": "com.boulderbuds.app"
+      "package": "com.boulderbuds.app",
+      "permissions": ["CAMERA", "READ_EXTERNAL_STORAGE", "WRITE_EXTERNAL_STORAGE"]
     },
     "plugins": [
       [
         "expo-location",
         {
           "locationAlwaysAndWhenInUsePermission": "Allow Boulder Buds to use your location to show nearby gyms."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Boulder Buds to access your photos to upload gym images."
         }
       ]
     ]

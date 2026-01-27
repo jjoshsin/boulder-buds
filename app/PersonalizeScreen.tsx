@@ -118,12 +118,6 @@ const handleContinue = async () => {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Question 1: Where do you live */}
-        <View style={styles.questionSection}>
-          <Text style={styles.questionTitle}>Where do you live?</Text>
-          <Text style={styles.comingSoon}>Coming soon...</Text>
-        </View>
-
         {/* Question 2: Climbing Level */}
         <View style={styles.questionSection}>
           <Text style={styles.questionTitle}>What would you say your level in climbing is?</Text>

@@ -100,6 +100,12 @@ export default function HomeScreen() {
         <TouchableOpacity style={styles.searchButton}>
           <Text style={styles.searchIcon}>🔍</Text>
         </TouchableOpacity>
+        <TouchableOpacity 
+          style={{ padding: 10 }}
+          onPress={() => {/* We'll wire this up next */}}
+        >
+          <Text>📸 Add Photos</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
