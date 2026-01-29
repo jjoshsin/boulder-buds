@@ -184,4 +184,8 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     color: '#9CA3AF',
   },
+  image: {
+  width: '100%',
+  height: '100%',
+  }
 });

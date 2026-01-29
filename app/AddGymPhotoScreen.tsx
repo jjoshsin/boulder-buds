@@ -13,6 +13,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { styles } from '../styles/AddGymPhotoScreen.styles';
 import uploadService from '../services/uploadService';
 import gymService from '../services/gymService';
+import * as SecureStore from 'expo-secure-store';
 
 interface AddGymPhotoScreenProps {
   onClose: () => void;
@@ -87,37 +88,49 @@ export default function AddGymPhotoScreen({ onClose }: AddGymPhotoScreenProps) {
   };
 
   const handleUpload = async () => {
-    if (!selectedGym) {
-      Alert.alert('Select a gym', 'Please select which gym these photos are for');
-      return;
+  if (!selectedGym) {
+    Alert.alert('Select a gym', 'Please select which gym these photos are for');
+    return;
+  }
+
+  if (selectedImages.length === 0) {
+    Alert.alert('No photos', 'Please add at least one photo');
+    return;
+  }
+
+  try {
+    setIsUploading(true);
+
+    // Upload all images to S3
+    const uploadPromises = selectedImages.map(uri => uploadService.uploadImage(uri));
+    const imageUrls = await Promise.all(uploadPromises);
+
+    console.log('✅ Uploaded images:', imageUrls);
+
+    // Save photo URLs to gym
+    const token = await SecureStore.getItemAsync('authToken');
+    const response = await fetch(`http://192.168.1.166:3000/gyms/${selectedGym}/photos`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ photos: imageUrls }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to save photos');
     }
 
-    if (selectedImages.length === 0) {
-      Alert.alert('No photos', 'Please add at least one photo');
-      return;
-    }
-
-    try {
-      setIsUploading(true);
-
-      // Upload all images
-      const uploadPromises = selectedImages.map(uri => uploadService.uploadImage(uri));
-      const imageUrls = await Promise.all(uploadPromises);
-
-      console.log('✅ Uploaded images:', imageUrls);
-      Alert.alert('Success', `Uploaded ${imageUrls.length} photo(s) to ${gyms.find(g => g.id === selectedGym)?.name}`);
-      
-      // TODO: Update gym photos in database
-      // You'll need to create an endpoint to add photos to a gym
-      
-      onClose();
-    } catch (error) {
-      console.error('Upload error:', error);
-      Alert.alert('Error', 'Failed to upload photos. Please try again.');
-    } finally {
-      setIsUploading(false);
-    }
-  };
+    Alert.alert('Success', `Uploaded ${imageUrls.length} photo(s) to ${gyms.find(g => g.id === selectedGym)?.name}`);
+    onClose();
+  } catch (error) {
+    console.error('Upload error:', error);
+    Alert.alert('Error', 'Failed to upload photos. Please try again.');
+  } finally {
+    setIsUploading(false);
+  }
+};
 
   return (
     <SafeAreaView style={styles.container}>

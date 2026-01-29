@@ -43,28 +43,42 @@ export default function HomeScreen() {
   };
 
   const renderPopularGym = (gym: Gym) => (
-    <TouchableOpacity key={gym.id} style={styles.popularCard} activeOpacity={0.8}>
-      <View style={styles.popularImage}>
+  <TouchableOpacity key={gym.id} style={styles.popularCard} activeOpacity={0.8}>
+    <View style={styles.popularImage}>
+      {gym.photos && gym.photos.length > 0 ? (
+        <Image 
+          source={{ uri: gym.photos[0] }} 
+          style={styles.image}
+          resizeMode="cover"
+        />
+      ) : (
         <View style={styles.placeholder}>
           <Text style={styles.placeholderText}>📸</Text>
         </View>
-      </View>
-      <View style={styles.popularInfo}>
-        <Text style={styles.popularName} numberOfLines={1}>
-          {gym.name}
-        </Text>
-        <View style={styles.ratingRow}>
-          <Text style={styles.rating}>⭐ {gym.rating}</Text>
-          <Text style={styles.reviewCount}>({gym.reviewCount})</Text>
-        </View>
-        {gym.tags && gym.tags.length > 0 && (
-          <Text style={styles.tag} numberOfLines={1}>
-            {gym.tags[0]}
-          </Text>
+      )}
+    </View>
+    <View style={styles.popularInfo}>
+      <Text style={styles.popularName} numberOfLines={1}>
+        {gym.name}
+      </Text>
+      <View style={styles.ratingRow}>
+        {gym.rating && gym.rating > 0 ? (
+          <>
+            <Text style={styles.rating}>⭐ {gym.rating}</Text>
+            <Text style={styles.reviewCount}>({gym.reviewCount})</Text>
+          </>
+        ) : (
+          <Text style={styles.reviewCount}>No reviews yet</Text>
         )}
       </View>
-    </TouchableOpacity>
-  );
+      {gym.tags && gym.tags.length > 0 && (
+        <Text style={styles.tag} numberOfLines={1}>
+          {gym.tags[0]}
+        </Text>
+      )}
+    </View>
+  </TouchableOpacity>
+);
 
   const renderNearbyGym = (gym: Gym) => (
     <TouchableOpacity key={gym.id} style={styles.nearbyCard} activeOpacity={0.8}>

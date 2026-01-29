@@ -129,4 +129,27 @@ export class GymsService {
     const sum = reviews.reduce((acc, review) => acc + review.overallRating, 0);
     return Math.round((sum / reviews.length) * 10) / 10; // Round to 1 decimal
   }
+
+  async addPhotos(gymId: string, photoUrls: string[]) {
+  const gym = await this.prisma.gym.findUnique({
+    where: { id: gymId },
+  });
+
+  if (!gym) {
+    throw new NotFoundException('Gym not found');
+  }
+
+  // Append new photos to existing ones
+  const updatedGym = await this.prisma.gym.update({
+    where: { id: gymId },
+    data: {
+      photos: [...gym.photos, ...photoUrls],
+    },
+  });
+
+  return {
+    id: updatedGym.id,
+    photos: updatedGym.photos,
+  };
+}
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Patch, UseGuards, Body } from '@nestjs/common';
 import { GymsService } from './gyms.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -30,4 +30,14 @@ export class GymsController {
   async getGymById(@Param('id') id: string) {
     return this.gymsService.getGymById(id);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/photos')
+  async addGymPhotos(
+  @Param('id') id: string,
+  @
+  Body() body: { photos: string[] },
+) {
+  return this.gymsService.addPhotos(id, body.photos);
+}
 }
