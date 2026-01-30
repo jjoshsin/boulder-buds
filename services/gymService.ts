@@ -10,7 +10,8 @@ export interface Gym {
   borough: string;
   latitude?: number;
   longitude?: number;
-  photos?: string[];
+  officialPhotos?: string[]; // Changed from photos
+  communityPhotos?: CommunityPhoto[]; // New
   amenities?: string[];
   priceRange?: number;
   climbingTypes?: string[];
@@ -18,6 +19,16 @@ export interface Gym {
   reviewCount?: number;
   distance?: string;
   tags?: string[];
+}
+
+export interface CommunityPhoto {
+  id: string;
+  url: string;
+  caption?: string;
+  createdAt: string;
+  user: {
+    displayName: string;
+  };
 }
 
 class GymService {

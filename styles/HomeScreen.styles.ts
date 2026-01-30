@@ -187,5 +187,10 @@ export const styles = StyleSheet.create({
   image: {
   width: '100%',
   height: '100%',
-  }
+  },
+  placeholderSubtext: {
+  fontSize: 12,
+  color: '#9CA3AF',
+  marginTop: 4,
+}
 });

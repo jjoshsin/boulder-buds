@@ -107,19 +107,25 @@ export default function AddGymPhotoScreen({ onClose }: AddGymPhotoScreenProps) {
 
     console.log('✅ Uploaded images:', imageUrls);
 
-    // Save photo URLs to gym
+    // Save as community photos (one at a time)
     const token = await SecureStore.getItemAsync('authToken');
-    const response = await fetch(`http://192.168.1.166:3000/gyms/${selectedGym}/photos`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify({ photos: imageUrls }),
-    });
+    
+    for (const url of imageUrls) {
+      const response = await fetch(`http://192.168.1.166:3000/gyms/${selectedGym}/community-photos`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ 
+          url: url,
+          caption: null, // Add caption input later if you want
+        }),
+      });
 
-    if (!response.ok) {
-      throw new Error('Failed to save photos');
+      if (!response.ok) {
+        throw new Error('Failed to save community photo');
+      }
     }
 
     Alert.alert('Success', `Uploaded ${imageUrls.length} photo(s) to ${gyms.find(g => g.id === selectedGym)?.name}`);

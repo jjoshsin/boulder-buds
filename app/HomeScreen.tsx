@@ -21,39 +21,42 @@ export default function HomeScreen() {
     fetchHomeData();
   }, []);
 
-  const fetchHomeData = async () => {
-    try {
-      setIsLoading(true);
-      
-      // Fetch real data from backend
-      const [popular, nearby] = await Promise.all([
-        gymService.getPopularGyms(),
-        gymService.getNearbyGyms(),
-      ]);
+const fetchHomeData = async () => {
+  try {
+    setIsLoading(true);
+    
+    const [popular, nearby] = await Promise.all([
+      gymService.getPopularGyms(),
+      gymService.getNearbyGyms(),
+    ]);
 
-      setPopularGyms(popular);
-      setNearbyGyms(nearby);
-      
-    } catch (error) {
-      console.error('Error fetching home data:', error);
-      Alert.alert('Error', 'Failed to load gyms. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    console.log('🏋️ Popular Gyms Response:', JSON.stringify(popular, null, 2));
+    console.log('📸 First gym photos:', popular[0]?.photos);
 
-  const renderPopularGym = (gym: Gym) => (
+    setPopularGyms(popular);
+    setNearbyGyms(nearby);
+    
+  } catch (error) {
+    console.error('Error fetching home data:', error);
+    Alert.alert('Error', 'Failed to load gyms. Please try again.');
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+const renderPopularGym = (gym: Gym) => (
   <TouchableOpacity key={gym.id} style={styles.popularCard} activeOpacity={0.8}>
     <View style={styles.popularImage}>
-      {gym.photos && gym.photos.length > 0 ? (
+      {gym.officialPhotos && gym.officialPhotos.length > 0 ? (
         <Image 
-          source={{ uri: gym.photos[0] }} 
+          source={{ uri: gym.officialPhotos[0] }} 
           style={styles.image}
           resizeMode="cover"
         />
       ) : (
         <View style={styles.placeholder}>
-          <Text style={styles.placeholderText}>📸</Text>
+          <Text style={styles.placeholderText}>🏔️</Text>
+          <Text style={styles.placeholderSubtext}>No photos yet</Text>
         </View>
       )}
     </View>

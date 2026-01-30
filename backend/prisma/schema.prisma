@@ -7,12 +7,45 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Gym {
+  id            String   @id @default(uuid())
+  name          String
+  address       String
+  borough       String
+  latitude      Float
+  longitude     Float
+  officialPhotos String[] // 1-3 curated gym photos for main card
+  amenities     String[]
+  priceRange    Int
+  climbingTypes String[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  reviews       Review[]
+  communityPhotos CommunityPhoto[] // User-uploaded photos
+  
+  @@map("gyms")
+}
+
+model CommunityPhoto {
+  id        String   @id @default(uuid())
+  url       String
+  gymId     String
+  gym       Gym      @relation(fields: [gymId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  caption   String?  // Optional caption
+  createdAt DateTime @default(now())
+  
+  @@map("community_photos")
+}
+
 model User {
   id            String   @id @default(uuid())
   email         String   @unique
-  password      String   // New: hashed password
+  password      String
   displayName   String
-  age           String?  // New: user's age
+  age           String?
   appleId       String?  @unique
   googleId      String?  @unique
   borough       String?
@@ -22,27 +55,9 @@ model User {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   reviews       Review[]
-
+  communityPhotos CommunityPhoto[] // User's uploaded photos
+  
   @@map("users")
-}
-
-model Gym {
-  id          String   @id @default(uuid())
-  name        String
-  address     String
-  borough     String   // Manhattan, Brooklyn, Queens, Bronx, Staten Island
-  latitude    Float
-  longitude   Float
-  photos      String[] // Array of image URLs
-  amenities   String[] // ["kilter_board", "spray_wall", "cafe", "showers"]
-  priceRange  Int      // 1 = $, 2 = $$, 3 = $$$
-  climbingTypes String[] // ["bouldering", "rope"]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  reviews     Review[]
-  
-  @@map("gyms")
 }
 
 model Review {
@@ -52,23 +67,21 @@ model Review {
   gymId           String
   gym             Gym      @relation(fields: [gymId], references: [id])
   
-  // Ratings (1-5)
   overallRating   Float
   settingQuality  Float?
-  difficulty      Float?   // 1 = very soft, 5 = very stiff
+  difficulty      Float?
   variety         Float?
   crowding        Float?
   cleanliness     Float?
   vibe            Float?
   
-  // Content
   reviewText      String?
-  photos          String[]
-  tags            String[] // ["soft_grades", "comp_style", "beginner_friendly"]
+  photos          String[] // Keep this for review photos
+  tags            String[]
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   
   @@map("reviews")
-  @@unique([userId, gymId]) // One review per gym per user
+  @@unique([userId, gymId])
 }

@@ -26,7 +26,7 @@ export class UploadService {
       Key: key,
       Body: file.buffer,
       ContentType: file.mimetype,
-      ACL: 'public-read',
+      // Remove ACL: 'public-read' - bucket doesn't support ACLs
     });
 
     await this.s3Client.send(command);
