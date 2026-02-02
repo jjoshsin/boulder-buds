@@ -258,31 +258,69 @@ export class GymsService {
   }
 
   // NEW: Batch fetch photos for all gyms without official photos
-  async fetchAllMissingOfficialPhotos(): Promise<void> {
-    const gyms = await this.prisma.gym.findMany({
-      where: {
-        OR: [
-          { officialPhotos: { isEmpty: true } },
-          { officialPhotos: null },
-        ],
+async fetchAllMissingOfficialPhotos(): Promise<void> {
+  // Get ALL gyms first
+  const allGyms = await this.prisma.gym.findMany();
+  
+  // Filter in JavaScript for gyms without official photos
+  const gyms = allGyms.filter(
+    gym => !gym.officialPhotos || gym.officialPhotos.length === 0
+  );
+
+  console.log(`📸 Found ${gyms.length} gyms without official photos`);
+
+  for (const gym of gyms) {
+    console.log(`\n🏋️ Processing: ${gym.name}`);
+    
+    try {
+      await this.fetchOfficialPhotos(gym.id);
+      
+      // Add delay to avoid hitting API rate limits
+      await new Promise(resolve => setTimeout(resolve, 500));
+    } catch (error) {
+      console.error(`❌ Error processing ${gym.name}:`, error);
+    }
+  }
+
+  console.log('\n✅ Finished fetching official photos for all gyms');
+}
+
+  async createGym(data: {
+    name: string;
+    address: string;
+    borough: string;
+    latitude: number;
+    longitude: number;
+    amenities?: string[];
+    priceRange?: number;
+    climbingTypes?: string[];
+  }) {
+    // Create the gym
+    const gym = await this.prisma.gym.create({
+      data: {
+        name: data.name,
+        address: data.address,
+        borough: data.borough,
+        latitude: data.latitude,
+        longitude: data.longitude,
+        officialPhotos: [], // Start empty
+        amenities: data.amenities || [],
+        priceRange: data.priceRange || 2,
+        climbingTypes: data.climbingTypes || ['bouldering'],
       },
     });
 
-    console.log(`📸 Found ${gyms.length} gyms without official photos`);
+    console.log(`✅ Created gym: ${gym.name}`);
 
-    for (const gym of gyms) {
-      console.log(`\n🏋️ Processing: ${gym.name}`);
-      
-      try {
-        await this.fetchOfficialPhotos(gym.id);
-        
-        // Add delay to avoid hitting API rate limits
-        await new Promise(resolve => setTimeout(resolve, 500));
-      } catch (error) {
-        console.error(`❌ Error processing ${gym.name}:`, error);
-      }
+    // Automatically fetch official photos after creating gym
+    try {
+      console.log(`🔍 Fetching official photos for new gym: ${gym.name}`);
+      await this.fetchOfficialPhotos(gym.id);
+    } catch (error) {
+      console.error('Failed to fetch official photos:', error);
+      // Don't fail the gym creation if photo fetch fails
     }
 
-    console.log('\n✅ Finished fetching official photos for all gyms');
+    return gym;
   }
 }

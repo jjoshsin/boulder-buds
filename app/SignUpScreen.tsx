@@ -140,7 +140,7 @@ export default function WelcomeScreen({ onBack, onContinue }: WelcomeScreenProps
     } else {
       const ageNum = parseInt(text);
       if (isNaN(ageNum) || ageNum < 13 || ageNum > 120) {
-        setAgeError('Please enter a valid age (13-120)');
+        setAgeError('Please enter a valid age');
       } else {
         setAgeError('');
       }

@@ -12,6 +12,7 @@ import HomeScreen from './app/HomeScreen';
 import ExploreScreen from './app/ExploreScreen';
 import PostScreen from './app/PostScreen';
 import ProfileScreen from './app/ProfileScreen';
+import GymDetailScreen from './app/GymDetailScreen';
 import authService from './services/authService';
 
 export type RootStackParamList = {
@@ -20,6 +21,7 @@ export type RootStackParamList = {
   Login: undefined;
   Personalize: undefined;
   MainTabs: undefined;
+  GymDetail: { gymId: string }; // Add this
 };
 
 export type TabParamList = {
@@ -207,9 +209,17 @@ export default function App() {
               )}
             </>
           ) : hasCompletedProfile ? (
-            <Stack.Screen name="MainTabs">
-              {() => <MainTabs onLogout={handleLogout} />}
-            </Stack.Screen>
+            <>
+              <Stack.Screen name="MainTabs">
+                {() => <MainTabs onLogout={handleLogout} />}
+              </Stack.Screen>
+              {/* Add GymDetail screen here */}
+              <Stack.Screen 
+                name="GymDetail" 
+                component={GymDetailScreen}
+                options={{ headerShown: false }}
+              />
+            </>
           ) : (
             <Stack.Screen name="Personalize">
               {() => (

@@ -11,8 +11,15 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { styles } from '../styles/HomeScreen.styles';
 import gymService, { Gym } from '../services/gymService';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../App';
+
+type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function HomeScreen() {
+  const navigation = useNavigation<HomeScreenNavigationProp>();
+
   const [popularGyms, setPopularGyms] = useState<Gym[]>([]);
   const [nearbyGyms, setNearbyGyms] = useState<Gym[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -31,7 +38,7 @@ const fetchHomeData = async () => {
     ]);
 
     console.log('🏋️ Popular Gyms Response:', JSON.stringify(popular, null, 2));
-    console.log('📸 First gym photos:', popular[0]?.photos);
+    console.log('📸 First gym photos:', popular[0]?.officialPhotos);
 
     setPopularGyms(popular);
     setNearbyGyms(nearby);
@@ -45,7 +52,12 @@ const fetchHomeData = async () => {
 };
 
 const renderPopularGym = (gym: Gym) => (
-  <TouchableOpacity key={gym.id} style={styles.popularCard} activeOpacity={0.8}>
+<TouchableOpacity 
+      key={gym.id} 
+      style={styles.popularCard} 
+      activeOpacity={0.8}
+      onPress={() => navigation.navigate('GymDetail', { gymId: gym.id })}
+    >    
     <View style={styles.popularImage}>
       {gym.officialPhotos && gym.officialPhotos.length > 0 ? (
         <Image 
@@ -84,8 +96,13 @@ const renderPopularGym = (gym: Gym) => (
 );
 
   const renderNearbyGym = (gym: Gym) => (
-    <TouchableOpacity key={gym.id} style={styles.nearbyCard} activeOpacity={0.8}>
-      <View style={styles.nearbyContent}>
+<TouchableOpacity 
+      key={gym.id} 
+      style={styles.nearbyCard} 
+      activeOpacity={0.8}
+      onPress={() => navigation.navigate('GymDetail', { gymId: gym.id })}
+    >
+        <View style={styles.nearbyContent}>
         <View style={styles.nearbyHeader}>
           <Text style={styles.nearbyName} numberOfLines={1}>
             {gym.name}

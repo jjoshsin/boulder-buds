@@ -73,4 +73,19 @@ export class GymsController {
       message: 'Started fetching official photos for all gyms',
     };
   }  
+
+  @UseGuards(JwtAuthGuard)
+  @Post()
+  async createGym(@Body() body: {
+    name: string;
+    address: string;
+    borough: string;
+    latitude: number;
+    longitude: number;
+    amenities?: string[];
+    priceRange?: number;
+    climbingTypes?: string[];
+  }) {
+    return this.gymsService.createGym(body);
+  }
 }

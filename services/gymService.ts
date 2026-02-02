@@ -19,12 +19,24 @@ export interface Gym {
   reviewCount?: number;
   distance?: string;
   tags?: string[];
+  reviews?: Review[];
 }
 
 export interface CommunityPhoto {
   id: string;
   url: string;
   caption?: string;
+  createdAt: string;
+  user: {
+    displayName: string;
+  };
+}
+
+export interface Review {
+  id: string;
+  overallRating: number;
+  reviewText?: string;
+  tags?: string[];
   createdAt: string;
   user: {
     displayName: string;
