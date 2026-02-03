@@ -13,6 +13,7 @@ import ExploreScreen from './app/ExploreScreen';
 import PostScreen from './app/PostScreen';
 import ProfileScreen from './app/ProfileScreen';
 import GymDetailScreen from './app/GymDetailScreen';
+import WriteReviewScreen from './app/WriteReviewScreen';
 import authService from './services/authService';
 
 export type RootStackParamList = {
@@ -21,7 +22,8 @@ export type RootStackParamList = {
   Login: undefined;
   Personalize: undefined;
   MainTabs: undefined;
-  GymDetail: { gymId: string }; // Add this
+  GymDetail: { gymId: string };
+  WriteReview: { gymId: string; gymName: string };
 };
 
 export type TabParamList = {
@@ -213,10 +215,14 @@ export default function App() {
               <Stack.Screen name="MainTabs">
                 {() => <MainTabs onLogout={handleLogout} />}
               </Stack.Screen>
-              {/* Add GymDetail screen here */}
               <Stack.Screen 
                 name="GymDetail" 
                 component={GymDetailScreen}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen 
+                name="WriteReview" 
+                component={WriteReviewScreen}
                 options={{ headerShown: false }}
               />
             </>

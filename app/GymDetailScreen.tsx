@@ -11,23 +11,42 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../App';
 import { styles } from '../styles/GymDetailScreen.styles';
 import gymService, { Gym } from '../services/gymService';
+import * as SecureStore from 'expo-secure-store';
 
 const { width } = Dimensions.get('window');
+type GymDetailScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
 
 export default function GymDetailScreen() {
   const route = useRoute();
-  const navigation = useNavigation();
+  const navigation = useNavigation<GymDetailScreenNavigationProp>();
   const { gymId } = route.params as { gymId: string };
 
   const [gym, setGym] = useState<Gym | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchGymDetails();
+    loadCurrentUser();
   }, [gymId]);
+
+  const loadCurrentUser = async () => {
+    try {
+      const userStr = await SecureStore.getItemAsync('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        setCurrentUserId(user.id);
+      }
+    } catch (error) {
+      console.error('Error loading user:', error);
+    }
+  };
 
   const fetchGymDetails = async () => {
     try {
@@ -149,7 +168,7 @@ export default function GymDetailScreen() {
             <Text style={styles.separator}>•</Text>
             <Text style={styles.priceRange}>{getPriceRangeText(gym.priceRange || 2)}</Text>
           </View>
-
+        </View>
           {/* Address */}
           <View style={styles.addressRow}>
             <Text style={styles.addressIcon}>📍</Text>
@@ -185,13 +204,18 @@ export default function GymDetailScreen() {
 
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
-            <TouchableOpacity style={styles.primaryButton}>
+            <TouchableOpacity 
+               style={styles.primaryButton}
+                onPress={() => navigation.navigate('WriteReview', { 
+                gymId: gym.id, 
+                gymName: gym.name 
+                })}
+              >
               <Text style={styles.primaryButtonText}>✍️ Write Review</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.secondaryButton}>
               <Text style={styles.secondaryButtonText}>📸 Add Photos</Text>
             </TouchableOpacity>
-          </View>
         </View>
 
         {/* Amenities */}
@@ -254,75 +278,83 @@ export default function GymDetailScreen() {
         )}
 
         {/* Reviews */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Reviews</Text>
-            {gym.reviewCount !== undefined && gym.reviewCount > 0 && (
-              <Text style={styles.seeAllText}>See all</Text>
-            )}
+<View style={styles.section}>
+  <View style={styles.sectionHeader}>
+    <Text style={styles.sectionTitle}>Reviews</Text>
+    {gym.reviewCount !== undefined && gym.reviewCount > 0 && (
+      <Text style={styles.seeAllText}>See all</Text>
+    )}
+  </View>
+
+  {gym.reviews && gym.reviews.length > 0 ? (
+    gym.reviews.slice(0, 3).map((review: any, index: number) => {
+      if (!review || !review.user || !review.user.displayName) {
+        return null;
+      }
+
+      return (
+        <View key={index} style={styles.reviewCard}>
+          <View style={styles.reviewHeader}>
+            <View style={styles.reviewUserInfo}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>
+                  {review.user.displayName.charAt(0).toUpperCase()}
+                </Text>
+              </View>
+              <View>
+                <Text style={styles.reviewUserName}>{review.user.displayName}</Text>
+                <Text style={styles.reviewDate}>
+                  {new Date(review.createdAt).toLocaleDateString()}
+                </Text>
+              </View>
+            </View>
+            <Text style={styles.reviewRating}>
+              ⭐ {review.overallRating ? review.overallRating.toFixed(1) : 'N/A'}
+            </Text>
           </View>
 
-          {gym.reviews && gym.reviews.length > 0 ? (
-            gym.reviews.slice(0, 3).map((review: any, index: number) => {
-              if (!review || !review.user || !review.user.displayName) {
-                return null;
-              }
+          {review.reviewText && typeof review.reviewText === 'string' && (
+            <Text style={styles.reviewText} numberOfLines={3}>
+              {review.reviewText}
+            </Text>
+          )}
 
-              return (
-                <View key={index} style={styles.reviewCard}>
-                  <View style={styles.reviewHeader}>
-                    <View style={styles.reviewUserInfo}>
-                      <View style={styles.avatar}>
-                        <Text style={styles.avatarText}>
-                          {review.user.displayName.charAt(0).toUpperCase()}
-                        </Text>
-                      </View>
-                      <View>
-                        <Text style={styles.reviewUserName}>{review.user.displayName}</Text>
-                        <Text style={styles.reviewDate}>
-                          {new Date(review.createdAt).toLocaleDateString()}
-                        </Text>
-                      </View>
-                    </View>
-                    <Text style={styles.reviewRating}>
-                      ⭐ {review.overallRating ? review.overallRating.toFixed(1) : 'N/A'}
+          {/* Show up to 2 tags */}
+          {review.tags && Array.isArray(review.tags) && review.tags.length > 0 && (
+            <View style={styles.reviewTags}>
+              {review.tags.slice(0, 2).map((tag: any, tagIndex: number) => {
+                if (!tag || typeof tag !== 'string') {
+                  return null;
+                }
+                const formattedTag = tag.replace(/_/g, ' ');
+                return (
+                  <View key={tagIndex} style={styles.reviewTag}>
+                    <Text style={styles.reviewTagText}>
+                      {formattedTag}
                     </Text>
                   </View>
-
-                  {review.reviewText && typeof review.reviewText === 'string' && (
-                    <Text style={styles.reviewText} numberOfLines={3}>
-                      {review.reviewText}
-                    </Text>
-                  )}
-
-                  {review.tags && Array.isArray(review.tags) && review.tags.length > 0 && (
-                    <View style={styles.reviewTags}>
-                      {review.tags.slice(0, 3).map((tag: any, tagIndex: number) => {
-                        if (!tag || typeof tag !== 'string') {
-                          return null;
-                        }
-                        const formattedTag = tag.replace(/_/g, ' ');
-                        return (
-                          <View key={tagIndex} style={styles.reviewTag}>
-                            <Text style={styles.reviewTagText}>
-                              {formattedTag}
-                            </Text>
-                          </View>
-                        );
-                      })}
-                    </View>
-                  )}
+                );
+              })}
+              {review.tags.length > 2 && (
+                <View style={styles.reviewTag}>
+                  <Text style={styles.reviewTagText}>
+                    +{review.tags.length - 2} more
+                  </Text>
                 </View>
-              );
-            })
-          ) : (
-            <View style={styles.noReviewsContainer}>
-              <Text style={styles.noReviewsEmoji}>✍️</Text>
-              <Text style={styles.noReviewsText}>No reviews yet</Text>
-              <Text style={styles.noReviewsSubtext}>Be the first to review this gym!</Text>
+              )}
             </View>
           )}
         </View>
+      );
+    })
+  ) : (
+    <View style={styles.noReviewsContainer}>
+      <Text style={styles.noReviewsEmoji}>✍️</Text>
+      <Text style={styles.noReviewsText}>No reviews yet</Text>
+      <Text style={styles.noReviewsSubtext}>Be the first to review this gym!</Text>
+    </View>
+  )}
+</View>
 
         {/* Bottom Padding */}
         <View style={styles.bottomPadding} />
