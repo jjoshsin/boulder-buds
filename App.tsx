@@ -10,10 +10,13 @@ import LoginScreen from './app/LoginScreen';
 import PersonalizeScreen from './app/PersonalizeScreen';
 import HomeScreen from './app/HomeScreen';
 import ExploreScreen from './app/ExploreScreen';
+import PeopleScreen from './app/PeopleScreen';
 import PostScreen from './app/PostScreen';
 import ProfileScreen from './app/ProfileScreen';
 import GymDetailScreen from './app/GymDetailScreen';
 import WriteReviewScreen from './app/WriteReviewScreen';
+import FollowListScreen from './app/FollowListScreen';
+import UserProfileScreen from './app/UserProfileScreen';
 import authService from './services/authService';
 
 export type RootStackParamList = {
@@ -27,13 +30,16 @@ export type RootStackParamList = {
     gymId: string; 
     gymName: string;
     reviewId?: string;
-    existingReview?: string; 
+    existingReview?: any;
   };
+  FollowList: { userId: string; tab: 'followers' | 'following' };
+  UserProfile: { userId: string };
 };
 
 export type TabParamList = {
   Home: undefined;
   Explore: undefined;
+  People: undefined;
   Post: undefined;
   Profile: undefined;
 };
@@ -78,6 +84,15 @@ function MainTabs({ onLogout }: { onLogout: () => void }) {
         options={{
           tabBarIcon: ({ color }) => (
             <Text style={{ fontSize: 24, color }}>🔍</Text>
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="People"
+        component={PeopleScreen}
+        options={{
+          tabBarIcon: ({ color }) => (
+            <Text style={{ fontSize: 24, color }}>👥</Text>
           ),
         }}
       />
@@ -228,6 +243,16 @@ export default function App() {
               <Stack.Screen 
                 name="WriteReview" 
                 component={WriteReviewScreen}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen 
+                name="FollowList" 
+                component={FollowListScreen}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen 
+                name="UserProfile" 
+                component={UserProfileScreen}
                 options={{ headerShown: false }}
               />
             </>

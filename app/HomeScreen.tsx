@@ -14,95 +14,127 @@ import gymService, { Gym } from '../services/gymService';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
+import * as SecureStore from 'expo-secure-store';
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
+interface Activity {
+  type: 'review' | 'photo';
+  id: string;
+  user: string;
+  gym: string;
+  rating?: number;
+  text?: string;
+  photoUrl?: string;
+  createdAt: string;
+}
 
 export default function HomeScreen() {
   const navigation = useNavigation<HomeScreenNavigationProp>();
 
   const [popularGyms, setPopularGyms] = useState<Gym[]>([]);
   const [nearbyGyms, setNearbyGyms] = useState<Gym[]>([]);
+  const [recentActivity, setRecentActivity] = useState<Activity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     fetchHomeData();
   }, []);
 
-const fetchHomeData = async () => {
-  try {
-    setIsLoading(true);
-    
-    const [popular, nearby] = await Promise.all([
-      gymService.getPopularGyms(),
-      gymService.getNearbyGyms(),
-    ]);
+  const fetchHomeData = async () => {
+    try {
+      setIsLoading(true);
+      
+      const token = await SecureStore.getItemAsync('authToken');
+      
+      const [popular, nearby, activityRes] = await Promise.all([
+        gymService.getPopularGyms(),
+        gymService.getNearbyGyms(),
+        fetch('http://192.168.1.166:3000/follows/feed/activity?limit=5', {
+          headers: { 'Authorization': `Bearer ${token}` },
+        }),
+      ]);
 
-    console.log('🏋️ Popular Gyms Response:', JSON.stringify(popular, null, 2));
-    console.log('📸 First gym photos:', popular[0]?.officialPhotos);
+      setPopularGyms(popular);
+      setNearbyGyms(nearby);
 
-    setPopularGyms(popular);
-    setNearbyGyms(nearby);
-    
-  } catch (error) {
-    console.error('Error fetching home data:', error);
-    Alert.alert('Error', 'Failed to load gyms. Please try again.');
-  } finally {
-    setIsLoading(false);
-  }
-};
+      if (activityRes.ok) {
+        const activityData = await activityRes.json();
+        setRecentActivity(activityData);
+      }
+      
+    } catch (error) {
+      console.error('Error fetching home data:', error);
+      Alert.alert('Error', 'Failed to load gyms. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-const renderPopularGym = (gym: Gym) => (
-<TouchableOpacity 
+  const getTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    if (seconds < 60) return 'just now';
+    if (seconds < 3600) return `${Math.floor(seconds / 60)} minutes ago`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours ago`;
+    if (seconds < 604800) return `${Math.floor(seconds / 86400)} days ago`;
+    return date.toLocaleDateString();
+  };
+
+  const renderPopularGym = (gym: Gym) => (
+    <TouchableOpacity 
       key={gym.id} 
       style={styles.popularCard} 
       activeOpacity={0.8}
       onPress={() => navigation.navigate('GymDetail', { gymId: gym.id })}
     >    
-    <View style={styles.popularImage}>
-      {gym.officialPhotos && gym.officialPhotos.length > 0 ? (
-        <Image 
-          source={{ uri: gym.officialPhotos[0] }} 
-          style={styles.image}
-          resizeMode="cover"
-        />
-      ) : (
-        <View style={styles.placeholder}>
-          <Text style={styles.placeholderText}>🏔️</Text>
-          <Text style={styles.placeholderSubtext}>No photos yet</Text>
-        </View>
-      )}
-    </View>
-    <View style={styles.popularInfo}>
-      <Text style={styles.popularName} numberOfLines={1}>
-        {gym.name}
-      </Text>
-      <View style={styles.ratingRow}>
-        {gym.rating && gym.rating > 0 ? (
-          <>
-            <Text style={styles.rating}>⭐ {gym.rating}</Text>
-            <Text style={styles.reviewCount}>({gym.reviewCount})</Text>
-          </>
+      <View style={styles.popularImage}>
+        {gym.officialPhotos && gym.officialPhotos.length > 0 ? (
+          <Image 
+            source={{ uri: gym.officialPhotos[0] }} 
+            style={styles.image}
+            resizeMode="cover"
+          />
         ) : (
-          <Text style={styles.reviewCount}>No reviews yet</Text>
+          <View style={styles.placeholder}>
+            <Text style={styles.placeholderText}>🏔️</Text>
+            <Text style={styles.placeholderSubtext}>No photos yet</Text>
+          </View>
         )}
       </View>
-      {gym.tags && gym.tags.length > 0 && (
-        <Text style={styles.tag} numberOfLines={1}>
-          {gym.tags[0]}
+      <View style={styles.popularInfo}>
+        <Text style={styles.popularName} numberOfLines={1}>
+          {gym.name}
         </Text>
-      )}
-    </View>
-  </TouchableOpacity>
-);
+        <View style={styles.ratingRow}>
+          {gym.rating && gym.rating > 0 ? (
+            <>
+              <Text style={styles.rating}>⭐ {gym.rating}</Text>
+              <Text style={styles.reviewCount}>({gym.reviewCount})</Text>
+            </>
+          ) : (
+            <Text style={styles.reviewCount}>No reviews yet</Text>
+          )}
+        </View>
+        {gym.tags && gym.tags.length > 0 && (
+          <Text style={styles.tag} numberOfLines={1}>
+            {gym.tags[0]}
+          </Text>
+        )}
+      </View>
+    </TouchableOpacity>
+  );
 
   const renderNearbyGym = (gym: Gym) => (
-<TouchableOpacity 
+    <TouchableOpacity 
       key={gym.id} 
       style={styles.nearbyCard} 
       activeOpacity={0.8}
       onPress={() => navigation.navigate('GymDetail', { gymId: gym.id })}
     >
-        <View style={styles.nearbyContent}>
+      <View style={styles.nearbyContent}>
         <View style={styles.nearbyHeader}>
           <Text style={styles.nearbyName} numberOfLines={1}>
             {gym.name}
@@ -118,6 +150,47 @@ const renderPopularGym = (gym: Gym) => (
     </TouchableOpacity>
   );
 
+  const renderActivity = (activity: Activity, index: number) => {
+    if (activity.type === 'review') {
+      return (
+        <View key={index} style={styles.activityCard}>
+          <Text style={styles.activityText}>
+            <Text style={styles.activityUser}>{activity.user}</Text> reviewed{' '}
+            <Text style={styles.activityGym}>{activity.gym}</Text>
+          </Text>
+          {activity.rating && (
+            <Text style={styles.activityRating}>
+              {'⭐'.repeat(Math.round(activity.rating))}
+            </Text>
+          )}
+          {activity.text && (
+            <Text style={styles.activityReview} numberOfLines={2}>
+              "{activity.text}"
+            </Text>
+          )}
+          <Text style={styles.activityTime}>{getTimeAgo(activity.createdAt)}</Text>
+        </View>
+      );
+    } else {
+      return (
+        <View key={index} style={styles.activityCard}>
+          <Text style={styles.activityText}>
+            <Text style={styles.activityUser}>{activity.user}</Text> added a photo to{' '}
+            <Text style={styles.activityGym}>{activity.gym}</Text>
+          </Text>
+          {activity.photoUrl && (
+            <Image 
+              source={{ uri: activity.photoUrl }} 
+              style={styles.activityPhoto}
+              resizeMode="cover"
+            />
+          )}
+          <Text style={styles.activityTime}>{getTimeAgo(activity.createdAt)}</Text>
+        </View>
+      );
+    }
+  };
+
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -129,9 +202,9 @@ const renderPopularGym = (gym: Gym) => (
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
-    <View style={styles.header}>
-      <Text style={styles.headerTitle}>Boulder Buds</Text>
-    </View>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Boulder Buds</Text>
+      </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Popular This Week */}
@@ -155,25 +228,17 @@ const renderPopularGym = (gym: Gym) => (
         {/* Recent Activity */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>👥 Recent Activity</Text>
-          <View style={styles.activityCard}>
-            <Text style={styles.activityText}>
-              <Text style={styles.activityUser}>alex_climbs</Text> checked in at{' '}
-              <Text style={styles.activityGym}>Brooklyn Boulders</Text>
-            </Text>
-            <Text style={styles.activityRating}>⭐⭐⭐⭐⭐</Text>
-            <Text style={styles.activityReview}>"Sick new problems this week!"</Text>
-            <Text style={styles.activityTime}>2 hours ago</Text>
-          </View>
-
-          <View style={styles.activityCard}>
-            <Text style={styles.activityText}>
-              <Text style={styles.activityUser}>sarah_sends</Text> reviewed{' '}
-              <Text style={styles.activityGym}>Vital Climbing</Text>
-            </Text>
-            <Text style={styles.activityRating}>⭐⭐⭐⭐</Text>
-            <Text style={styles.activityReview}>"Great for beginners!"</Text>
-            <Text style={styles.activityTime}>5 hours ago</Text>
-          </View>
+          {recentActivity.length > 0 ? (
+            recentActivity.map(renderActivity)
+          ) : (
+            <View style={styles.emptyActivityContainer}>
+              <Text style={styles.emptyActivityEmoji}>👥</Text>
+              <Text style={styles.emptyActivityText}>No recent activity</Text>
+              <Text style={styles.emptyActivitySubtext}>
+                Follow other climbers to see their activity here
+              </Text>
+            </View>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>

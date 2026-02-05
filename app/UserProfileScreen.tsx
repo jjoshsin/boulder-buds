@@ -9,17 +9,13 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useRoute, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
-import { styles } from '../styles/ProfileScreen.styles';
+import { styles } from '../styles/UserProfileScreen.styles';
 import * as SecureStore from 'expo-secure-store';
 
-type ProfileNavigationProp = NativeStackNavigationProp<RootStackParamList>;
-
-interface ProfileScreenProps {
-  onLogout: () => void;
-}
+type UserProfileNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 interface UserProfile {
   id: string;
@@ -28,7 +24,6 @@ interface UserProfile {
   climbingLevel?: string;
   climbingType?: string;
   borough?: string;
-  age?: string;
 }
 
 interface UserReview {
@@ -54,112 +49,102 @@ interface CommunityPhoto {
   };
 }
 
-export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
-  const navigation = useNavigation<ProfileNavigationProp>();
+export default function UserProfileScreen() {
+  const route = useRoute();
+  const navigation = useNavigation<UserProfileNavigationProp>();
+  const { userId } = route.params as { userId: string };
 
   const [user, setUser] = useState<UserProfile | null>(null);
   const [reviews, setReviews] = useState<UserReview[]>([]);
   const [photos, setPhotos] = useState<CommunityPhoto[]>([]);
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
+  const [isFollowing, setIsFollowing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'reviews' | 'photos'>('reviews');
 
   useEffect(() => {
-    loadProfileData();
-  }, []);
+    loadUserProfile();
+  }, [userId]);
 
-  const loadProfileData = async () => {
+  const loadUserProfile = async () => {
     try {
       setIsLoading(true);
+      const token = await SecureStore.getItemAsync('authToken');
 
-      const userStr = await SecureStore.getItemAsync('user');
-      if (userStr) {
-        const userData = JSON.parse(userStr);
+      const [userRes, reviewsRes, photosRes, statsRes, followStatusRes] = await Promise.all([
+        fetch(`http://192.168.1.166:3000/users/${userId}`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        }),
+        fetch(`http://192.168.1.166:3000/users/${userId}/reviews`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        }),
+        fetch(`http://192.168.1.166:3000/users/${userId}/photos`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        }),
+        fetch(`http://192.168.1.166:3000/users/${userId}/follow-stats`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        }),
+        fetch(`http://192.168.1.166:3000/follows/check/${userId}`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        }),
+      ]);
+
+      if (userRes.ok) {
+        const userData = await userRes.json();
         setUser(userData);
+      }
 
-        const token = await SecureStore.getItemAsync('authToken');
-        
-        const [reviewsRes, photosRes, statsRes] = await Promise.all([
-          fetch(`http://192.168.1.166:3000/users/${userData.id}/reviews`, {
-            headers: { 'Authorization': `Bearer ${token}` },
-          }),
-          fetch(`http://192.168.1.166:3000/users/${userData.id}/photos`, {
-            headers: { 'Authorization': `Bearer ${token}` },
-          }),
-          fetch(`http://192.168.1.166:3000/users/${userData.id}/follow-stats`, {
-            headers: { 'Authorization': `Bearer ${token}` },
-          }),
-        ]);
+      if (reviewsRes.ok) {
+        const reviewsData = await reviewsRes.json();
+        setReviews(reviewsData);
+      }
 
-        if (reviewsRes.ok) {
-          const reviewsData = await reviewsRes.json();
-          setReviews(reviewsData);
-        }
+      if (photosRes.ok) {
+        const photosData = await photosRes.json();
+        setPhotos(photosData);
+      }
 
-        if (photosRes.ok) {
-          const photosData = await photosRes.json();
-          setPhotos(photosData);
-        }
+      if (statsRes.ok) {
+        const statsData = await statsRes.json();
+        setFollowersCount(statsData.followersCount);
+        setFollowingCount(statsData.followingCount);
+      }
 
-        if (statsRes.ok) {
-          const statsData = await statsRes.json();
-          setFollowersCount(statsData.followersCount);
-          setFollowingCount(statsData.followingCount);
-        }
+      if (followStatusRes.ok) {
+        const followData = await followStatusRes.json();
+        setIsFollowing(followData.isFollowing);
       }
     } catch (error) {
       console.error('Error loading profile:', error);
+      Alert.alert('Error', 'Failed to load profile');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
+  const handleFollowToggle = async () => {
+    try {
+      const token = await SecureStore.getItemAsync('authToken');
+      const response = await fetch(
+        `http://192.168.1.166:3000/follows/${userId}`,
         {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: onLogout,
-        },
-      ]
-    );
-  };
+          method: isFollowing ? 'DELETE' : 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+        }
+      );
 
-  const handleDeleteReview = async (reviewId: string) => {
-    Alert.alert(
-      'Delete Review',
-      'Are you sure you want to delete this review?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const token = await SecureStore.getItemAsync('authToken');
-              const response = await fetch(`http://192.168.1.166:3000/reviews/${reviewId}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` },
-              });
-
-              if (response.ok) {
-                Alert.alert('Success', 'Review deleted');
-                loadProfileData();
-              } else {
-                throw new Error('Failed to delete');
-              }
-            } catch (error) {
-              Alert.alert('Error', 'Failed to delete review');
-            }
-          },
-        },
-      ]
-    );
+      if (response.ok) {
+        setIsFollowing(!isFollowing);
+        setFollowersCount(isFollowing ? followersCount - 1 : followersCount + 1);
+      } else {
+        const error = await response.json();
+        Alert.alert('Error', error.message || 'Failed to update follow status');
+      }
+    } catch (error) {
+      console.error('Follow toggle error:', error);
+      Alert.alert('Error', 'Failed to update follow status');
+    }
   };
 
   const renderReview = (review: UserReview) => (
@@ -192,27 +177,9 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
         </View>
       )}
 
-      <View style={styles.reviewFooter}>
-        <Text style={styles.reviewDate}>
-          {new Date(review.createdAt).toLocaleDateString()}
-        </Text>
-        <View style={styles.reviewActions}>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('WriteReview', {
-              gymId: review.gym.id,
-              gymName: review.gym.name,
-              reviewId: review.id,
-              existingReview: review,
-            } as any)}
-          >
-            <Text style={styles.reviewActionText}>Edit</Text>
-          </TouchableOpacity>
-          <Text style={styles.reviewActionSeparator}>•</Text>
-          <TouchableOpacity onPress={() => handleDeleteReview(review.id)}>
-            <Text style={[styles.reviewActionText, styles.reviewActionDelete]}>Delete</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      <Text style={styles.reviewDate}>
+        {new Date(review.createdAt).toLocaleDateString()}
+      </Text>
     </TouchableOpacity>
   );
 
@@ -242,7 +209,7 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
   if (!user) {
     return (
       <View style={styles.loadingContainer}>
-        <Text style={styles.errorText}>Failed to load profile</Text>
+        <Text style={styles.errorText}>User not found</Text>
       </View>
     );
   }
@@ -252,46 +219,56 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
-          <View style={styles.headerContent}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {user.displayName.charAt(0).toUpperCase()}
-              </Text>
-            </View>
-            <View style={styles.userInfo}>
-              <Text style={styles.userName}>{user.displayName}</Text>
-              <Text style={styles.userEmail}>{user.email}</Text>
-            </View>
-          </View>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Text style={styles.backButton}>←</Text>
+          </TouchableOpacity>
+          <View style={{ width: 40 }} />
+        </View>
 
-          <TouchableOpacity style={styles.settingsButton} onPress={() => Alert.alert('Settings', 'Coming soon!')}>
-            <Text style={styles.settingsIcon}>⚙️</Text>
+        {/* User Info */}
+        <View style={styles.userSection}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>
+              {user.displayName.charAt(0).toUpperCase()}
+            </Text>
+          </View>
+          <Text style={styles.userName}>{user.displayName}</Text>
+          <Text style={styles.userEmail}>{user.email}</Text>
+
+          {/* Follow Button */}
+          <TouchableOpacity
+            style={[styles.followButton, isFollowing && styles.followingButton]}
+            onPress={handleFollowToggle}
+          >
+            <Text style={[styles.followButtonText, isFollowing && styles.followingButtonText]}>
+              {isFollowing ? 'Following' : 'Follow'}
+            </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Stats - UPDATED with Followers/Following */}
+        {/* Stats */}
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{reviews.length}</Text>
             <Text style={styles.statLabel}>Reviews</Text>
           </View>
           <View style={styles.statDivider} />
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.statItem}
-            onPress={() => navigation.navigate('FollowList', { 
-              userId: user.id, 
-              tab: 'followers' 
+            onPress={() => navigation.navigate('FollowList', {
+              userId: user.id,
+              tab: 'followers'
             })}
           >
             <Text style={styles.statValue}>{followersCount}</Text>
             <Text style={styles.statLabel}>Followers</Text>
           </TouchableOpacity>
           <View style={styles.statDivider} />
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.statItem}
-            onPress={() => navigation.navigate('FollowList', { 
-              userId: user.id, 
-              tab: 'following' 
+            onPress={() => navigation.navigate('FollowList', {
+              userId: user.id,
+              tab: 'following'
             })}
           >
             <Text style={styles.statValue}>{followingCount}</Text>
@@ -300,11 +277,16 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
         </View>
 
         {/* User Details */}
-        {(user.climbingType || user.borough) && (
+        {(user.climbingType || user.borough || user.climbingLevel) && (
           <View style={styles.detailsContainer}>
+            {user.climbingLevel && (
+              <View style={styles.detailChip}>
+                <Text style={styles.detailChipText}>🧗 {user.climbingLevel}</Text>
+              </View>
+            )}
             {user.climbingType && (
               <View style={styles.detailChip}>
-                <Text style={styles.detailChipText}>🧗 {user.climbingType}</Text>
+                <Text style={styles.detailChipText}>⛰️ {user.climbingType}</Text>
               </View>
             )}
             {user.borough && (
@@ -344,7 +326,6 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
               <View style={styles.emptyState}>
                 <Text style={styles.emptyStateEmoji}>✍️</Text>
                 <Text style={styles.emptyStateText}>No reviews yet</Text>
-                <Text style={styles.emptyStateSubtext}>Start reviewing gyms to see them here</Text>
               </View>
             )
           ) : (
@@ -356,16 +337,10 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
               <View style={styles.emptyState}>
                 <Text style={styles.emptyStateEmoji}>📸</Text>
                 <Text style={styles.emptyStateText}>No photos yet</Text>
-                <Text style={styles.emptyStateSubtext}>Upload photos to gyms to see them here</Text>
               </View>
             )
           )}
         </View>
-
-        {/* Logout Button */}
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutButtonText}>Logout</Text>
-        </TouchableOpacity>
 
         <View style={styles.bottomPadding} />
       </ScrollView>

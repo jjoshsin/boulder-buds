@@ -54,11 +54,31 @@ model User {
   climbingType  String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-  reviews       Review[]
-  communityPhotos CommunityPhoto[] // User's uploaded photos
   
+  reviews         Review[]
+  communityPhotos CommunityPhoto[]
+  
+  // Follower relationships
+  following       Follow[] @relation("UserFollowing")
+  followers       Follow[] @relation("UserFollowers")
+
   @@map("users")
 }
+
+model Follow {
+  id          String   @id @default(uuid())
+  followerId  String   // Person doing the following
+  followingId String   // Person being followed
+  createdAt   DateTime @default(now())
+
+  follower    User @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@map("follows")
+}
+
+// ... rest of your models stay the same
 
 model Review {
   id              String   @id @default(uuid())

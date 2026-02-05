@@ -179,4 +179,33 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     color: '#9CA3AF',
   },
+  activityPhoto: {
+  width: '100%',
+  height: 200,
+  borderRadius: 8,
+  marginVertical: 8,
+  },
+  emptyActivityContainer: {
+  alignItems: 'center',
+  paddingVertical: 40,
+  backgroundColor: '#F9FAFB',
+  borderRadius: 12,
+  marginTop: 8,
+  },
+  emptyActivityEmoji: {
+  fontSize: 48,
+  marginBottom: 12,
+  },
+  emptyActivityText: {
+  fontSize: 16,
+  fontWeight: '600',
+  color: '#374151',
+  marginBottom: 4,
+  },
+  emptyActivitySubtext: {
+  fontSize: 14,
+  color: '#9CA3AF',
+  textAlign: 'center',
+  paddingHorizontal: 20,
+  },
 });
