@@ -129,18 +129,9 @@ const renderPopularGym = (gym: Gym) => (
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Boulder Buds</Text>
-        <TouchableOpacity style={styles.searchButton}>
-          <Text style={styles.searchIcon}>🔍</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={{ padding: 10 }}
-          onPress={() => {/* We'll wire this up next */}}
-        >
-          <Text>📸 Add Photos</Text>
-        </TouchableOpacity>
-      </View>
+    <View style={styles.header}>
+      <Text style={styles.headerTitle}>Boulder Buds</Text>
+    </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Popular This Week */}

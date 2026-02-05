@@ -23,7 +23,12 @@ export type RootStackParamList = {
   Personalize: undefined;
   MainTabs: undefined;
   GymDetail: { gymId: string };
-  WriteReview: { gymId: string; gymName: string };
+  WriteReview: { 
+    gymId: string; 
+    gymName: string;
+    reviewId?: string;
+    existingReview?: string; 
+  };
 };
 
 export type TabParamList = {

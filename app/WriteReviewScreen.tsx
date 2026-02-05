@@ -28,21 +28,26 @@ type WriteReviewNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 export default function WriteReviewScreen() {
   const route = useRoute();
   const navigation = useNavigation<WriteReviewNavigationProp>();
-  const { gymId, gymName } = route.params as { gymId: string; gymName: string };
+  const { gymId, gymName, reviewId, existingReview } = route.params as { 
+    gymId: string; 
+    gymName: string;
+    reviewId?: string;
+    existingReview?: any;
+  };
 
-  // Rating states
-  const [overallRating, setOverallRating] = useState(0);
-  const [settingQuality, setSettingQuality] = useState(0);
-  const [difficulty, setDifficulty] = useState(0);
-  const [variety, setVariety] = useState(0);
-  const [crowding, setCrowding] = useState(0);
-  const [cleanliness, setCleanliness] = useState(0);
-  const [vibe, setVibe] = useState(0);
+  const isEditing = !!reviewId;
 
-  // Other states
-  const [reviewText, setReviewText] = useState('');
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [selectedImages, setSelectedImages] = useState<string[]>([]);
+  // Initialize with existing review data if editing
+  const [overallRating, setOverallRating] = useState(existingReview?.overallRating || 0);
+  const [settingQuality, setSettingQuality] = useState(existingReview?.settingQuality || 0);
+  const [difficulty, setDifficulty] = useState(existingReview?.difficulty || 0);
+  const [variety, setVariety] = useState(existingReview?.variety || 0);
+  const [crowding, setCrowding] = useState(existingReview?.crowding || 0);
+  const [cleanliness, setCleanliness] = useState(existingReview?.cleanliness || 0);
+  const [vibe, setVibe] = useState(existingReview?.vibe || 0);
+  const [reviewText, setReviewText] = useState(existingReview?.reviewText || '');
+  const [selectedTags, setSelectedTags] = useState<string[]>(existingReview?.tags || []);
+  const [selectedImages, setSelectedImages] = useState<string[]>(existingReview?.photos || []);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const ratingCategories: RatingCategory[] = [
@@ -146,55 +151,69 @@ export default function WriteReviewScreen() {
   };
 
   const handleSubmit = async () => {
-    // Validation
-    if (overallRating === 0) {
-      Alert.alert('Rating required', 'Please provide an overall rating');
-      return;
+  if (overallRating === 0) {
+    Alert.alert('Rating required', 'Please provide an overall rating');
+    return;
+  }
+
+  try {
+    setIsSubmitting(true);
+    const token = await SecureStore.getItemAsync('authToken');
+
+    const url = isEditing 
+      ? `http://192.168.1.166:3000/reviews/${reviewId}`
+      : `http://192.168.1.166:3000/reviews`;
+    
+    const method = isEditing ? 'PATCH' : 'POST';
+
+    const body: any = {
+      overallRating,
+      settingQuality: settingQuality || null,
+      difficulty: difficulty || null,
+      variety: variety || null,
+      crowding: crowding || null,
+      cleanliness: cleanliness || null,
+      vibe: vibe || null,
+      reviewText: reviewText.trim() || null,
+      tags: selectedTags,
+      photos: [],
+    };
+
+    if (!isEditing) {
+      body.gymId = gymId;
     }
 
-    try {
-      setIsSubmitting(true);
-      const token = await SecureStore.getItemAsync('authToken');
+    const response = await fetch(url, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+    });
 
-      // Create the review
-      const response = await fetch(`http://192.168.1.166:3000/reviews`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          gymId,
-          overallRating,
-          settingQuality: settingQuality || null,
-          difficulty: difficulty || null,
-          variety: variety || null,
-          crowding: crowding || null,
-          cleanliness: cleanliness || null,
-          vibe: vibe || null,
-          reviewText: reviewText.trim() || null,
-          tags: selectedTags,
-          photos: [], // We'll add photo upload later
-        }),
-      });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to submit review');
+    }
 
-      if (!response.ok) {
-        throw new Error('Failed to submit review');
-      }
-
-      Alert.alert('Success', 'Your review has been posted!', [
+    Alert.alert(
+      'Success', 
+      isEditing ? 'Your review has been updated!' : 'Your review has been posted!',
+      [
         {
           text: 'OK',
           onPress: () => navigation.goBack(),
         },
-      ]);
-    } catch (error) {
-      console.error('Submit review error:', error);
-      Alert.alert('Error', 'Failed to submit review. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+      ]
+    );
+  } catch (error: any) {
+    console.error('Submit review error:', error);
+    Alert.alert('Error', error.message || 'Failed to submit review. Please try again.');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <SafeAreaView style={styles.container} edges={['top','bottom']}>
@@ -204,7 +223,9 @@ export default function WriteReviewScreen() {
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Text style={styles.closeButton}>✕</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Write Review</Text>
+            <Text style={styles.headerTitle}>
+              {isEditing ? 'Edit Review' : 'Write Review'}
+            </Text>          
           <View style={{ width: 40 }} />
         </View>
 
@@ -309,7 +330,9 @@ export default function WriteReviewScreen() {
             {isSubmitting ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text style={styles.submitButtonText}>Post Review</Text>
+              <Text style={styles.submitButtonText}>
+                {isEditing ? 'Update Review' : 'Post Review'}
+              </Text>            
             )}
           </TouchableOpacity>
         </View>

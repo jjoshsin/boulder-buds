@@ -12,9 +12,6 @@ export const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
@@ -24,17 +21,6 @@ export const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#1F2937',
-  },
-  searchButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F3F4F6',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  searchIcon: {
-    fontSize: 20,
   },
   scrollView: {
     flex: 1,
@@ -78,6 +64,15 @@ export const styles = StyleSheet.create({
   },
   placeholderText: {
     fontSize: 32,
+  },
+  placeholderSubtext: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    marginTop: 4,
+  },
+  image: {
+    width: '100%',
+    height: '100%',
   },
   popularInfo: {
     padding: 12,
@@ -184,13 +179,4 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     color: '#9CA3AF',
   },
-  image: {
-  width: '100%',
-  height: '100%',
-  },
-  placeholderSubtext: {
-  fontSize: 12,
-  color: '#9CA3AF',
-  marginTop: 4,
-}
 });

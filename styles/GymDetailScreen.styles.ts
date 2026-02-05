@@ -89,109 +89,110 @@ export const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     width: 24,
   },
-  infoSection: {
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  gymName: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#1F2937',
-    marginBottom: 8,
-  },
-  ratingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  rating: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
-    marginRight: 6,
-  },
-  reviewCount: {
-    fontSize: 15,
-    color: '#6B7280',
-    marginRight: 8,
-  },
-  separator: {
-    fontSize: 15,
-    color: '#D1D5DB',
-    marginHorizontal: 8,
-  },
-  priceRange: {
-    fontSize: 15,
-    color: '#10B981',
-    fontWeight: '600',
-  },
-  addressRow: {
-    flexDirection: 'row',
-    marginBottom: 16,
-  },
-  addressIcon: {
-    fontSize: 20,
-    marginRight: 12,
-  },
-  addressInfo: {
-    flex: 1,
-  },
-  address: {
-    fontSize: 15,
-    color: '#374151',
-    marginBottom: 2,
-  },
-  borough: {
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  climbingTypes: {
-    flexDirection: 'row',
-    marginBottom: 20,
-  },
-  typeChip: {
-    backgroundColor: '#FEF3C7',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginRight: 8,
-  },
-  typeChipText: {
-    fontSize: 13,
-    color: '#92400E',
-    fontWeight: '600',
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  primaryButton: {
-    flex: 1,
-    backgroundColor: '#FF8C00',
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  primaryButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  secondaryButton: {
-    flex: 1,
-    backgroundColor: '#F3F4F6',
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  secondaryButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#374151',
-  },
+infoSection: {
+  padding: 20,
+  borderBottomWidth: 1,
+  borderBottomColor: '#E5E7EB',
+},
+gymName: {
+  fontSize: 28,
+  fontWeight: 'bold',
+  color: '#1F2937',
+  marginBottom: 8,
+},
+ratingRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginBottom: 16,
+},
+rating: {
+  fontSize: 16,
+  fontWeight: '600',
+  color: '#1F2937',
+  marginRight: 6,
+},
+reviewCount: {
+  fontSize: 15,
+  color: '#6B7280',
+  marginRight: 8,
+},
+separator: {
+  fontSize: 15,
+  color: '#D1D5DB',
+  marginHorizontal: 8,
+},
+priceRange: {
+  fontSize: 15,
+  color: '#10B981',
+  fontWeight: '600',
+},
+addressRow: {
+  marginBottom: 16,
+  marginLeft: 20,
+},
+addressInfo: {
+  flex: 1,
+},
+address: {
+  fontSize: 15,
+  color: '#374151',
+  marginBottom: 2,
+},
+borough: {
+  fontSize: 14,
+  color: '#6B7280',
+},
+climbingTypes: {
+  flexDirection: 'row',
+  marginBottom: 16,
+  marginLeft: 20,
+},
+typeChip: {
+  backgroundColor: '#FEF3C7',
+  paddingHorizontal: 12,
+  paddingVertical: 6,
+  borderRadius: 16,
+  marginRight: 8,
+},
+typeChipText: {
+  fontSize: 13,
+  color: '#92400E',
+  fontWeight: '600',
+},
+actionButtons: {
+  flexDirection: 'row',
+  gap: 12,
+  marginLeft: 20,
+
+},
+primaryButton: {
+  flex: 1,
+  backgroundColor: '#FF8C00',
+  paddingVertical: 10,    // Made smaller (was 12)
+  paddingHorizontal: 12,  // Add horizontal padding
+  borderRadius: 10,       // Smaller border radius
+  alignItems: 'center',
+},
+primaryButtonText: {
+  fontSize: 14,           // Smaller font (was 15)
+  fontWeight: '600',
+  color: '#FFFFFF',
+},
+secondaryButton: {
+  flex: 1,
+  backgroundColor: '#F3F4F6',
+  paddingVertical: 10,    // Made smaller (was 12)
+  paddingHorizontal: 12,  // Add horizontal padding
+  borderRadius: 10,       // Smaller border radius
+  alignItems: 'center',
+  borderWidth: 1,
+  borderColor: '#E5E7EB',
+},
+secondaryButtonText: {
+  fontSize: 14,           // Smaller font (was 15)
+  fontWeight: '600',
+  color: '#374151',
+},
   section: {
     paddingHorizontal: 20,
     paddingVertical: 24,
@@ -335,5 +336,17 @@ export const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 40,
-  }
+  },
+  reviewRatingContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  },
+  reviewOptionsButton: {
+  marginLeft: 8,
+  padding: 4,
+  },
+  reviewOptionsText: {
+  fontSize: 20,
+  color: '#6B7280',
+  },
 });
