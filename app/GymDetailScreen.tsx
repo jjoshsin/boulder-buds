@@ -12,6 +12,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Modal } from 'react-native';
+import AddGymPhotoScreen from './AddGymPhotoScreen';
 import { RootStackParamList } from '../App';
 import { styles } from '../styles/GymDetailScreen.styles';
 import gymService, { Gym } from '../services/gymService';
@@ -30,6 +32,7 @@ export default function GymDetailScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [showPhotoUpload, setShowPhotoUpload] = useState(false);
 
   useEffect(() => {
     fetchGymDetails();
@@ -237,20 +240,23 @@ export default function GymDetailScreen() {
           )}
 
           {/* Action Buttons */}
-          <View style={styles.actionButtons}>
-            <TouchableOpacity 
-               style={styles.primaryButton}
-                onPress={() => navigation.navigate('WriteReview', { 
-                gymId: gym.id, 
-                gymName: gym.name 
-                })}
-              >
-              <Text style={styles.primaryButtonText}>✍️ Write Review</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.secondaryButton}>
-              <Text style={styles.secondaryButtonText}>📸 Add Photos</Text>
-            </TouchableOpacity>
-        </View>
+<View style={styles.actionButtons}>
+  <TouchableOpacity 
+    style={styles.primaryButton}
+    onPress={() => navigation.navigate('WriteReview', { 
+      gymId: gym.id, 
+      gymName: gym.name 
+    })}
+  >
+    <Text style={styles.primaryButtonText}>✍️ Write Review</Text>
+  </TouchableOpacity>
+  <TouchableOpacity 
+    style={styles.secondaryButton}
+    onPress={() => setShowPhotoUpload(true)}
+  >
+    <Text style={styles.secondaryButtonText}>📸 Add Photos</Text>
+  </TouchableOpacity>
+</View>
 
         {/* Amenities */}
         {gym.amenities && gym.amenities.length > 0 && (
@@ -423,10 +429,22 @@ export default function GymDetailScreen() {
   </View>
 )}
 </View>
-
         {/* Bottom Padding */}
         <View style={styles.bottomPadding} />
       </ScrollView>
+        <Modal
+          visible={showPhotoUpload}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          >
+        <AddGymPhotoScreen 
+          onClose={() => {
+            setShowPhotoUpload(false);
+            fetchGymDetails();
+            }}
+          preselectedGym={{ id: gym.id, name: gym.name }}
+        />
+      </Modal>
     </SafeAreaView>
   );
 }

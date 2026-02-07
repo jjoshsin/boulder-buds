@@ -17,17 +17,23 @@ import * as SecureStore from 'expo-secure-store';
 
 interface AddGymPhotoScreenProps {
   onClose: () => void;
+  preselectedGym?: { id: string; name: string };
 }
 
-export default function AddGymPhotoScreen({ onClose }: AddGymPhotoScreenProps) {
+export default function AddGymPhotoScreen({ onClose, preselectedGym }: AddGymPhotoScreenProps) {
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [gyms, setGyms] = useState<any[]>([]);
-  const [selectedGym, setSelectedGym] = useState<string | null>(null);
+  const [selectedGym, setSelectedGym] = useState<string | null>(preselectedGym?.id || null);
 
   React.useEffect(() => {
-    loadGyms();
+    if (!preselectedGym) {
+      loadGyms();
+    } else {
+      setGyms([preselectedGym]);
+    }
   }, []);
+
 
   const loadGyms = async () => {
     try {

@@ -1,10 +1,21 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../App';
 import AddGymPhotoScreen from './AddGymPhotoScreen';
+import SelectGymScreen from './SelectGymScreen';
+import RegisterGymScreen from './RegisterGymScreen';
+import { styles } from '../styles/PostScreen.styles';
+
+type PostNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function PostScreen() {
+  const navigation = useNavigation<PostNavigationProp>();
   const [showPhotoUpload, setShowPhotoUpload] = useState(false);
+  const [showSelectGym, setShowSelectGym] = useState(false);
+  const [showRegisterGym, setShowRegisterGym] = useState(false);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -19,14 +30,37 @@ export default function PostScreen() {
           onPress={() => setShowPhotoUpload(true)}
         >
           <Text style={styles.actionIcon}>📸</Text>
-          <Text style={styles.actionText}>Add Gym Photos</Text>
+          <View style={styles.actionContent}>
+            <Text style={styles.actionText}>Add Gym Photos</Text>
+            <Text style={styles.actionSubtext}>Upload photos to a gym</Text>
+          </View>
+          <Text style={styles.chevron}>›</Text>
         </TouchableOpacity>
 
-        {/* Add Review - Coming Soon */}
-        <TouchableOpacity style={[styles.actionButton, styles.actionButtonDisabled]} disabled>
+        {/* Write Review */}
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => setShowSelectGym(true)}
+        >
           <Text style={styles.actionIcon}>⭐</Text>
-          <Text style={[styles.actionText, styles.actionTextDisabled]}>Write Review</Text>
-          <Text style={styles.comingSoonBadge}>Coming Soon</Text>
+          <View style={styles.actionContent}>
+            <Text style={styles.actionText}>Write Review</Text>
+            <Text style={styles.actionSubtext}>Share your experience</Text>
+          </View>
+          <Text style={styles.chevron}>›</Text>
+        </TouchableOpacity>
+
+        {/* Register New Gym */}
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => setShowRegisterGym(true)}
+        >
+          <Text style={styles.actionIcon}>🏢</Text>
+          <View style={styles.actionContent}>
+            <Text style={styles.actionText}>Register New Gym</Text>
+            <Text style={styles.actionSubtext}>Add a gym to our database</Text>
+          </View>
+          <Text style={styles.chevron}>›</Text>
         </TouchableOpacity>
       </View>
 
@@ -38,71 +72,30 @@ export default function PostScreen() {
       >
         <AddGymPhotoScreen onClose={() => setShowPhotoUpload(false)} />
       </Modal>
+
+      {/* Select Gym for Review Modal */}
+      <Modal
+        visible={showSelectGym}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <SelectGymScreen 
+          onClose={() => setShowSelectGym(false)}
+          onSelectGym={(gymId, gymName) => {
+            setShowSelectGym(false);
+            navigation.navigate('WriteReview', { gymId, gymName });
+          }}
+        />
+      </Modal>
+
+      {/* Register Gym Modal */}
+      <Modal
+        visible={showRegisterGym}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <RegisterGymScreen onClose={() => setShowRegisterGym(false)} />
+      </Modal>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 32,
-    paddingTop: 60,
-  },
-  emoji: {
-    fontSize: 64,
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#1F2937',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#6B7280',
-    marginBottom: 40,
-    textAlign: 'center',
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F9FAFB',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-    borderWidth: 2,
-    borderColor: '#E5E7EB',
-  },
-  actionButtonDisabled: {
-    opacity: 0.5,
-  },
-  actionIcon: {
-    fontSize: 32,
-    marginRight: 16,
-  },
-  actionText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1F2937',
-    flex: 1,
-  },
-  actionTextDisabled: {
-    color: '#9CA3AF',
-  },
-  comingSoonBadge: {
-    fontSize: 12,
-    color: '#6B7280',
-    backgroundColor: '#F3F4F6',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-    fontWeight: '600',
-  },
-});

@@ -14,6 +14,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
 import { styles } from '../styles/ProfileScreen.styles';
 import * as SecureStore from 'expo-secure-store';
+import * as ImagePicker from 'expo-image-picker';
 
 type ProfileNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -25,6 +26,7 @@ interface UserProfile {
   id: string;
   displayName: string;
   email: string;
+  profilePhoto?: string;
   climbingLevel?: string;
   climbingType?: string;
   borough?: string;
@@ -63,6 +65,7 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [activeTab, setActiveTab] = useState<'reviews' | 'photos'>('reviews');
 
   useEffect(() => {
@@ -80,7 +83,7 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
 
         const token = await SecureStore.getItemAsync('authToken');
         
-        const [reviewsRes, photosRes, statsRes] = await Promise.all([
+        const [reviewsRes, photosRes, statsRes, userRes] = await Promise.all([
           fetch(`http://192.168.1.166:3000/users/${userData.id}/reviews`, {
             headers: { 'Authorization': `Bearer ${token}` },
           }),
@@ -90,7 +93,17 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
           fetch(`http://192.168.1.166:3000/users/${userData.id}/follow-stats`, {
             headers: { 'Authorization': `Bearer ${token}` },
           }),
+          fetch(`http://192.168.1.166:3000/users/${userData.id}`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+          }),
         ]);
+
+        if (userRes.ok) {
+          const freshUserData = await userRes.json();
+          setUser(freshUserData);
+          // Update stored user data
+          await SecureStore.setItemAsync('user', JSON.stringify(freshUserData));
+        }
 
         if (reviewsRes.ok) {
           const reviewsData = await reviewsRes.json();
@@ -112,6 +125,70 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
       console.error('Error loading profile:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleUploadProfilePhoto = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'Please allow access to your photos');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && user) {
+        setIsUploadingPhoto(true);
+
+        const uri = result.assets[0].uri;
+        const filename = uri.split('/').pop() || 'photo.jpg';
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+        const formData = new FormData();
+        formData.append('photo', {
+          uri,
+          name: filename,
+          type,
+        } as any);
+
+        const token = await SecureStore.getItemAsync('authToken');
+        const response = await fetch(
+          `http://192.168.1.166:3000/users/${user.id}/profile-photo`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+            body: formData,
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          setUser({ ...user, profilePhoto: data.profilePhoto });
+          
+          // Update stored user data
+          const updatedUser = { ...user, profilePhoto: data.profilePhoto };
+          await SecureStore.setItemAsync('user', JSON.stringify(updatedUser));
+          
+          Alert.alert('Success', 'Profile photo updated!');
+        } else {
+          throw new Error('Failed to upload photo');
+        }
+      }
+    } catch (error) {
+      console.error('Upload photo error:', error);
+      Alert.alert('Error', 'Failed to upload photo');
+    } finally {
+      setIsUploadingPhoto(false);
     }
   };
 
@@ -253,14 +330,30 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerContent}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {user.displayName.charAt(0).toUpperCase()}
-              </Text>
+            <View style={styles.avatarContainer}>
+              {user.profilePhoto ? (
+                <Image source={{ uri: user.profilePhoto }} style={styles.avatarImage} />
+              ) : (
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>
+                    {user.displayName.charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+              )}
+              <TouchableOpacity 
+                style={styles.uploadPhotoButton}
+                onPress={handleUploadProfilePhoto}
+                disabled={isUploadingPhoto}
+              >
+                {isUploadingPhoto ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.uploadPhotoIcon}>+</Text>
+                )}
+              </TouchableOpacity>
             </View>
             <View style={styles.userInfo}>
               <Text style={styles.userName}>{user.displayName}</Text>
-              <Text style={styles.userEmail}>{user.email}</Text>
             </View>
           </View>
 
@@ -269,7 +362,7 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
           </TouchableOpacity>
         </View>
 
-        {/* Stats - UPDATED with Followers/Following */}
+        {/* Stats */}
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{reviews.length}</Text>

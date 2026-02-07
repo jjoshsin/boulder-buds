@@ -1,4 +1,5 @@
-import { Controller, Patch, Get, Param, Body, UseGuards, Request, Query } from '@nestjs/common';
+import { Controller, Patch, Get, Param, Body, UseGuards, Request, Query, Post, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -63,5 +64,20 @@ export class UsersController {
   async searchUsers(@Query('q') query: string, @Request() req) {
     const currentUserId = req.user.userId;
     return this.usersService.searchUsers(query, currentUserId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/profile-photo')
+  @UseInterceptors(FileInterceptor('photo'))
+  async uploadProfilePhoto(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req,
+  ) {
+    const userId = req.user.userId;
+    if (userId !== id) {
+      throw new Error('Unauthorized');
+    }
+    return this.usersService.updateProfilePhoto(id, file);
   }
 }

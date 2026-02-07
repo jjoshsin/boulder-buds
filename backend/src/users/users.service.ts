@@ -1,9 +1,24 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  private s3Client: S3Client;
+  private bucketName: string;
+
+  constructor(private prisma: PrismaService) {
+    this.s3Client = new S3Client({
+      region: process.env.AWS_REGION,
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      },
+    });
+    this.bucketName = process.env.AWS_S3_BUCKET;
+  }
+    
 
   async getUser(userId: string) {
     const user = await this.prisma.user.findUnique({
@@ -182,5 +197,36 @@ export class UsersService {
     });
 
     return users;
+  }
+
+  async updateProfilePhoto(userId: string, file: Express.Multer.File) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Upload to S3
+    const key = `profile-photos/${uuidv4()}-${file.originalname}`;
+    const command = new PutObjectCommand({
+      Bucket: this.bucketName,
+      Key: key,
+      Body: file.buffer,
+      ContentType: file.mimetype,
+    });
+
+    await this.s3Client.send(command);
+
+    const photoUrl = `https://${this.bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+
+    // Update user
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: { profilePhoto: photoUrl },
+    });
+
+    return { profilePhoto: updatedUser.profilePhoto };
   }
 }

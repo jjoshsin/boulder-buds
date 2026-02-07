@@ -45,6 +45,7 @@ model User {
   email         String   @unique
   password      String
   displayName   String
+  profilePhoto  String?
   age           String?
   appleId       String?  @unique
   googleId      String?  @unique
