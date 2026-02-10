@@ -150,7 +150,7 @@ export default function WriteReviewScreen() {
     setSelectedImages(selectedImages.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = async () => {
+const handleSubmit = async () => {
   if (overallRating === 0) {
     Alert.alert('Rating required', 'Please provide an overall rating');
     return;
@@ -159,6 +159,12 @@ export default function WriteReviewScreen() {
   try {
     setIsSubmitting(true);
     const token = await SecureStore.getItemAsync('authToken');
+
+    // First, upload photos if any
+    let uploadedPhotoUrls: string[] = [];
+    if (selectedImages.length > 0) {
+      uploadedPhotoUrls = await uploadPhotos(selectedImages);
+    }
 
     const url = isEditing 
       ? `http://192.168.1.166:3000/reviews/${reviewId}`
@@ -176,7 +182,7 @@ export default function WriteReviewScreen() {
       vibe: vibe || null,
       reviewText: reviewText.trim() || null,
       tags: selectedTags,
-      photos: [],
+      photos: uploadedPhotoUrls,
     };
 
     if (!isEditing) {
@@ -213,6 +219,44 @@ export default function WriteReviewScreen() {
   } finally {
     setIsSubmitting(false);
   }
+};
+
+// Add this helper function above handleSubmit
+const uploadPhotos = async (imageUris: string[]): Promise<string[]> => {
+  const uploadedUrls: string[] = [];
+  
+  for (const uri of imageUris) {
+    try {
+      const filename = uri.split('/').pop() || 'photo.jpg';
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+      const formData = new FormData();
+      formData.append('photo', {
+        uri,
+        name: filename,
+        type,
+      } as any);
+
+      const token = await SecureStore.getItemAsync('authToken');
+      const response = await fetch('http://192.168.1.166:3000/upload/photo', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        uploadedUrls.push(data.url);
+      }
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+    }
+  }
+
+  return uploadedUrls;
 };
 
   return (

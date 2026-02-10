@@ -16,6 +16,7 @@ import { Modal } from 'react-native';
 import AddGymPhotoScreen from './AddGymPhotoScreen';
 import { RootStackParamList } from '../App';
 import { styles } from '../styles/GymDetailScreen.styles';
+import EditAmenitiesScreen from './EditAmenitiesScreen';
 import gymService, { Gym } from '../services/gymService';
 import * as SecureStore from 'expo-secure-store';
 
@@ -33,6 +34,7 @@ export default function GymDetailScreen() {
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [showPhotoUpload, setShowPhotoUpload] = useState(false);
+  const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
 
   useEffect(() => {
     fetchGymDetails();
@@ -259,32 +261,50 @@ export default function GymDetailScreen() {
 </View>
 
         {/* Amenities */}
-        {gym.amenities && gym.amenities.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Amenities</Text>
-            <View style={styles.amenitiesGrid}>
-              {gym.amenities.map((amenity, index) => {
-                if (!amenity || typeof amenity !== 'string') {
-                  console.warn('Invalid amenity:', amenity);
-                  return null;
-                }
-                
-                const formattedAmenity = amenity
-                  .replace(/_/g, ' ')
-                  .replace(/\b\w/g, l => l.toUpperCase());
-                
-                return (
-                  <View key={index} style={styles.amenityItem}>
-                    <Text style={styles.amenityIcon}>{renderAmenityIcon(amenity)}</Text>
-                    <Text style={styles.amenityText}>
-                      {formattedAmenity}
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
+{gym.amenities && gym.amenities.length > 0 && (
+  <View style={styles.section}>
+    <View style={styles.sectionHeader}>
+      <Text style={styles.sectionTitle}>Amenities</Text>
+      <TouchableOpacity onPress={() => setShowAmenitiesModal(true)}>
+        <Text style={styles.editText}>Edit</Text>
+      </TouchableOpacity>
+    </View>
+    <View style={styles.amenitiesGrid}>
+      {gym.amenities.map((amenity, index) => {
+        if (!amenity || typeof amenity !== 'string') {
+          console.warn('Invalid amenity:', amenity);
+          return null;
+        }
+        
+        const formattedAmenity = amenity
+          .replace(/_/g, ' ')
+          .replace(/\b\w/g, l => l.toUpperCase());
+        
+        return (
+          <View key={index} style={styles.amenityItem}>
+            <Text style={styles.amenityIcon}>{renderAmenityIcon(amenity)}</Text>
+            <Text style={styles.amenityText}>
+              {formattedAmenity}
+            </Text>
           </View>
-        )}
+        );
+      })}
+    </View>
+  </View>
+)}
+
+{/* If no amenities, show add button */}
+{(!gym.amenities || gym.amenities.length === 0) && (
+  <View style={styles.section}>
+    <Text style={styles.sectionTitle}>Amenities</Text>
+    <TouchableOpacity 
+      style={styles.addAmenitiesButton}
+      onPress={() => setShowAmenitiesModal(true)}
+    >
+      <Text style={styles.addAmenitiesText}>+ Add Amenities</Text>
+    </TouchableOpacity>
+  </View>
+)}
 
         {/* Community Photos */}
         {gym.communityPhotos && gym.communityPhotos.length > 0 && (
@@ -445,6 +465,21 @@ export default function GymDetailScreen() {
           preselectedGym={{ id: gym.id, name: gym.name }}
         />
       </Modal>
+      {/* Amenities Edit Modal */}
+<Modal
+  visible={showAmenitiesModal}
+  animationType="slide"
+  presentationStyle="pageSheet"
+>
+  <EditAmenitiesScreen
+    gymId={gym.id}
+    currentAmenities={gym.amenities || []}
+    onClose={() => {
+      setShowAmenitiesModal(false);
+      fetchGymDetails(); // Refresh to show updated amenities
+    }}
+  />
+</Modal>
     </SafeAreaView>
   );
 }

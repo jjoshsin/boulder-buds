@@ -80,12 +80,26 @@ export class GymsController {
     name: string;
     address: string;
     borough: string;
-    latitude: number;
-    longitude: number;
+    latitude?: number;  // Optional now
+    longitude?: number; // Optional now
     amenities?: string[];
     priceRange?: number;
     climbingTypes?: string[];
   }) {
     return this.gymsService.createGym(body);
+  }
+
+  @Get('map-data')
+  async getGymsMapData() {
+    return this.gymsService.getGymsMapData();
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/amenities')
+  async updateAmenities(
+  @Param('id') id: string,
+  @Body() body: { amenities: string[] },
+  ) {
+    return this.gymsService.updateAmenities(id, body.amenities);
   }
 }

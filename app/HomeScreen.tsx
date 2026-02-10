@@ -23,6 +23,7 @@ interface Activity {
   id: string;
   user: string;
   gym: string;
+  gymId: string;
   rating?: number;
   text?: string;
   photoUrl?: string;
@@ -150,46 +151,54 @@ export default function HomeScreen() {
     </TouchableOpacity>
   );
 
-  const renderActivity = (activity: Activity, index: number) => {
-    if (activity.type === 'review') {
-      return (
-        <View key={index} style={styles.activityCard}>
-          <Text style={styles.activityText}>
-            <Text style={styles.activityUser}>{activity.user}</Text> reviewed{' '}
-            <Text style={styles.activityGym}>{activity.gym}</Text>
+const renderActivity = (activity: Activity, index: number) => {
+  if (activity.type === 'review') {
+    return (
+      <TouchableOpacity 
+        key={index} 
+        style={styles.activityCard}
+        onPress={() => navigation.navigate('GymDetail', { gymId: activity.gymId })}
+      >
+        <Text style={styles.activityText}>
+          <Text style={styles.activityUser}>{activity.user}</Text> reviewed{' '}
+          <Text style={styles.activityGym}>{activity.gym}</Text>
+        </Text>
+        {activity.rating && (
+          <Text style={styles.activityRating}>
+            {'⭐'.repeat(Math.round(activity.rating))}
           </Text>
-          {activity.rating && (
-            <Text style={styles.activityRating}>
-              {'⭐'.repeat(Math.round(activity.rating))}
-            </Text>
-          )}
-          {activity.text && (
-            <Text style={styles.activityReview} numberOfLines={2}>
-              "{activity.text}"
-            </Text>
-          )}
-          <Text style={styles.activityTime}>{getTimeAgo(activity.createdAt)}</Text>
-        </View>
-      );
-    } else {
-      return (
-        <View key={index} style={styles.activityCard}>
-          <Text style={styles.activityText}>
-            <Text style={styles.activityUser}>{activity.user}</Text> added a photo to{' '}
-            <Text style={styles.activityGym}>{activity.gym}</Text>
+        )}
+        {activity.text && (
+          <Text style={styles.activityReview} numberOfLines={2}>
+            "{activity.text}"
           </Text>
-          {activity.photoUrl && (
-            <Image 
-              source={{ uri: activity.photoUrl }} 
-              style={styles.activityPhoto}
-              resizeMode="cover"
-            />
-          )}
-          <Text style={styles.activityTime}>{getTimeAgo(activity.createdAt)}</Text>
-        </View>
-      );
-    }
-  };
+        )}
+        <Text style={styles.activityTime}>{getTimeAgo(activity.createdAt)}</Text>
+      </TouchableOpacity>
+    );
+  } else {
+    return (
+      <TouchableOpacity 
+        key={index} 
+        style={styles.activityCard}
+        onPress={() => navigation.navigate('GymDetail', { gymId: activity.gymId })}
+      >
+        <Text style={styles.activityText}>
+          <Text style={styles.activityUser}>{activity.user}</Text> added a photo to{' '}
+          <Text style={styles.activityGym}>{activity.gym}</Text>
+        </Text>
+        {activity.photoUrl && (
+          <Image 
+            source={{ uri: activity.photoUrl }} 
+            style={styles.activityPhoto}
+            resizeMode="cover"
+          />
+        )}
+        <Text style={styles.activityTime}>{getTimeAgo(activity.createdAt)}</Text>
+      </TouchableOpacity>
+    );
+  }
+};
 
   if (isLoading) {
     return (

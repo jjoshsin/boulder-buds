@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
-import AddGymPhotoScreen from './AddGymPhotoScreen';
 import SelectGymScreen from './SelectGymScreen';
 import RegisterGymScreen from './RegisterGymScreen';
 import { styles } from '../styles/PostScreen.styles';
@@ -13,7 +12,6 @@ type PostNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function PostScreen() {
   const navigation = useNavigation<PostNavigationProp>();
-  const [showPhotoUpload, setShowPhotoUpload] = useState(false);
   const [showSelectGym, setShowSelectGym] = useState(false);
   const [showRegisterGym, setShowRegisterGym] = useState(false);
 
@@ -24,19 +22,6 @@ export default function PostScreen() {
         <Text style={styles.title}>Add Content</Text>
         <Text style={styles.subtitle}>Share your gym experience</Text>
 
-        {/* Add Gym Photos */}
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => setShowPhotoUpload(true)}
-        >
-          <Text style={styles.actionIcon}>📸</Text>
-          <View style={styles.actionContent}>
-            <Text style={styles.actionText}>Add Gym Photos</Text>
-            <Text style={styles.actionSubtext}>Upload photos to a gym</Text>
-          </View>
-          <Text style={styles.chevron}>›</Text>
-        </TouchableOpacity>
-
         {/* Write Review */}
         <TouchableOpacity
           style={styles.actionButton}
@@ -45,7 +30,7 @@ export default function PostScreen() {
           <Text style={styles.actionIcon}>⭐</Text>
           <View style={styles.actionContent}>
             <Text style={styles.actionText}>Write Review</Text>
-            <Text style={styles.actionSubtext}>Share your experience</Text>
+            <Text style={styles.actionSubtext}>Share your experience at a gym</Text>
           </View>
           <Text style={styles.chevron}>›</Text>
         </TouchableOpacity>
@@ -63,15 +48,6 @@ export default function PostScreen() {
           <Text style={styles.chevron}>›</Text>
         </TouchableOpacity>
       </View>
-
-      {/* Photo Upload Modal */}
-      <Modal
-        visible={showPhotoUpload}
-        animationType="slide"
-        presentationStyle="pageSheet"
-      >
-        <AddGymPhotoScreen onClose={() => setShowPhotoUpload(false)} />
-      </Modal>
 
       {/* Select Gym for Review Modal */}
       <Modal

@@ -6,12 +6,12 @@ async function main() {
   // Brooklyn Boulders Gowanus
   await prisma.gym.create({
     data: {
-      name: 'Brooklyn Boulders Gowanus',
+      name: 'Bouldering Project Gowanus',
       address: '575 Degraw St, Brooklyn, NY 11217',
       borough: 'Brooklyn',
       latitude: 40.6755,
       longitude: -73.9879,
-      photos: [],
+      officialPhotos: [],
       amenities: ['kilter_board', 'spray_wall', 'cafe', 'training_area'],
       priceRange: 2,
       climbingTypes: ['bouldering', 'rope'],
@@ -26,7 +26,7 @@ async function main() {
       borough: 'Brooklyn',
       latitude: 40.5788,
       longitude: -73.9658,
-      photos: [],
+      officialPhotos: [],
       amenities: ['moon_board', 'training_area', 'showers'],
       priceRange: 2,
       climbingTypes: ['bouldering', 'rope'],
@@ -41,7 +41,7 @@ async function main() {
       borough: 'Queens',
       latitude: 40.7449,
       longitude: -73.9520,
-      photos: [],
+      officialPhotos: [],
       amenities: ['spray_wall', 'cafe', 'showers', 'yoga'],
       priceRange: 3,
       climbingTypes: ['bouldering', 'rope'],

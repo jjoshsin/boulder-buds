@@ -349,4 +349,25 @@ secondaryButtonText: {
   fontSize: 20,
   color: '#6B7280',
   },
+editText: {
+  fontSize: 14,
+  fontWeight: '600',
+  color: '#3B82F6',
+},
+addAmenitiesButton: {
+  backgroundColor: '#F3F4F6',
+  paddingVertical: 16,
+  paddingHorizontal: 20,
+  borderRadius: 12,
+  borderWidth: 2,
+  borderColor: '#E5E7EB',
+  borderStyle: 'dashed',
+  alignItems: 'center',
+  marginTop: 8,
+},
+addAmenitiesText: {
+  fontSize: 16,
+  fontWeight: '600',
+  color: '#6B7280',
+},
 });

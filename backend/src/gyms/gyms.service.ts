@@ -1,13 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { GooglePlacesService } from './google-places.service';
-
+import { GeocodingService } from './geocoding.service'; 
 
 @Injectable()
 export class GymsService {
   constructor(
     private prisma: PrismaService,
     private googlePlacesService: GooglePlacesService,
+    private geocodingService: GeocodingService,
   ) {}
 
   async getAllGyms() {
@@ -289,28 +290,47 @@ async fetchAllMissingOfficialPhotos(): Promise<void> {
     name: string;
     address: string;
     borough: string;
-    latitude: number;
-    longitude: number;
+    latitude?: number;
+    longitude?: number;
     amenities?: string[];
     priceRange?: number;
     climbingTypes?: string[];
   }) {
+    let latitude = data.latitude;
+    let longitude = data.longitude;
+
+    // If coordinates not provided, geocode the address
+    if (!latitude || !longitude) {
+      console.log(`🗺️ No coordinates provided, geocoding address...`);
+      const coords = await this.geocodingService.geocodeAddress(data.address, data.borough);
+      
+      if (coords) {
+        latitude = coords.lat;
+        longitude = coords.lng;
+      } else {
+        // Default to NYC center if geocoding fails
+        console.warn(`⚠️ Geocoding failed, using default NYC coordinates`);
+        latitude = 40.7128;
+        longitude = -74.0060;
+      }
+    }
+
     // Create the gym
     const gym = await this.prisma.gym.create({
       data: {
         name: data.name,
         address: data.address,
         borough: data.borough,
-        latitude: data.latitude,
-        longitude: data.longitude,
-        officialPhotos: [], // Start empty
+        latitude,
+        longitude,
+        officialPhotos: [],
         amenities: data.amenities || [],
         priceRange: data.priceRange || 2,
         climbingTypes: data.climbingTypes || ['bouldering'],
       },
     });
 
-    console.log(`✅ Created gym: ${gym.name}`);
+    console.log(`✅ Created gym: ${gym.name} at (${latitude}, ${longitude})`);
 
     // Automatically fetch official photos after creating gym
     try {
@@ -318,9 +338,60 @@ async fetchAllMissingOfficialPhotos(): Promise<void> {
       await this.fetchOfficialPhotos(gym.id);
     } catch (error) {
       console.error('Failed to fetch official photos:', error);
-      // Don't fail the gym creation if photo fetch fails
     }
 
     return gym;
   }
+
+async getGymsMapData() {
+  const gyms = await this.prisma.gym.findMany({
+    select: {
+      id: true,
+      name: true,
+      latitude: true,
+      longitude: true,
+      borough: true,
+      reviews: {
+        select: {
+          overallRating: true,
+        },
+      },
+    },
+  });
+
+  // Calculate average rating and review count for each gym
+  return gyms.map(gym => {
+    const reviewCount = gym.reviews.length;
+    const avgRating = reviewCount > 0
+      ? gym.reviews.reduce((sum, r) => sum + r.overallRating, 0) / reviewCount
+      : 0;
+
+    return {
+      id: gym.id,
+      name: gym.name,
+      latitude: gym.latitude,
+      longitude: gym.longitude,
+      borough: gym.borough,
+      reviewCount,
+      rating: Math.round(avgRating * 10) / 10,
+    };
+  });
+  }
+
+  async updateAmenities(gymId: string, amenities: string[]) {
+  const gym = await this.prisma.gym.findUnique({
+    where: { id: gymId },
+  });
+
+  if (!gym) {
+    throw new NotFoundException('Gym not found');
+  }
+
+  const updatedGym = await this.prisma.gym.update({
+    where: { id: gymId },
+    data: { amenities },
+  });
+
+  return updatedGym;
+}
 }

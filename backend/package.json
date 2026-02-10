@@ -9,7 +9,6 @@
     "start:prod": "node dist/main.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "fetch-gym-photos": "ts-node src/scripts/fetch-gym-photos.ts"
-
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
