@@ -9,8 +9,8 @@ async function main() {
       name: 'Bouldering Project Gowanus',
       address: '575 Degraw St, Brooklyn, NY 11217',
       borough: 'Brooklyn',
-      latitude: 40.6755,
-      longitude: -73.9879,
+      latitude: 40.6743,   // Fixed
+      longitude: -73.9900, // Fixed
       officialPhotos: [],
       amenities: ['kilter_board', 'spray_wall', 'cafe', 'training_area'],
       priceRange: 2,
@@ -24,8 +24,8 @@ async function main() {
       name: 'Vital Climbing Gym',
       address: '21 West End Ave, Brooklyn, NY 11235',
       borough: 'Brooklyn',
-      latitude: 40.5788,
-      longitude: -73.9658,
+      latitude: 40.5759,   // Fixed
+      longitude: -73.9680, // Fixed
       officialPhotos: [],
       amenities: ['moon_board', 'training_area', 'showers'],
       priceRange: 2,
@@ -39,8 +39,8 @@ async function main() {
       name: 'The Cliffs at LIC',
       address: '11-11 44th Dr, Long Island City, NY 11101',
       borough: 'Queens',
-      latitude: 40.7449,
-      longitude: -73.9520,
+      latitude: 40.7448,   // Fixed
+      longitude: -73.9512, // Fixed
       officialPhotos: [],
       amenities: ['spray_wall', 'cafe', 'showers', 'yoga'],
       priceRange: 3,

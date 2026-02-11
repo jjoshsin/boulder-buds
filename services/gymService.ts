@@ -66,7 +66,7 @@ class GymService {
     }
   }
 
-  async getNearbyGyms(): Promise<Gym[]> {
+async getNearbyGyms(): Promise<Gym[]> {
   try {
     const token = await SecureStore.getItemAsync('authToken');
     
@@ -82,14 +82,11 @@ class GymService {
     }
 
     const gyms: Gym[] = await response.json();
-    console.log('📍 Fetched gyms:', gyms);
 
-    // Get user's location and calculate distances
+    // Get user's real GPS location
     const userLocation = await locationService.getCurrentLocation();
-    console.log('📍 User location:', userLocation);
 
     if (userLocation) {
-      // Calculate distance for each gym
       const gymsWithDistance = gyms.map(gym => {
         if (gym.latitude && gym.longitude) {
           const distance = locationService.calculateDistance(
@@ -98,7 +95,6 @@ class GymService {
             gym.latitude,
             gym.longitude
           );
-          console.log(`📍 Distance to ${gym.name}: ${distance} mi`);
           return {
             ...gym,
             distance: `${distance} mi`,
@@ -107,7 +103,7 @@ class GymService {
         return gym;
       });
 
-      // Sort by distance
+      // Sort by closest first
       return gymsWithDistance.sort((a, b) => {
         const distA = parseFloat(a.distance?.replace(' mi', '') || '999');
         const distB = parseFloat(b.distance?.replace(' mi', '') || '999');
@@ -115,7 +111,6 @@ class GymService {
       });
     }
 
-    console.log('📍 No user location, returning gyms without distance');
     return gyms;
   } catch (error) {
     console.error('Get nearby gyms error:', error);
