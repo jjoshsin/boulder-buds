@@ -357,9 +357,12 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
             </View>
           </View>
 
-          <TouchableOpacity style={styles.settingsButton} onPress={() => Alert.alert('Settings', 'Coming soon!')}>
-            <Text style={styles.settingsIcon}>⚙️</Text>
-          </TouchableOpacity>
+          <TouchableOpacity 
+  style={styles.settingsButton} 
+  onPress={() => navigation.navigate('Settings')}
+>
+  <Text style={styles.settingsIcon}>⚙️</Text>
+</TouchableOpacity>
         </View>
 
         {/* Stats */}

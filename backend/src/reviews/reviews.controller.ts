@@ -59,4 +59,13 @@ export class ReviewsController {
     const userId = req.user.userId;
     return this.reviewsService.deleteReview(id, userId);
   }
+
+  @UseGuards(JwtAuthGuard)
+@Post(':id/like')
+async toggleLike(
+  @Param('id') id: string,
+  @Request() req,
+) {
+  return this.reviewsService.toggleLike(id, req.user.userId);
+}
 }

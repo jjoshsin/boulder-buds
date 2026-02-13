@@ -150,6 +150,43 @@ export default function WriteReviewScreen() {
     setSelectedImages(selectedImages.filter((_, i) => i !== index));
   };
 
+const uploadPhotos = async (imageUris: string[]): Promise<string[]> => {
+  const uploadedUrls: string[] = [];
+  const token = await SecureStore.getItemAsync('authToken');
+
+  console.log('📸 Starting upload for', imageUris.length, 'photos');
+
+  for (const uri of imageUris) {
+    try {
+      const filename = uri.split('/').pop() || 'photo.jpg';
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+      const formData = new FormData();
+      formData.append('image', { uri, name: filename, type } as any); // 'image' not 'photo'
+
+      const response = await fetch('http://192.168.1.166:3000/upload/image', { // /upload/image not /upload/photo
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Uploaded URL:', data.url);
+        uploadedUrls.push(data.url);
+      } else {
+        const error = await response.json();
+        console.error('❌ Upload failed:', error);
+      }
+    } catch (error) {
+      console.error('❌ Upload error:', error);
+    }
+  }
+
+  return uploadedUrls;
+};
+
 const handleSubmit = async () => {
   if (overallRating === 0) {
     Alert.alert('Rating required', 'Please provide an overall rating');
@@ -160,16 +197,16 @@ const handleSubmit = async () => {
     setIsSubmitting(true);
     const token = await SecureStore.getItemAsync('authToken');
 
-    // First, upload photos if any
+    // Upload photos first if any selected
     let uploadedPhotoUrls: string[] = [];
     if (selectedImages.length > 0) {
       uploadedPhotoUrls = await uploadPhotos(selectedImages);
     }
 
-    const url = isEditing 
+    const url = isEditing
       ? `http://192.168.1.166:3000/reviews/${reviewId}`
       : `http://192.168.1.166:3000/reviews`;
-    
+
     const method = isEditing ? 'PATCH' : 'POST';
 
     const body: any = {
@@ -204,59 +241,15 @@ const handleSubmit = async () => {
     }
 
     Alert.alert(
-      'Success', 
+      'Success',
       isEditing ? 'Your review has been updated!' : 'Your review has been posted!',
-      [
-        {
-          text: 'OK',
-          onPress: () => navigation.goBack(),
-        },
-      ]
+      [{ text: 'OK', onPress: () => navigation.goBack() }]
     );
   } catch (error: any) {
-    console.error('Submit review error:', error);
-    Alert.alert('Error', error.message || 'Failed to submit review. Please try again.');
+    Alert.alert('Error', error.message || 'Failed to submit review');
   } finally {
     setIsSubmitting(false);
   }
-};
-
-// Add this helper function above handleSubmit
-const uploadPhotos = async (imageUris: string[]): Promise<string[]> => {
-  const uploadedUrls: string[] = [];
-  
-  for (const uri of imageUris) {
-    try {
-      const filename = uri.split('/').pop() || 'photo.jpg';
-      const match = /\.(\w+)$/.exec(filename);
-      const type = match ? `image/${match[1]}` : 'image/jpeg';
-
-      const formData = new FormData();
-      formData.append('photo', {
-        uri,
-        name: filename,
-        type,
-      } as any);
-
-      const token = await SecureStore.getItemAsync('authToken');
-      const response = await fetch('http://192.168.1.166:3000/upload/photo', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        uploadedUrls.push(data.url);
-      }
-    } catch (error) {
-      console.error('Error uploading photo:', error);
-    }
-  }
-
-  return uploadedUrls;
 };
 
   return (

@@ -19,8 +19,9 @@ import { styles } from '../styles/GymDetailScreen.styles';
 import EditAmenitiesScreen from './EditAmenitiesScreen';
 import gymService, { Gym } from '../services/gymService';
 import * as SecureStore from 'expo-secure-store';
+import PhotoGrid from './components/PhotoGrid';
 
-const { width } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 type GymDetailScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 
@@ -54,17 +55,20 @@ export default function GymDetailScreen() {
   };
 
   const fetchGymDetails = async () => {
-    try {
-      setIsLoading(true);
-      const gymData = await gymService.getGymById(gymId);
-      setGym(gymData);
-    } catch (error) {
-      console.error('Error fetching gym details:', error);
-      Alert.alert('Error', 'Failed to load gym details');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  try {
+    setIsLoading(true);
+    const gymData = await gymService.getGymById(gymId);
+    console.log('📸 Reviews with photos:', JSON.stringify(
+      gymData.reviews?.map((r: any) => ({ id: r.id, photos: r.photos })),
+      null, 2
+    ));
+    setGym(gymData);
+  } catch (error) {
+    console.error('Error fetching gym details:', error);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleDeleteReview = async (reviewId: string) => {
     Alert.alert(
@@ -161,7 +165,7 @@ export default function GymDetailScreen() {
               pagingEnabled
               showsHorizontalScrollIndicator={false}
               onScroll={(e) => {
-                const index = Math.round(e.nativeEvent.contentOffset.x / width);
+                const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
                 setActivePhotoIndex(index);
               }}
               scrollEventThrottle={16}
@@ -306,148 +310,126 @@ export default function GymDetailScreen() {
   </View>
 )}
 
-        {/* Community Photos */}
-        {gym.communityPhotos && gym.communityPhotos.length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Community Photos</Text>
-              <Text style={styles.seeAllText}>See all ({gym.communityPhotos.length})</Text>
-            </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {gym.communityPhotos.map((photo, index) => {
-                if (!photo || !photo.url || !photo.user || !photo.user.displayName) {
-                  console.warn('Invalid community photo:', photo);
-                  return null;
-                }
-                
-                return (
-                  <View key={photo.id || index} style={styles.communityPhotoItem}>
-                    <Image
-                      source={{ uri: photo.url }}
-                      style={styles.communityPhoto}
-                      resizeMode="cover"
-                    />
-                    <Text style={styles.communityPhotoUser}>
-                      {photo.user.displayName}
-                    </Text>
-                  </View>
-                );
-              })}
-            </ScrollView>
-          </View>
-        )}
-
-        {/* Reviews */}
+{/* Reviews */}
 <View style={styles.section}>
   <View style={styles.sectionHeader}>
     <Text style={styles.sectionTitle}>Reviews</Text>
     {gym.reviewCount !== undefined && gym.reviewCount > 0 && (
-      <Text style={styles.seeAllText}>See all</Text>
+      <Text style={styles.seeAllText}>
+        {gym.reviewCount} {gym.reviewCount === 1 ? 'review' : 'reviews'}
+      </Text>
     )}
   </View>
 
   {gym.reviews && gym.reviews.length > 0 ? (
-  gym.reviews.slice(0, 3).map((review: any, index: number) => {
-    if (!review || !review.user || !review.user.displayName) {
-      return null;
-    }
+    gym.reviews.map((review: any, index: number) => {
+      if (!review || !review.user || !review.user.displayName) return null;
+      const isOwnReview = currentUserId === review.userId;
 
-    const isOwnReview = currentUserId === review.userId;
-
-    return (
-      <View key={index} style={styles.reviewCard}>
-        <View style={styles.reviewHeader}>
-          <View style={styles.reviewUserInfo}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {review.user.displayName.charAt(0).toUpperCase()}
-              </Text>
-            </View>
-            <View>
-              <Text style={styles.reviewUserName}>{review.user.displayName}</Text>
-              <Text style={styles.reviewDate}>
-                {new Date(review.createdAt).toLocaleDateString()}
-              </Text>
-            </View>
-          </View>
-          <View style={styles.reviewRatingContainer}>
-            <Text style={styles.reviewRating}>
-              ⭐ {review.overallRating ? review.overallRating.toFixed(1) : 'N/A'}
-            </Text>
-            {isOwnReview && (
-              <TouchableOpacity 
-                style={styles.reviewOptionsButton}
-                onPress={() => {
-                  Alert.alert(
-                    'Review Options',
-                    'What would you like to do?',
-                    [
-                      {
-                        text: 'Edit',
-                        onPress: () => navigation.navigate('WriteReview', {
-                          gymId: gym.id,
-                          gymName: gym.name,
-                          reviewId: review.id,
-                          existingReview: review,
-                        } as any),
-                      },
-                      {
-                        text: 'Delete',
-                        onPress: () => handleDeleteReview(review.id),
-                        style: 'destructive',
-                      },
-                      { text: 'Cancel', style: 'cancel' },
-                    ]
-                  );
-                }}
-              >
-                <Text style={styles.reviewOptionsText}>⋯</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-
-        {review.reviewText && typeof review.reviewText === 'string' && (
-          <Text style={styles.reviewText} numberOfLines={3}>
-            {review.reviewText}
-          </Text>
-        )}
-
-        {/* Tags */}
-        {review.tags && Array.isArray(review.tags) && review.tags.length > 0 && (
-          <View style={styles.reviewTags}>
-            {review.tags.slice(0, 2).map((tag: any, tagIndex: number) => {
-              if (!tag || typeof tag !== 'string') {
-                return null;
-              }
-              const formattedTag = tag.replace(/_/g, ' ');
-              return (
-                <View key={tagIndex} style={styles.reviewTag}>
-                  <Text style={styles.reviewTagText}>
-                    {formattedTag}
-                  </Text>
-                </View>
-              );
-            })}
-            {review.tags.length > 2 && (
-              <View style={styles.reviewTag}>
-                <Text style={styles.reviewTagText}>
-                  +{review.tags.length - 2} more
+      return (
+        <View key={index} style={styles.reviewCard}>
+          <View style={styles.reviewHeader}>
+            <View style={styles.reviewUserInfo}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>
+                  {review.user.displayName.charAt(0).toUpperCase()}
                 </Text>
               </View>
-            )}
+              <View>
+                <Text style={styles.reviewUserName}>{review.user.displayName}</Text>
+                <Text style={styles.reviewDate}>
+                  {new Date(review.createdAt).toLocaleDateString()}
+                </Text>
+              </View>
+            </View>
+            <View style={styles.reviewRatingContainer}>
+              <Text style={styles.reviewRating}>
+                ⭐ {review.overallRating ? review.overallRating.toFixed(1) : 'N/A'}
+              </Text>
+              {isOwnReview && (
+                <TouchableOpacity
+                  style={styles.reviewOptionsButton}
+                  onPress={() => {
+                    Alert.alert(
+                      'Review Options',
+                      'What would you like to do?',
+                      [
+                        {
+                          text: 'Edit',
+                          onPress: () => navigation.navigate('WriteReview', {
+                            gymId: gym.id,
+                            gymName: gym.name,
+                            reviewId: review.id,
+                            existingReview: review,
+                          } as any),
+                        },
+                        {
+                          text: 'Delete',
+                          style: 'destructive',
+                          onPress: () => handleDeleteReview(review.id),
+                        },
+                        { text: 'Cancel', style: 'cancel' },
+                      ]
+                    );
+                  }}
+                >
+                  <Text style={styles.reviewOptionsText}>⋯</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
-        )}
-      </View>
-    );
-  })
-) : (
-  <View style={styles.noReviewsContainer}>
-    <Text style={styles.noReviewsEmoji}>✍️</Text>
-    <Text style={styles.noReviewsText}>No reviews yet</Text>
-    <Text style={styles.noReviewsSubtext}>Be the first to review this gym!</Text>
-  </View>
+
+          {/* Review Text */}
+          {review.reviewText && typeof review.reviewText === 'string' && (
+            <Text style={styles.reviewText} numberOfLines={3}>
+              {review.reviewText}
+            </Text>
+          )}
+
+          {/* Tags */}
+          {review.tags && Array.isArray(review.tags) && review.tags.length > 0 && (
+            <View style={styles.reviewTags}>
+              {review.tags.slice(0, 2).map((tag: any, tagIndex: number) => {
+                if (!tag || typeof tag !== 'string') return null;
+                return (
+                  <View key={tagIndex} style={styles.reviewTag}>
+                    <Text style={styles.reviewTagText}>
+                      {tag.replace(/_/g, ' ')}
+                    </Text>
+                  </View>
+                );
+              })}
+              {review.tags.length > 2 && (
+                <View style={styles.reviewTag}>
+                  <Text style={styles.reviewTagText}>
+                    +{review.tags.length - 2} more
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* Photo Grid */}
+          {review.photos && review.photos.length > 0 && (
+  <PhotoGrid
+    photos={review.photos}
+    reviewId={review.id}
+    initialLikeCount={review.likeCount || 0}
+    initialLiked={review.likes?.some((l: any) => l.userId === currentUserId) || false}
+    currentUserId={currentUserId || ''}
+    containerWidth={SCREEN_WIDTH - 40 - 32}
+  />
 )}
+        </View>
+      );
+    })
+  ) : (
+    <View style={styles.noReviewsContainer}>
+      <Text style={styles.noReviewsEmoji}>✍️</Text>
+      <Text style={styles.noReviewsText}>No reviews yet</Text>
+      <Text style={styles.noReviewsSubtext}>Be the first to review this gym!</Text>
+    </View>
+  )}
 </View>
         {/* Bottom Padding */}
         <View style={styles.bottomPadding} />

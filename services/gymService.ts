@@ -27,7 +27,9 @@ export interface CommunityPhoto {
   url: string;
   caption?: string;
   createdAt: string;
+  likeCount: number;
   user: {
+    id: string;
     displayName: string;
   };
 }

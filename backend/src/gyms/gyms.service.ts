@@ -105,56 +105,68 @@ export class GymsService {
     }));
   }
 
-  async getGymById(id: string) {
-    const gym = await this.prisma.gym.findUnique({
-      where: { id },
-      include: {
-        reviews: {
-          include: {
-            user: {
-              select: {
-                displayName: true,
-              },
-            },
-          },
+async getGymById(id: string) {
+  const gym = await this.prisma.gym.findUnique({
+    where: { id },
+    include: {
+      reviews: {
+  include: {
+    user: {
+      select: {
+        id: true,
+        displayName: true,
+      },
+    },
+    likes: {
+      select: {
+        userId: true,
+      },
+    },
+  },
+  orderBy: {
+    createdAt: 'desc',
+  },
+},
+      communityPhotos: {
+        orderBy: {
+          createdAt: 'desc',
         },
-        communityPhotos: {
-          orderBy: {
-            createdAt: 'desc',
-          },
-          include: {
-            user: {
-              select: {
-                id: true,
-                displayName: true,
-              },
+        include: {
+          user: {
+            select: {
+              id: true,
+              displayName: true,
             },
           },
         },
       },
-    });
+    },
+  });
 
-    if (!gym) {
-      throw new NotFoundException('Gym not found');
-    }
-
-    return {
-      id: gym.id,
-      name: gym.name,
-      address: gym.address,
-      borough: gym.borough,
-      latitude: gym.latitude,
-      longitude: gym.longitude,
-      officialPhotos: gym.officialPhotos,
-      communityPhotos: gym.communityPhotos,
-      amenities: gym.amenities,
-      priceRange: gym.priceRange,
-      climbingTypes: gym.climbingTypes,
-      rating: this.calculateAverageRating(gym.reviews),
-      reviewCount: gym.reviews.length,
-      reviews: gym.reviews,
-    };
+  if (!gym) {
+    throw new NotFoundException('Gym not found');
   }
+
+  return {
+  id: gym.id,
+  name: gym.name,
+  address: gym.address,
+  borough: gym.borough,
+  latitude: gym.latitude,
+  longitude: gym.longitude,
+  officialPhotos: gym.officialPhotos,
+  communityPhotos: gym.communityPhotos,
+  amenities: gym.amenities,
+  priceRange: gym.priceRange,
+  climbingTypes: gym.climbingTypes,
+  rating: this.calculateAverageRating(gym.reviews),
+  reviewCount: gym.reviews.length,
+  reviews: gym.reviews.map(review => ({
+    ...review,
+    likeCount: review.likes.length,
+  })),
+};
+}
 
   private calculateAverageRating(reviews: { overallRating: number }[]): number {
     if (reviews.length === 0) return 0;

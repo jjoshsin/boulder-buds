@@ -37,7 +37,20 @@ model CommunityPhoto {
   caption   String?  // Optional caption
   createdAt DateTime @default(now())
   
+
   @@map("community_photos")
+}
+
+model ReviewLike {
+  id        String   @id @default(uuid())
+  reviewId  String
+  review    Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([reviewId, userId])
+  @@map("review_likes")
 }
 
 model User {
@@ -58,6 +71,7 @@ model User {
   
   reviews         Review[]
   communityPhotos CommunityPhoto[]
+  reviewLikes     ReviewLike[]
   
   // Follower relationships
   following       Follow[] @relation("UserFollowing")
@@ -99,6 +113,7 @@ model Review {
   reviewText      String?
   photos          String[] // Keep this for review photos
   tags            String[]
+  likes           ReviewLike[]
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt

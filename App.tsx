@@ -14,6 +14,7 @@ import PeopleScreen from './app/PeopleScreen';
 import PostScreen from './app/PostScreen';
 import ProfileScreen from './app/ProfileScreen';
 import GymDetailScreen from './app/GymDetailScreen';
+import SettingsScreen from './app/SettingsScreen';
 import WriteReviewScreen from './app/WriteReviewScreen';
 import FollowListScreen from './app/FollowListScreen';
 import UserProfileScreen from './app/UserProfileScreen';
@@ -34,6 +35,7 @@ export type RootStackParamList = {
   };
   FollowList: { userId: string; tab: 'followers' | 'following' };
   UserProfile: { userId: string };
+  Settings: undefined;
 };
 
 export type TabParamList = {
@@ -253,6 +255,11 @@ export default function App() {
               <Stack.Screen 
                 name="UserProfile" 
                 component={UserProfileScreen}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen 
+                name="Settings" 
+                component={SettingsScreen}
                 options={{ headerShown: false }}
               />
             </>

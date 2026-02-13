@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
+import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 
 @Injectable()
 export class UploadService {
@@ -33,4 +34,24 @@ export class UploadService {
 
     return `https://${this.bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
   }
+
+  async deleteImage(imageUrl: string): Promise<void> {
+  try {
+    // Extract the key from the S3 URL
+    // URL format: https://bucket-name.s3.region.amazonaws.com/key
+    const url = new URL(imageUrl);
+    const key = url.pathname.substring(1); // Remove leading slash
+
+    const command = new DeleteObjectCommand({
+      Bucket: this.bucketName,
+      Key: key,
+    });
+
+    await this.s3Client.send(command);
+    console.log(`✅ Deleted S3 object: ${key}`);
+  } catch (error) {
+    // Don't throw - if S3 delete fails, still delete from DB
+    console.error('Failed to delete S3 object:', error);
+  }
+}
 }

@@ -1,9 +1,10 @@
-import { Injectable, ConflictException, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { UploadService } from '../upload/upload.service';
 
 @Injectable()
 export class ReviewsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private uploadService: UploadService) {}
 
   async createReview(userId: string, data: any) {
     // Check if user already reviewed this gym
@@ -90,26 +91,65 @@ export class ReviewsService {
     return updatedReview;
   }
 
-  async deleteReview(reviewId: string, userId: string) {
-    // Find the review
-    const review = await this.prisma.review.findUnique({
-      where: { id: reviewId },
-    });
+async deleteReview(reviewId: string, userId: string) {
+  const review = await this.prisma.review.findUnique({
+    where: { id: reviewId },
+  });
 
-    if (!review) {
-      throw new NotFoundException('Review not found');
-    }
-
-    // Check if user owns this review
-    if (review.userId !== userId) {
-      throw new ForbiddenException('You can only delete your own reviews');
-    }
-
-    // Delete the review
-    await this.prisma.review.delete({
-      where: { id: reviewId },
-    });
-
-    return { message: 'Review deleted successfully' };
+  if (!review) {
+    throw new NotFoundException('Review not found');
   }
+
+  if (review.userId !== userId) {
+    throw new UnauthorizedException('Not authorized to delete this review');
+  }
+
+  // Delete photos from S3 if any
+  if (review.photos && review.photos.length > 0) {
+    await Promise.all(
+      review.photos.map(photoUrl => this.uploadService.deleteImage(photoUrl))
+    );
+  }
+
+  await this.prisma.review.delete({
+    where: { id: reviewId },
+  });
+
+  return { success: true };
+}
+
+async toggleLike(reviewId: string, userId: string) {
+  const existing = await this.prisma.reviewLike.findUnique({
+    where: {
+      reviewId_userId: {
+        reviewId,
+        userId,
+      },
+    },
+  });
+
+  if (existing) {
+    await this.prisma.reviewLike.delete({
+      where: {
+        reviewId_userId: {
+          reviewId,
+          userId,
+        },
+      },
+    });
+  } else {
+    await this.prisma.reviewLike.create({
+      data: { reviewId, userId },
+    });
+  }
+
+  const likeCount = await this.prisma.reviewLike.count({
+    where: { reviewId },
+  });
+
+  return {
+    liked: !existing,
+    likeCount,
+  };
+}
 }
