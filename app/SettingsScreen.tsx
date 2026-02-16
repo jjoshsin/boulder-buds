@@ -7,6 +7,7 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -22,8 +23,17 @@ interface UserProfile {
   displayName: string;
   email: string;
   climbingType?: string;
-  borough?: string;
+  city?: string;
+  state?: string;
 }
+
+const US_STATES = [
+  'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
+  'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
+  'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
+  'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
+  'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY',
+];
 
 export default function SettingsScreen() {
   const navigation = useNavigation<SettingsNavigationProp>();
@@ -40,10 +50,11 @@ export default function SettingsScreen() {
   // Edit preferences
   const [isEditingPreferences, setIsEditingPreferences] = useState(false);
   const [selectedClimbingType, setSelectedClimbingType] = useState('');
-  const [selectedBorough, setSelectedBorough] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
+  const [selectedState, setSelectedState] = useState('');
+  const [showStatePicker, setShowStatePicker] = useState(false);
   const [isSavingPreferences, setIsSavingPreferences] = useState(false);
 
-  const boroughs = ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island'];
   const climbingTypes = [
     { value: 'bouldering', label: '🧗 Bouldering' },
     { value: 'rope', label: '🪢 Rope' },
@@ -63,7 +74,8 @@ export default function SettingsScreen() {
         setUser(userData);
         setNewDisplayName(userData.displayName);
         setSelectedClimbingType(userData.climbingType || '');
-        setSelectedBorough(userData.borough || '');
+        setSelectedCity(userData.city || '');
+        setSelectedState(userData.state || '');
       }
     } catch (error) {
       console.error('Error loading user:', error);
@@ -125,7 +137,8 @@ export default function SettingsScreen() {
         },
         body: JSON.stringify({
           climbingType: selectedClimbingType,
-          borough: selectedBorough,
+          city: selectedCity.trim(),
+          state: selectedState,
         }),
       });
 
@@ -133,7 +146,8 @@ export default function SettingsScreen() {
         const updatedUser = {
           ...user!,
           climbingType: selectedClimbingType,
-          borough: selectedBorough,
+          city: selectedCity.trim(),
+          state: selectedState,
         };
         setUser(updatedUser);
         await SecureStore.setItemAsync('user', JSON.stringify(updatedUser));
@@ -193,17 +207,13 @@ export default function SettingsScreen() {
           <View style={styles.settingCard}>
             <TouchableOpacity
               style={styles.settingRow}
-              onPress={() => {
-                setIsEditingName(!isEditingName);
-              }}
+              onPress={() => setIsEditingName(!isEditingName)}
             >
               <View style={styles.settingInfo}>
                 <Text style={styles.settingLabel}>Display Name</Text>
                 <Text style={styles.settingValue}>{user?.displayName}</Text>
               </View>
-              <Text style={styles.chevron}>
-                {isEditingName ? '▲' : '▼'}
-              </Text>
+              <Text style={styles.chevron}>{isEditingName ? '▲' : '▼'}</Text>
             </TouchableOpacity>
 
             {isEditingName && (
@@ -246,6 +256,7 @@ export default function SettingsScreen() {
               </View>
             )}
           </View>
+
           {/* Delete Account */}
           <TouchableOpacity
             style={[styles.settingCard, styles.deleteCard]}
@@ -280,9 +291,11 @@ export default function SettingsScreen() {
             {!isEditingPreferences && (
               <View style={[styles.settingRow, styles.settingRowBorder]}>
                 <View style={styles.settingInfo}>
-                  <Text style={styles.settingLabel}>Borough</Text>
+                  <Text style={styles.settingLabel}>Location</Text>
                   <Text style={styles.settingValue}>
-                    {user?.borough || 'Not set'}
+                    {user?.city && user?.state
+                      ? `${user.city}, ${user.state}`
+                      : 'Not set'}
                   </Text>
                 </View>
               </View>
@@ -290,6 +303,7 @@ export default function SettingsScreen() {
 
             {isEditingPreferences && (
               <View style={styles.editContainer}>
+                {/* Climbing Type */}
                 <Text style={styles.editSectionLabel}>Climbing Type</Text>
                 <View style={styles.chipContainer}>
                   {climbingTypes.map((type) => (
@@ -311,26 +325,28 @@ export default function SettingsScreen() {
                   ))}
                 </View>
 
-                <Text style={[styles.editSectionLabel, styles.inputSpacing]}>Borough</Text>
-                <View style={styles.chipContainer}>
-                  {boroughs.map((b) => (
-                    <TouchableOpacity
-                      key={b}
-                      style={[
-                        styles.chip,
-                        selectedBorough === b && styles.chipActive,
-                      ]}
-                      onPress={() => setSelectedBorough(b)}
-                    >
-                      <Text style={[
-                        styles.chipText,
-                        selectedBorough === b && styles.chipTextActive,
-                      ]}>
-                        {b}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
+                {/* City */}
+                <Text style={[styles.editSectionLabel, styles.inputSpacing]}>City</Text>
+                <TextInput
+                  style={styles.input}
+                  value={selectedCity}
+                  onChangeText={setSelectedCity}
+                  placeholder="e.g., New York"
+                  placeholderTextColor="#9CA3AF"
+                  autoCapitalize="words"
+                />
+
+                {/* State */}
+                <Text style={[styles.editSectionLabel, styles.inputSpacing]}>State</Text>
+                <TouchableOpacity
+                  style={[styles.input, styles.stateSelector]}
+                  onPress={() => setShowStatePicker(true)}
+                >
+                  <Text style={selectedState ? styles.stateSelectorText : styles.statePlaceholder}>
+                    {selectedState || 'Select a state'}
+                  </Text>
+                  <Text style={styles.stateChevron}>▼</Text>
+                </TouchableOpacity>
 
                 <View style={styles.editActions}>
                   <TouchableOpacity
@@ -338,7 +354,8 @@ export default function SettingsScreen() {
                     onPress={() => {
                       setIsEditingPreferences(false);
                       setSelectedClimbingType(user?.climbingType || '');
-                      setSelectedBorough(user?.borough || '');
+                      setSelectedCity(user?.city || '');
+                      setSelectedState(user?.state || '');
                     }}
                   >
                     <Text style={styles.cancelButtonText}>Cancel</Text>
@@ -392,6 +409,48 @@ export default function SettingsScreen() {
 
         <View style={styles.bottomPadding} />
       </ScrollView>
+
+      {/* State Picker Modal */}
+      <Modal
+        visible={showStatePicker}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <SafeAreaView style={styles.statePickerContainer}>
+          <View style={styles.statePickerHeader}>
+            <TouchableOpacity onPress={() => setShowStatePicker(false)}>
+              <Text style={styles.statePickerClose}>✕</Text>
+            </TouchableOpacity>
+            <Text style={styles.statePickerTitle}>Select State</Text>
+            <View style={{ width: 40 }} />
+          </View>
+          <ScrollView>
+            {US_STATES.map((s) => (
+              <TouchableOpacity
+                key={s}
+                style={[
+                  styles.stateOption,
+                  selectedState === s && styles.stateOptionSelected,
+                ]}
+                onPress={() => {
+                  setSelectedState(s);
+                  setShowStatePicker(false);
+                }}
+              >
+                <Text style={[
+                  styles.stateOptionText,
+                  selectedState === s && styles.stateOptionTextSelected,
+                ]}>
+                  {s}
+                </Text>
+                {selectedState === s && (
+                  <Text style={styles.stateCheckmark}>✓</Text>
+                )}
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }

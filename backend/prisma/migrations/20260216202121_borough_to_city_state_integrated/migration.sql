@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "gyms" ALTER COLUMN "city" DROP DEFAULT,
+ALTER COLUMN "state" DROP DEFAULT;

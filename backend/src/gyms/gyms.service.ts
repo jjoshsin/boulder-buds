@@ -11,122 +11,169 @@ export class GymsService {
     private geocodingService: GeocodingService,
   ) {}
 
-  async getAllGyms() {
-    const gyms = await this.prisma.gym.findMany({
-      include: {
-        reviews: {
-          select: {
-            overallRating: true,
-          },
-        },
-        communityPhotos: {
-          take: 5,
-          orderBy: {
-            createdAt: 'desc',
-          },
-          include: {
-            user: {
-              select: {
-                displayName: true,
-              },
-            },
-          },
-        },
-      },
-    });
+async createGym(data: {
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  latitude?: number;
+  longitude?: number;
+  amenities?: string[];
+  priceRange?: number;
+  climbingTypes?: string[];
+}) {
+  let latitude = data.latitude;
+  let longitude = data.longitude;
 
-    return gyms.map(gym => ({
+  if (!latitude || !longitude) {
+    console.log(`🗺️ Geocoding address...`);
+    const coords = await this.geocodingService.geocodeAddress(
+      data.address,
+      data.city,
+      data.state,
+    );
+
+    if (coords) {
+      latitude = coords.lat;
+      longitude = coords.lng;
+    } else {
+      console.warn(`⚠️ Geocoding failed, using default coordinates`);
+      latitude = 39.8283; // USA center
+      longitude = -98.5795;
+    }
+  }
+
+  const gym = await this.prisma.gym.create({
+    data: {
+      name: data.name,
+      address: data.address,
+      city: data.city,
+      state: data.state,
+      latitude,
+      longitude,
+      officialPhotos: [],
+      amenities: data.amenities || [],
+      priceRange: data.priceRange || 2,
+      climbingTypes: data.climbingTypes || ['bouldering'],
+    },
+  });
+
+  console.log(`✅ Created gym: ${gym.name} at (${latitude}, ${longitude})`);
+
+  try {
+    await this.fetchOfficialPhotos(gym.id);
+  } catch (error) {
+    console.error('Failed to fetch official photos:', error);
+  }
+
+  return gym;
+}
+
+async getAllGyms() {
+  const gyms = await this.prisma.gym.findMany({
+    include: {
+      reviews: {
+        select: { overallRating: true },
+      },
+    },
+  });
+
+  return gyms.map(gym => ({
+    id: gym.id,
+    name: gym.name,
+    address: gym.address,
+    city: gym.city,
+    state: gym.state,
+    latitude: gym.latitude,
+    longitude: gym.longitude,
+    officialPhotos: gym.officialPhotos,
+    amenities: gym.amenities,
+    priceRange: gym.priceRange,
+    climbingTypes: gym.climbingTypes,
+    rating: this.calculateAverageRating(gym.reviews),
+    reviewCount: gym.reviews.length,
+  }));
+}
+
+async getPopularGyms(climbingType?: string) {
+  const gyms = await this.prisma.gym.findMany({
+    where: climbingType ? {
+      climbingTypes: { has: climbingType },
+    } : {},
+    include: {
+      reviews: {
+        select: { overallRating: true },
+      },
+    },
+    take: 10,
+  });
+
+  return gyms
+    .map(gym => ({
       id: gym.id,
       name: gym.name,
-      address: gym.address,
-      borough: gym.borough,
-      latitude: gym.latitude,
-      longitude: gym.longitude,
+      city: gym.city,
+      state: gym.state,
       officialPhotos: gym.officialPhotos,
-      communityPhotos: gym.communityPhotos,
-      amenities: gym.amenities,
-      priceRange: gym.priceRange,
-      climbingTypes: gym.climbingTypes,
-      rating: this.calculateAverageRating(gym.reviews),
-      reviewCount: gym.reviews.length,
-    }));
-  }
-
-  async getPopularGyms() {
-    const gyms = await this.prisma.gym.findMany({
-      include: {
-        reviews: {
-          select: {
-            overallRating: true,
-          },
-        },
-      },
-      take: 10,
-    });
-
-    const sorted = gyms
-      .map(gym => ({
-        id: gym.id,
-        name: gym.name,
-        borough: gym.borough,
-        officialPhotos: gym.officialPhotos, // Show official photos in main card
-        rating: this.calculateAverageRating(gym.reviews),
-        reviewCount: gym.reviews.length,
-        tags: gym.amenities?.slice(0, 2) || [],
-      }))
-      .sort((a, b) => b.reviewCount - a.reviewCount)
-      .slice(0, 5);
-
-    return sorted;
-  }
-
-  async getNearbyGyms() {
-    const gyms = await this.prisma.gym.findMany({
-      include: {
-        reviews: {
-          select: {
-            overallRating: true,
-          },
-        },
-      },
-    });
-
-    return gyms.map(gym => ({
-      id: gym.id,
-      name: gym.name,
-      borough: gym.borough,
-      latitude: gym.latitude,
-      longitude: gym.longitude,
-      officialPhotos: gym.officialPhotos, // Show official photos
-      distance: '0.0 mi',
       rating: this.calculateAverageRating(gym.reviews),
       reviewCount: gym.reviews.length,
       tags: gym.amenities.slice(0, 2),
-    }));
-  }
+      climbingTypes: gym.climbingTypes,
+    }))
+    .sort((a, b) => b.reviewCount - a.reviewCount);
+}
+
+async getNearbyGyms(climbingType?: string) {
+  const gyms = await this.prisma.gym.findMany({
+    where: climbingType ? {
+      climbingTypes: { has: climbingType },
+    } : {},
+    include: {
+      reviews: {
+        select: { overallRating: true },
+      },
+    },
+  });
+
+  return gyms.map(gym => ({
+    id: gym.id,
+    name: gym.name,
+    city: gym.city,
+    state: gym.state,
+    address: gym.address,
+    latitude: gym.latitude,
+    longitude: gym.longitude,
+    officialPhotos: gym.officialPhotos,
+    distance: '0.0 mi',
+    rating: this.calculateAverageRating(gym.reviews),
+    reviewCount: gym.reviews.length,
+    tags: gym.amenities.slice(0, 2),
+    climbingTypes: gym.climbingTypes,
+  }));
+}
 
 async getGymById(id: string) {
   const gym = await this.prisma.gym.findUnique({
     where: { id },
     include: {
       reviews: {
-  include: {
-    user: {
-      select: {
-        id: true,
-        displayName: true,
+        include: {
+          user: {
+            select: {
+              id: true,
+              displayName: true,
+            },
+          },
+          likes: {
+            select: {
+              userId: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
       },
-    },
-    likes: {
-      select: {
-        userId: true,
-      },
-    },
-  },
-  orderBy: {
-    createdAt: 'desc',
-  },
-},
       communityPhotos: {
         orderBy: {
           createdAt: 'desc',
@@ -148,24 +195,25 @@ async getGymById(id: string) {
   }
 
   return {
-  id: gym.id,
-  name: gym.name,
-  address: gym.address,
-  borough: gym.borough,
-  latitude: gym.latitude,
-  longitude: gym.longitude,
-  officialPhotos: gym.officialPhotos,
-  communityPhotos: gym.communityPhotos,
-  amenities: gym.amenities,
-  priceRange: gym.priceRange,
-  climbingTypes: gym.climbingTypes,
-  rating: this.calculateAverageRating(gym.reviews),
-  reviewCount: gym.reviews.length,
-  reviews: gym.reviews.map(review => ({
-    ...review,
-    likeCount: review.likes.length,
-  })),
-};
+    id: gym.id,
+    name: gym.name,
+    address: gym.address,
+    city: gym.city,
+    state: gym.state,
+    latitude: gym.latitude,
+    longitude: gym.longitude,
+    officialPhotos: gym.officialPhotos,
+    communityPhotos: gym.communityPhotos,
+    amenities: gym.amenities,
+    priceRange: gym.priceRange,
+    climbingTypes: gym.climbingTypes,
+    rating: this.calculateAverageRating(gym.reviews),
+    reviewCount: gym.reviews.length,
+    reviews: gym.reviews.map(review => ({
+      ...review,
+      likeCount: review.likes.length,
+    })),
+  };
 }
 
   private calculateAverageRating(reviews: { overallRating: number }[]): number {
@@ -298,63 +346,6 @@ async fetchAllMissingOfficialPhotos(): Promise<void> {
   console.log('\n✅ Finished fetching official photos for all gyms');
 }
 
-  async createGym(data: {
-    name: string;
-    address: string;
-    borough: string;
-    latitude?: number;
-    longitude?: number;
-    amenities?: string[];
-    priceRange?: number;
-    climbingTypes?: string[];
-  }) {
-    let latitude = data.latitude;
-    let longitude = data.longitude;
-
-    // If coordinates not provided, geocode the address
-    if (!latitude || !longitude) {
-      console.log(`🗺️ No coordinates provided, geocoding address...`);
-      const coords = await this.geocodingService.geocodeAddress(data.address, data.borough);
-      
-      if (coords) {
-        latitude = coords.lat;
-        longitude = coords.lng;
-      } else {
-        // Default to NYC center if geocoding fails
-        console.warn(`⚠️ Geocoding failed, using default NYC coordinates`);
-        latitude = 40.7128;
-        longitude = -74.0060;
-      }
-    }
-
-    // Create the gym
-    const gym = await this.prisma.gym.create({
-      data: {
-        name: data.name,
-        address: data.address,
-        borough: data.borough,
-        latitude,
-        longitude,
-        officialPhotos: [],
-        amenities: data.amenities || [],
-        priceRange: data.priceRange || 2,
-        climbingTypes: data.climbingTypes || ['bouldering'],
-      },
-    });
-
-    console.log(`✅ Created gym: ${gym.name} at (${latitude}, ${longitude})`);
-
-    // Automatically fetch official photos after creating gym
-    try {
-      console.log(`🔍 Fetching official photos for new gym: ${gym.name}`);
-      await this.fetchOfficialPhotos(gym.id);
-    } catch (error) {
-      console.error('Failed to fetch official photos:', error);
-    }
-
-    return gym;
-  }
-
 async getGymsMapData() {
   const gyms = await this.prisma.gym.findMany({
     select: {
@@ -362,7 +353,8 @@ async getGymsMapData() {
       name: true,
       latitude: true,
       longitude: true,
-      borough: true,
+      city: true,
+      state: true,
       reviews: {
         select: {
           overallRating: true,
@@ -371,7 +363,6 @@ async getGymsMapData() {
     },
   });
 
-  // Calculate average rating and review count for each gym
   return gyms.map(gym => {
     const reviewCount = gym.reviews.length;
     const avgRating = reviewCount > 0
@@ -383,12 +374,13 @@ async getGymsMapData() {
       name: gym.name,
       latitude: gym.latitude,
       longitude: gym.longitude,
-      borough: gym.borough,
+      city: gym.city,
+      state: gym.state,
       reviewCount,
       rating: Math.round(avgRating * 10) / 10,
     };
   });
-  }
+}
 
   async updateAmenities(gymId: string, amenities: string[]) {
   const gym = await this.prisma.gym.findUnique({

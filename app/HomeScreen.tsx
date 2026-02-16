@@ -42,35 +42,38 @@ export default function HomeScreen() {
     fetchHomeData();
   }, []);
 
-  const fetchHomeData = async () => {
-    try {
-      setIsLoading(true);
-      
-      const token = await SecureStore.getItemAsync('authToken');
-      
-      const [popular, nearby, activityRes] = await Promise.all([
-        gymService.getPopularGyms(),
-        gymService.getNearbyGyms(),
-        fetch('http://192.168.1.166:3000/follows/feed/activity?limit=5', {
-          headers: { 'Authorization': `Bearer ${token}` },
-        }),
-      ]);
+const fetchHomeData = async () => {
+  try {
+    setIsLoading(true);
+    const token = await SecureStore.getItemAsync('authToken');
 
-      setPopularGyms(popular);
-      setNearbyGyms(nearby);
+    // Get user's climbing preference
+    const userStr = await SecureStore.getItemAsync('user');
+    const user = userStr ? JSON.parse(userStr) : null;
+    const climbingType = user?.climbingType || null;
 
-      if (activityRes.ok) {
-        const activityData = await activityRes.json();
-        setRecentActivity(activityData);
-      }
-      
-    } catch (error) {
-      console.error('Error fetching home data:', error);
-      Alert.alert('Error', 'Failed to load gyms. Please try again.');
-    } finally {
-      setIsLoading(false);
+    const [popular, nearby, activityRes] = await Promise.all([
+      gymService.getPopularGyms(climbingType),
+      gymService.getNearbyGyms(climbingType),
+      fetch(`http://192.168.1.166:3000/follows/feed/activity?limit=5`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      }),
+    ]);
+
+    setPopularGyms(popular);
+    setNearbyGyms(nearby);
+
+    if (activityRes.ok) {
+      const activityData = await activityRes.json();
+      setRecentActivity(activityData);
     }
-  };
+  } catch (error) {
+    console.error('Error fetching home data:', error);
+    Alert.alert('Error', 'Failed to load gyms. Please try again.');
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const getTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
@@ -84,72 +87,72 @@ export default function HomeScreen() {
     return date.toLocaleDateString();
   };
 
-  const renderPopularGym = (gym: Gym) => (
-    <TouchableOpacity 
-      key={gym.id} 
-      style={styles.popularCard} 
-      activeOpacity={0.8}
-      onPress={() => navigation.navigate('GymDetail', { gymId: gym.id })}
-    >    
-      <View style={styles.popularImage}>
-        {gym.officialPhotos && gym.officialPhotos.length > 0 ? (
-          <Image 
-            source={{ uri: gym.officialPhotos[0] }} 
-            style={styles.image}
-            resizeMode="cover"
-          />
+const renderPopularGym = (gym: Gym) => (
+  <TouchableOpacity 
+    key={gym.id} 
+    style={styles.popularCard} 
+    activeOpacity={0.8}
+    onPress={() => navigation.navigate('GymDetail', { gymId: gym.id })}
+  >    
+    <View style={styles.popularImage}>
+      {gym.officialPhotos && gym.officialPhotos.length > 0 ? (
+        <Image 
+          source={{ uri: gym.officialPhotos[0] }} 
+          style={styles.image}
+          resizeMode="cover"
+        />
+      ) : (
+        <View style={styles.placeholder}>
+          <Text style={styles.placeholderText}>🏔️</Text>
+          <Text style={styles.placeholderSubtext}>No photos yet</Text>
+        </View>
+      )}
+    </View>
+    <View style={styles.popularInfo}>
+      <Text style={styles.popularName} numberOfLines={1}>
+        {gym.name}
+      </Text>
+      <View style={styles.ratingRow}>
+        {gym.rating && gym.rating > 0 ? (
+          <>
+            <Text style={styles.rating}>⭐ {gym.rating}</Text>
+            <Text style={styles.reviewCount}>({gym.reviewCount})</Text>
+          </>
         ) : (
-          <View style={styles.placeholder}>
-            <Text style={styles.placeholderText}>🏔️</Text>
-            <Text style={styles.placeholderSubtext}>No photos yet</Text>
-          </View>
+          <Text style={styles.reviewCount}>No reviews yet</Text>
         )}
       </View>
-      <View style={styles.popularInfo}>
-        <Text style={styles.popularName} numberOfLines={1}>
+      <Text style={styles.tag} numberOfLines={1}>
+        {gym.city}{gym.state ? `, ${gym.state}` : ''}
+      </Text>
+    </View>
+  </TouchableOpacity>
+);
+
+const renderNearbyGym = (gym: Gym) => (
+  <TouchableOpacity 
+    key={gym.id} 
+    style={styles.nearbyCard} 
+    activeOpacity={0.8}
+    onPress={() => navigation.navigate('GymDetail', { gymId: gym.id })}
+  >
+    <View style={styles.nearbyContent}>
+      <View style={styles.nearbyHeader}>
+        <Text style={styles.nearbyName} numberOfLines={1}>
           {gym.name}
         </Text>
-        <View style={styles.ratingRow}>
-          {gym.rating && gym.rating > 0 ? (
-            <>
-              <Text style={styles.rating}>⭐ {gym.rating}</Text>
-              <Text style={styles.reviewCount}>({gym.reviewCount})</Text>
-            </>
-          ) : (
-            <Text style={styles.reviewCount}>No reviews yet</Text>
-          )}
-        </View>
-        {gym.tags && gym.tags.length > 0 && (
-          <Text style={styles.tag} numberOfLines={1}>
-            {gym.tags[0]}
-          </Text>
-        )}
+        <Text style={styles.distance}>{gym.distance}</Text>
       </View>
-    </TouchableOpacity>
-  );
-
-  const renderNearbyGym = (gym: Gym) => (
-    <TouchableOpacity 
-      key={gym.id} 
-      style={styles.nearbyCard} 
-      activeOpacity={0.8}
-      onPress={() => navigation.navigate('GymDetail', { gymId: gym.id })}
-    >
-      <View style={styles.nearbyContent}>
-        <View style={styles.nearbyHeader}>
-          <Text style={styles.nearbyName} numberOfLines={1}>
-            {gym.name}
-          </Text>
-          <Text style={styles.distance}>{gym.distance}</Text>
-        </View>
-        <View style={styles.nearbyMeta}>
-          <Text style={styles.rating}>⭐ {gym.rating}</Text>
-          <Text style={styles.metaSeparator}>•</Text>
-          <Text style={styles.tags}>{gym.tags?.join(' • ')}</Text>
-        </View>
+      <View style={styles.nearbyMeta}>
+        <Text style={styles.rating}>⭐ {gym.rating}</Text>
+        <Text style={styles.metaSeparator}>•</Text>
+        <Text style={styles.tags}>
+          {gym.city}{gym.state ? `, ${gym.state}` : ''}
+        </Text>
       </View>
-    </TouchableOpacity>
-  );
+    </View>
+  </TouchableOpacity>
+);
 
 const renderActivity = (activity: Activity, index: number) => {
   if (activity.type === 'review') {

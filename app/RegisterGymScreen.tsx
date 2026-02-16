@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { styles } from '../styles/RegisterGymScreen.styles';
@@ -21,8 +22,9 @@ interface RegisterGymScreenProps {
 export default function RegisterGymScreen({ onClose }: RegisterGymScreenProps) {
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
-  const [borough, setBorough] = useState('');
-  const [climbingTypes, setClimbingTypes] = useState<string[]>([]);
+  // Replace borough state with city and state
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');  const [climbingTypes, setClimbingTypes] = useState<string[]>([]);
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,11 +32,22 @@ export default function RegisterGymScreen({ onClose }: RegisterGymScreenProps) {
   // Error states
   const [nameError, setNameError] = useState('');
   const [addressError, setAddressError] = useState('');
-  const [boroughError, setBoroughError] = useState('');
-  const [climbingTypesError, setClimbingTypesError] = useState('');
+  // Replace borough error with city/state errors
+  const [cityError, setCityError] = useState('');
+  const [stateError, setStateError] = useState('');  const [climbingTypesError, setClimbingTypesError] = useState('');
 
-  const boroughs = ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island'];
+  // US States array
+  const usStates = [
+    'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
+    'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
+    'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
+    'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
+    'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY',
+  ];
+
+  const [showStatePicker, setShowStatePicker] = useState(false);  
   const types = ['bouldering', 'rope', 'both'];
+
   const amenities = [
     'kilter_board',
     'moon_board',
@@ -147,39 +160,46 @@ export default function RegisterGymScreen({ onClose }: RegisterGymScreenProps) {
     }
   };
 
-  const validate = () => {
-    let isValid = true;
+const validate = () => {
+  let isValid = true;
 
-    if (!name.trim()) {
-      setNameError('Gym name is required');
-      isValid = false;
-    } else {
-      setNameError('');
-    }
+  if (!name.trim()) {
+    setNameError('Gym name is required');
+    isValid = false;
+  } else {
+    setNameError('');
+  }
 
-    if (!address.trim()) {
-      setAddressError('Address is required');
-      isValid = false;
-    } else {
-      setAddressError('');
-    }
+  if (!address.trim()) {
+    setAddressError('Address is required');
+    isValid = false;
+  } else {
+    setAddressError('');
+  }
 
-    if (!borough) {
-      setBoroughError('Please select a borough');
-      isValid = false;
-    } else {
-      setBoroughError('');
-    }
+  if (!city.trim()) {
+    setCityError('City is required');
+    isValid = false;
+  } else {
+    setCityError('');
+  }
 
-    if (climbingTypes.length === 0) {
-      setClimbingTypesError('Please select at least one climbing type');
-      isValid = false;
-    } else {
-      setClimbingTypesError('');
-    }
+  if (!state) {
+    setStateError('Please select a state');
+    isValid = false;
+  } else {
+    setStateError('');
+  }
 
-    return isValid;
-  };
+  if (climbingTypes.length === 0) {
+    setClimbingTypesError('Please select at least one climbing type');
+    isValid = false;
+  } else {
+    setClimbingTypesError('');
+  }
+
+  return isValid;
+};
 
   const handleSubmit = async () => {
     if (!validate()) return;
@@ -195,12 +215,13 @@ export default function RegisterGymScreen({ onClose }: RegisterGymScreenProps) {
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          name: name.trim(),
-          address: address.trim(),
-          borough,
-          climbingTypes,
-          amenities: selectedAmenities,
-        }),
+  name: name.trim(),
+  address: address.trim(),
+  city: city.trim(),
+  state,
+  climbingTypes,
+  amenities: selectedAmenities,
+}),
       });
 
       if (response.ok) {
@@ -272,31 +293,77 @@ export default function RegisterGymScreen({ onClose }: RegisterGymScreenProps) {
             {addressError ? <Text style={styles.errorText}>{addressError}</Text> : null}
           </View>
 
-          {/* Borough */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Borough *</Text>
-            <View style={styles.chipContainer}>
-              {boroughs.map((b) => (
-                <TouchableOpacity
-                  key={b}
-                  style={[
-                    styles.chip,
-                    borough === b && styles.chipActive,
-                    boroughError ? styles.chipErrorBorder : null,
-                  ]}
-                  onPress={() => {
-                    setBorough(b);
-                    setBoroughError('');
-                  }}
-                >
-                  <Text style={[styles.chipText, borough === b && styles.chipTextActive]}>
-                    {b}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-            {boroughError ? <Text style={styles.errorText}>{boroughError}</Text> : null}
-          </View>
+          {/* City */}
+<View style={styles.inputGroup}>
+  <Text style={styles.label}>City *</Text>
+  <TextInput
+    style={[styles.input, cityError ? styles.inputError : null]}
+    placeholder="e.g., New York"
+    placeholderTextColor="#9CA3AF"
+    value={city}
+    onChangeText={(text) => {
+      setCity(text);
+      if (text.trim()) setCityError('');
+    }}
+  />
+  {cityError ? <Text style={styles.errorText}>{cityError}</Text> : null}
+</View>
+
+{/* State */}
+<View style={styles.inputGroup}>
+  <Text style={styles.label}>State *</Text>
+  <TouchableOpacity
+    style={[styles.input, styles.stateSelector, stateError ? styles.inputError : null]}
+    onPress={() => setShowStatePicker(true)}
+  >
+    <Text style={state ? styles.stateSelectorText : styles.statePlaceholder}>
+      {state || 'Select a state'}
+    </Text>
+    <Text style={styles.stateChevron}>▼</Text>
+  </TouchableOpacity>
+  {stateError ? <Text style={styles.errorText}>{stateError}</Text> : null}
+
+  {/* State Picker Modal */}
+  <Modal
+    visible={showStatePicker}
+    animationType="slide"
+    presentationStyle="pageSheet"
+  >
+    <SafeAreaView style={styles.statePickerContainer}>
+      <View style={styles.statePickerHeader}>
+        <TouchableOpacity onPress={() => setShowStatePicker(false)}>
+          <Text style={styles.statePickerClose}>✕</Text>
+        </TouchableOpacity>
+        <Text style={styles.statePickerTitle}>Select State</Text>
+        <View style={{ width: 40 }} />
+      </View>
+      <ScrollView>
+        {usStates.map((s) => (
+          <TouchableOpacity
+            key={s}
+            style={[
+              styles.stateOption,
+              state === s && styles.stateOptionSelected,
+            ]}
+            onPress={() => {
+              setState(s);
+              setStateError('');
+              setShowStatePicker(false);
+            }}
+          >
+            <Text style={[
+              styles.stateOptionText,
+              state === s && styles.stateOptionTextSelected,
+            ]}>
+              {s}
+            </Text>
+            {state === s && <Text style={styles.stateCheckmark}>✓</Text>}
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </SafeAreaView>
+  </Modal>
+</View>
 
 {/* Climbing Types */}
 <View style={styles.inputGroup}>

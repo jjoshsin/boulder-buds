@@ -15,6 +15,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
 import { styles } from '../styles/ExploreScreen.styles';
 import gymService, { Gym } from '../services/gymService';
+import MapView, { Marker, Callout } from 'react-native-maps';
 
 type ExploreNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -26,19 +27,28 @@ export default function ExploreScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [isMapView, setIsMapView] = useState(false);
 
   // Filter states
-  const [selectedBorough, setSelectedBorough] = useState<string | null>(null);
+  const [selectedState, setSelectedState] = useState<string | null>(null);
   const [selectedPriceRange, setSelectedPriceRange] = useState<number | null>(null);
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<'nearest' | 'rating' | 'reviews'>('nearest');
 
-  const boroughs = ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island'];
+  const usStates = [
+    'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
+    'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
+    'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
+    'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
+    'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY',
+  ];
+
   const priceRanges = [
     { value: 1, label: '$' },
     { value: 2, label: '$$' },
     { value: 3, label: '$$$' },
   ];
+
   const amenities = [
     'kilter_board',
     'moon_board',
@@ -56,7 +66,7 @@ export default function ExploreScreen() {
 
   useEffect(() => {
     applyFilters();
-  }, [searchQuery, selectedBorough, selectedPriceRange, selectedAmenities, sortBy, gyms]);
+  }, [searchQuery, selectedState, selectedPriceRange, selectedAmenities, sortBy, gyms]);
 
   const fetchGyms = async () => {
     try {
@@ -74,34 +84,29 @@ export default function ExploreScreen() {
   const applyFilters = () => {
     let results = [...gyms];
 
-    // Search filter
     if (searchQuery.trim()) {
       results = results.filter(gym =>
         gym.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        gym.address?.toLowerCase().includes(searchQuery.toLowerCase())
+        gym.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        gym.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        gym.state?.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
-    // Borough filter
-    if (selectedBorough) {
-      results = results.filter(gym => gym.borough === selectedBorough);
+    if (selectedState) {
+      results = results.filter(gym => gym.state === selectedState);
     }
 
-    // Price range filter
     if (selectedPriceRange) {
       results = results.filter(gym => gym.priceRange === selectedPriceRange);
     }
 
-    // Amenities filter
     if (selectedAmenities.length > 0) {
       results = results.filter(gym =>
-        selectedAmenities.every(amenity =>
-          gym.amenities?.includes(amenity)
-        )
+        selectedAmenities.every(amenity => gym.amenities?.includes(amenity))
       );
     }
 
-    // Sorting
     results.sort((a, b) => {
       switch (sortBy) {
         case 'rating':
@@ -110,7 +115,6 @@ export default function ExploreScreen() {
           return (b.reviewCount || 0) - (a.reviewCount || 0);
         case 'nearest':
         default:
-          // Parse distance strings like "2.3 mi"
           const distA = parseFloat(a.distance?.replace(' mi', '') || '999');
           const distB = parseFloat(b.distance?.replace(' mi', '') || '999');
           return distA - distB;
@@ -129,7 +133,7 @@ export default function ExploreScreen() {
   };
 
   const clearFilters = () => {
-    setSelectedBorough(null);
+    setSelectedState(null);
     setSelectedPriceRange(null);
     setSelectedAmenities([]);
     setSortBy('nearest');
@@ -137,10 +141,37 @@ export default function ExploreScreen() {
 
   const getActiveFilterCount = () => {
     let count = 0;
-    if (selectedBorough) count++;
+    if (selectedState) count++;
     if (selectedPriceRange) count++;
     if (selectedAmenities.length > 0) count++;
     return count;
+  };
+
+  // Calculate initial map region to fit all gyms
+  const getMapRegion = () => {
+    const gymsWithCoords = filteredGyms.filter(g => g.latitude && g.longitude);
+    if (gymsWithCoords.length === 0) {
+      return {
+        latitude: 39.8283,
+        longitude: -98.5795,
+        latitudeDelta: 30,
+        longitudeDelta: 30,
+      };
+    }
+
+    const lats = gymsWithCoords.map(g => g.latitude!);
+    const lngs = gymsWithCoords.map(g => g.longitude!);
+    const minLat = Math.min(...lats);
+    const maxLat = Math.max(...lats);
+    const minLng = Math.min(...lngs);
+    const maxLng = Math.max(...lngs);
+
+    return {
+      latitude: (minLat + maxLat) / 2,
+      longitude: (minLng + maxLng) / 2,
+      latitudeDelta: Math.max((maxLat - minLat) * 1.5, 0.1),
+      longitudeDelta: Math.max((maxLng - minLng) * 1.5, 0.1),
+    };
   };
 
   const renderGymCard = (gym: Gym) => (
@@ -182,7 +213,9 @@ export default function ExploreScreen() {
           )}
         </View>
 
-        <Text style={styles.gymBorough}>{gym.borough}</Text>
+        <Text style={styles.gymBorough}>
+          {gym.city}{gym.state ? `, ${gym.state}` : ''}
+        </Text>
 
         {gym.amenities && gym.amenities.length > 0 && (
           <View style={styles.amenitiesRow}>
@@ -202,6 +235,44 @@ export default function ExploreScreen() {
     </TouchableOpacity>
   );
 
+  const renderMapView = () => (
+    <MapView
+      style={styles.map}
+      initialRegion={getMapRegion()}
+      showsUserLocation
+      showsMyLocationButton
+    >
+      {filteredGyms
+        .filter(gym => gym.latitude && gym.longitude)
+        .map(gym => (
+          <Marker
+            key={gym.id}
+            coordinate={{
+              latitude: gym.latitude!,
+              longitude: gym.longitude!,
+            }}
+            pinColor="#FF8C00"
+          >
+            <Callout
+              onPress={() => navigation.navigate('GymDetail', { gymId: gym.id })}
+            >
+              <View style={styles.callout}>
+                <Text style={styles.calloutName}>{gym.name}</Text>
+                <Text style={styles.calloutLocation}>
+                  {gym.city}{gym.state ? `, ${gym.state}` : ''}
+                </Text>
+                <Text style={styles.calloutRating}>
+                  ⭐ {gym.rating ? gym.rating.toFixed(1) : 'New'} •{' '}
+                  {gym.reviewCount || 0} reviews
+                </Text>
+                <Text style={styles.calloutTap}>Tap to view →</Text>
+              </View>
+            </Callout>
+          </Marker>
+        ))}
+    </MapView>
+  );
+
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -215,6 +286,14 @@ export default function ExploreScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Explore Gyms</Text>
+        <TouchableOpacity
+          style={styles.mapToggleButton}
+          onPress={() => setIsMapView(!isMapView)}
+        >
+          <Text style={styles.mapToggleText}>
+            {isMapView ? '📋 List' : '🗺️ Map'}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {/* Search Bar */}
@@ -223,7 +302,7 @@ export default function ExploreScreen() {
           <Text style={styles.searchIcon}>🔍</Text>
           <TextInput
             style={styles.searchInput}
-            placeholder="Search gyms..."
+            placeholder="Search gyms, cities, states..."
             placeholderTextColor="#9CA3AF"
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -236,161 +315,163 @@ export default function ExploreScreen() {
         </View>
       </View>
 
-      {/* Filter & Sort Bar */}
-      <View style={styles.filterBar}>
-        <TouchableOpacity
-          style={styles.filterButton}
-          onPress={() => setShowFilters(!showFilters)}
-        >
-          <Text style={styles.filterButtonText}>
-            🎛️ Filters {getActiveFilterCount() > 0 && `(${getActiveFilterCount()})`}
-          </Text>
-        </TouchableOpacity>
-
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sortButtons}>
-          <TouchableOpacity
-            style={[styles.sortButton, sortBy === 'nearest' && styles.sortButtonActive]}
-            onPress={() => setSortBy('nearest')}
-          >
-            <Text style={[styles.sortButtonText, sortBy === 'nearest' && styles.sortButtonTextActive]}>
-              📍 Nearest
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.sortButton, sortBy === 'rating' && styles.sortButtonActive]}
-            onPress={() => setSortBy('rating')}
-          >
-            <Text style={[styles.sortButtonText, sortBy === 'rating' && styles.sortButtonTextActive]}>
-              ⭐ Rating
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.sortButton, sortBy === 'reviews' && styles.sortButtonActive]}
-            onPress={() => setSortBy('reviews')}
-          >
-            <Text style={[styles.sortButtonText, sortBy === 'reviews' && styles.sortButtonTextActive]}>
-              💬 Reviews
-            </Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </View>
-
-      {/* Filters Panel */}
-      {showFilters && (
-        <ScrollView style={styles.filtersPanel}>
-          {/* Borough Filter */}
-          <View style={styles.filterSection}>
-            <Text style={styles.filterTitle}>Borough</Text>
-            <View style={styles.filterOptions}>
-              {boroughs.map(borough => (
-                <TouchableOpacity
-                  key={borough}
-                  style={[
-                    styles.filterChip,
-                    selectedBorough === borough && styles.filterChipActive,
-                  ]}
-                  onPress={() =>
-                    setSelectedBorough(selectedBorough === borough ? null : borough)
-                  }
-                >
-                  <Text
-                    style={[
-                      styles.filterChipText,
-                      selectedBorough === borough && styles.filterChipTextActive,
-                    ]}
-                  >
-                    {borough}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          {/* Price Range Filter */}
-          <View style={styles.filterSection}>
-            <Text style={styles.filterTitle}>Price Range</Text>
-            <View style={styles.filterOptions}>
-              {priceRanges.map(price => (
-                <TouchableOpacity
-                  key={price.value}
-                  style={[
-                    styles.filterChip,
-                    selectedPriceRange === price.value && styles.filterChipActive,
-                  ]}
-                  onPress={() =>
-                    setSelectedPriceRange(
-                      selectedPriceRange === price.value ? null : price.value
-                    )
-                  }
-                >
-                  <Text
-                    style={[
-                      styles.filterChipText,
-                      selectedPriceRange === price.value && styles.filterChipTextActive,
-                    ]}
-                  >
-                    {price.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          {/* Amenities Filter */}
-          <View style={styles.filterSection}>
-            <Text style={styles.filterTitle}>Amenities</Text>
-            <View style={styles.filterOptions}>
-              {amenities.map(amenity => (
-                <TouchableOpacity
-                  key={amenity}
-                  style={[
-                    styles.filterChip,
-                    selectedAmenities.includes(amenity) && styles.filterChipActive,
-                  ]}
-                  onPress={() => toggleAmenity(amenity)}
-                >
-                  <Text
-                    style={[
-                      styles.filterChipText,
-                      selectedAmenities.includes(amenity) && styles.filterChipTextActive,
-                    ]}
-                  >
-                    {amenity.replace(/_/g, ' ')}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          {/* Clear Filters */}
-          {getActiveFilterCount() > 0 && (
-            <TouchableOpacity style={styles.clearFiltersButton} onPress={clearFilters}>
-              <Text style={styles.clearFiltersText}>Clear All Filters</Text>
+      {/* Map View */}
+      {isMapView ? (
+        renderMapView()
+      ) : (
+        <>
+          {/* Filter & Sort Bar */}
+          <View style={styles.filterBar}>
+            <TouchableOpacity
+              style={styles.filterButton}
+              onPress={() => setShowFilters(!showFilters)}
+            >
+              <Text style={styles.filterButtonText}>
+                🎛️ Filters {getActiveFilterCount() > 0 && `(${getActiveFilterCount()})`}
+              </Text>
             </TouchableOpacity>
-          )}
-        </ScrollView>
-      )}
 
-      {/* Results */}
-      <ScrollView style={styles.resultsContainer} showsVerticalScrollIndicator={false}>
-        <Text style={styles.resultsCount}>
-          {filteredGyms.length} {filteredGyms.length === 1 ? 'gym' : 'gyms'} found
-        </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sortButtons}>
+              <TouchableOpacity
+                style={[styles.sortButton, sortBy === 'nearest' && styles.sortButtonActive]}
+                onPress={() => setSortBy('nearest')}
+              >
+                <Text style={[styles.sortButtonText, sortBy === 'nearest' && styles.sortButtonTextActive]}>
+                  📍 Nearest
+                </Text>
+              </TouchableOpacity>
 
-        {filteredGyms.length > 0 ? (
-          filteredGyms.map(renderGymCard)
-        ) : (
-          <View style={styles.noResults}>
-            <Text style={styles.noResultsEmoji}>🤷</Text>
-            <Text style={styles.noResultsText}>No gyms found</Text>
-            <Text style={styles.noResultsSubtext}>Try adjusting your filters</Text>
+              <TouchableOpacity
+                style={[styles.sortButton, sortBy === 'rating' && styles.sortButtonActive]}
+                onPress={() => setSortBy('rating')}
+              >
+                <Text style={[styles.sortButtonText, sortBy === 'rating' && styles.sortButtonTextActive]}>
+                  ⭐ Rating
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.sortButton, sortBy === 'reviews' && styles.sortButtonActive]}
+                onPress={() => setSortBy('reviews')}
+              >
+                <Text style={[styles.sortButtonText, sortBy === 'reviews' && styles.sortButtonTextActive]}>
+                  💬 Reviews
+                </Text>
+              </TouchableOpacity>
+            </ScrollView>
           </View>
-        )}
 
-        <View style={styles.bottomPadding} />
-      </ScrollView>
+          {/* Filters Panel */}
+          {showFilters && (
+            <ScrollView style={styles.filtersPanel}>
+              {/* State Filter */}
+              <View style={styles.filterSection}>
+                <Text style={styles.filterTitle}>State</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  <View style={styles.filterOptions}>
+                    {usStates.map(state => (
+                      <TouchableOpacity
+                        key={state}
+                        style={[
+                          styles.filterChip,
+                          selectedState === state && styles.filterChipActive,
+                        ]}
+                        onPress={() =>
+                          setSelectedState(selectedState === state ? null : state)
+                        }
+                      >
+                        <Text style={[
+                          styles.filterChipText,
+                          selectedState === state && styles.filterChipTextActive,
+                        ]}>
+                          {state}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </ScrollView>
+              </View>
+
+              {/* Price Range Filter */}
+              <View style={styles.filterSection}>
+                <Text style={styles.filterTitle}>Price Range</Text>
+                <View style={styles.filterOptions}>
+                  {priceRanges.map(price => (
+                    <TouchableOpacity
+                      key={price.value}
+                      style={[
+                        styles.filterChip,
+                        selectedPriceRange === price.value && styles.filterChipActive,
+                      ]}
+                      onPress={() =>
+                        setSelectedPriceRange(
+                          selectedPriceRange === price.value ? null : price.value
+                        )
+                      }
+                    >
+                      <Text style={[
+                        styles.filterChipText,
+                        selectedPriceRange === price.value && styles.filterChipTextActive,
+                      ]}>
+                        {price.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              {/* Amenities Filter */}
+              <View style={styles.filterSection}>
+                <Text style={styles.filterTitle}>Amenities</Text>
+                <View style={styles.filterOptions}>
+                  {amenities.map(amenity => (
+                    <TouchableOpacity
+                      key={amenity}
+                      style={[
+                        styles.filterChip,
+                        selectedAmenities.includes(amenity) && styles.filterChipActive,
+                      ]}
+                      onPress={() => toggleAmenity(amenity)}
+                    >
+                      <Text style={[
+                        styles.filterChipText,
+                        selectedAmenities.includes(amenity) && styles.filterChipTextActive,
+                      ]}>
+                        {amenity.replace(/_/g, ' ')}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              {getActiveFilterCount() > 0 && (
+                <TouchableOpacity style={styles.clearFiltersButton} onPress={clearFilters}>
+                  <Text style={styles.clearFiltersText}>Clear All Filters</Text>
+                </TouchableOpacity>
+              )}
+            </ScrollView>
+          )}
+
+          {/* Results */}
+          <ScrollView style={styles.resultsContainer} showsVerticalScrollIndicator={false}>
+            <Text style={styles.resultsCount}>
+              {filteredGyms.length} {filteredGyms.length === 1 ? 'gym' : 'gyms'} found
+            </Text>
+
+            {filteredGyms.length > 0 ? (
+              filteredGyms.map(renderGymCard)
+            ) : (
+              <View style={styles.noResults}>
+                <Text style={styles.noResultsEmoji}>🤷</Text>
+                <Text style={styles.noResultsText}>No gyms found</Text>
+                <Text style={styles.noResultsSubtext}>Try adjusting your filters</Text>
+              </View>
+            )}
+
+            <View style={styles.bottomPadding} />
+          </ScrollView>
+        </>
+      )}
     </SafeAreaView>
   );
 }

@@ -3,53 +3,65 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-  // Brooklyn Boulders Gowanus
-  await prisma.gym.create({
-    data: {
-      name: 'Bouldering Project Gowanus',
-      address: '575 Degraw St, Brooklyn, NY 11217',
-      borough: 'Brooklyn',
-      latitude: 40.6743,   // Fixed
-      longitude: -73.9900, // Fixed
-      officialPhotos: [],
-      amenities: ['kilter_board', 'spray_wall', 'cafe', 'training_area'],
-      priceRange: 2,
-      climbingTypes: ['bouldering', 'rope'],
-    },
-  });
+await prisma.gym.create({
+  data: {
+    name: 'Bouldering Project Gowanus',
+    address: '575 Degraw St',
+    city: 'Brooklyn',
+    state: 'NY',
+    latitude: 40.6743,
+    longitude: -73.9900,
+    officialPhotos: [],
+    amenities: ['kilter_board', 'spray_wall', 'cafe', 'training_area'],
+    priceRange: 2,
+    climbingTypes: ['bouldering', 'rope'],
+  },
+});
 
-  // Vital Climbing Gym
-  await prisma.gym.create({
-    data: {
-      name: 'Vital Climbing Gym',
-      address: '21 West End Ave, Brooklyn, NY 11235',
-      borough: 'Brooklyn',
-      latitude: 40.5759,   // Fixed
-      longitude: -73.9680, // Fixed
-      officialPhotos: [],
-      amenities: ['moon_board', 'training_area', 'showers'],
-      priceRange: 2,
-      climbingTypes: ['bouldering', 'rope'],
-    },
-  });
+await prisma.gym.create({
+  data: {
+    name: 'Vital Climbing Gym',
+    address: '21 West End Ave',
+    city: 'Brooklyn',
+    state: 'NY',
+    latitude: 40.5759,
+    longitude: -73.9680,
+    officialPhotos: [],
+    amenities: ['moon_board', 'training_area', 'showers'],
+    priceRange: 2,
+    climbingTypes: ['bouldering', 'rope'],
+  },
+});
 
-  // The Cliffs LIC
-  await prisma.gym.create({
-    data: {
-      name: 'The Cliffs at LIC',
-      address: '11-11 44th Dr, Long Island City, NY 11101',
-      borough: 'Queens',
-      latitude: 40.7448,   // Fixed
-      longitude: -73.9512, // Fixed
-      officialPhotos: [],
-      amenities: ['spray_wall', 'cafe', 'showers', 'yoga'],
-      priceRange: 3,
-      climbingTypes: ['bouldering', 'rope'],
-    },
-  });
+await prisma.gym.create({
+  data: {
+    name: 'The Cliffs at LIC',
+    address: '11-11 44th Dr',
+    city: 'Long Island City',
+    state: 'NY',
+    latitude: 40.7448,
+    longitude: -73.9512,
+    officialPhotos: [],
+    amenities: ['spray_wall', 'cafe', 'showers', 'yoga'],
+    priceRange: 3,
+    climbingTypes: ['bouldering', 'rope'],
+  },
+});
 
-  console.log('✅ Seed data created');
-}
+await prisma.gym.create({
+  data: {
+    name: 'Brooklyn Boulders Queensbridge',
+    address: '23-10 41st Ave',
+    city: 'Long Island City',
+    state: 'NY',
+    latitude: 40.7516,
+    longitude: -73.9426,
+    officialPhotos: [],
+    amenities: ['moon_board', 'kilter_board'],
+    priceRange: 2,
+    climbingTypes: ['bouldering', 'rope'],
+  },
+});
 
 main()
   .catch((e) => {

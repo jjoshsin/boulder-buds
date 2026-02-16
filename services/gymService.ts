@@ -7,11 +7,12 @@ export interface Gym {
   id: string;
   name: string;
   address?: string;
-  borough: string;
+  city: string;
+  state: string;
   latitude?: number;
   longitude?: number;
-  officialPhotos?: string[]; // Changed from photos
-  communityPhotos?: CommunityPhoto[]; // New
+  officialPhotos?: string[];
+  communityPhotos?: CommunityPhoto[];
   amenities?: string[];
   priceRange?: number;
   climbingTypes?: string[];
@@ -20,6 +21,7 @@ export interface Gym {
   distance?: string;
   tags?: string[];
   reviews?: Review[];
+  likeCount?: number;
 }
 
 export interface CommunityPhoto {
@@ -46,46 +48,41 @@ export interface Review {
 }
 
 class GymService {
-  async getPopularGyms(): Promise<Gym[]> {
-    try {
-      const token = await SecureStore.getItemAsync('authToken');
-      
-      const response = await fetch(`${API_URL}/gyms/popular`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch popular gyms');
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Get popular gyms error:', error);
-      throw error;
-    }
-  }
-
-async getNearbyGyms(): Promise<Gym[]> {
+async getPopularGyms(climbingType?: string | null): Promise<Gym[]> {
   try {
     const token = await SecureStore.getItemAsync('authToken');
     
-    const response = await fetch(`${API_URL}/gyms/nearby`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
+    const url = climbingType && climbingType !== 'both'
+      ? `${API_URL}/gyms/popular?climbingType=${climbingType}`
+      : `${API_URL}/gyms/popular`;
+
+    const response = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${token}` },
     });
 
-    if (!response.ok) {
-      throw new Error('Failed to fetch nearby gyms');
-    }
+    if (!response.ok) throw new Error('Failed to fetch popular gyms');
+    return await response.json();
+  } catch (error) {
+    console.error('Get popular gyms error:', error);
+    throw error;
+  }
+}
+
+async getNearbyGyms(climbingType?: string | null): Promise<Gym[]> {
+  try {
+    const token = await SecureStore.getItemAsync('authToken');
+    
+    const url = climbingType && climbingType !== 'both'
+      ? `${API_URL}/gyms/nearby?climbingType=${climbingType}`
+      : `${API_URL}/gyms/nearby`;
+
+    const response = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+
+    if (!response.ok) throw new Error('Failed to fetch nearby gyms');
 
     const gyms: Gym[] = await response.json();
-
-    // Get user's real GPS location
     const userLocation = await locationService.getCurrentLocation();
 
     if (userLocation) {
@@ -97,15 +94,11 @@ async getNearbyGyms(): Promise<Gym[]> {
             gym.latitude,
             gym.longitude
           );
-          return {
-            ...gym,
-            distance: `${distance} mi`,
-          };
+          return { ...gym, distance: `${distance} mi` };
         }
         return gym;
       });
 
-      // Sort by closest first
       return gymsWithDistance.sort((a, b) => {
         const distA = parseFloat(a.distance?.replace(' mi', '') || '999');
         const distB = parseFloat(b.distance?.replace(' mi', '') || '999');

@@ -152,4 +152,68 @@ errorText: {
   color: '#EF4444',
   marginTop: 6,
 },
+stateSelector: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+},
+stateSelectorText: {
+  fontSize: 16,
+  color: '#1F2937',
+},
+statePlaceholder: {
+  fontSize: 16,
+  color: '#9CA3AF',
+},
+stateChevron: {
+  fontSize: 14,
+  color: '#6B7280',
+},
+statePickerContainer: {
+  flex: 1,
+  backgroundColor: '#FFFFFF',
+},
+statePickerHeader: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  paddingHorizontal: 20,
+  paddingVertical: 16,
+  borderBottomWidth: 1,
+  borderBottomColor: '#E5E7EB',
+},
+statePickerClose: {
+  fontSize: 24,
+  color: '#1F2937',
+  width: 40,
+},
+statePickerTitle: {
+  fontSize: 18,
+  fontWeight: '600',
+  color: '#1F2937',
+},
+stateOption: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  paddingHorizontal: 20,
+  paddingVertical: 16,
+  borderBottomWidth: 1,
+  borderBottomColor: '#F3F4F6',
+},
+stateOptionSelected: {
+  backgroundColor: '#FFF7ED',
+},
+stateOptionText: {
+  fontSize: 16,
+  color: '#1F2937',
+},
+stateOptionTextSelected: {
+  color: '#FF8C00',
+  fontWeight: '600',
+},
+stateCheckmark: {
+  fontSize: 18,
+  color: '#FF8C00',
+},
 });

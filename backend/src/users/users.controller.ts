@@ -20,7 +20,8 @@ export class UsersController {
     @Body() body: { 
       displayName?: string; 
       birthday?: string; 
-      borough?: string;
+      city?: string;
+      state?: string;
       climbingLevel?: string;
       climbingType?: string;
     },

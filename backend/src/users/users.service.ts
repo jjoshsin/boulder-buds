@@ -18,7 +18,6 @@ export class UsersService {
     });
     this.bucketName = process.env.AWS_S3_BUCKET;
   }
-    
 
   async getUser(userId: string) {
     const user = await this.prisma.user.findUnique({
@@ -34,7 +33,8 @@ export class UsersService {
       email: user.email,
       displayName: user.displayName,
       birthday: user.birthday,
-      borough: user.borough,
+      city: user.city,
+      state: user.state,
       climbingLevel: user.climbingLevel,
       climbingType: user.climbingType,
     };
@@ -44,8 +44,9 @@ export class UsersService {
     userId: string,
     data: { 
       displayName?: string; 
-      birthday?: string; 
-      borough?: string;
+      birthday?: string;
+      city?: string;
+      state?: string;
       climbingLevel?: string;
       climbingType?: string;
     },
@@ -63,7 +64,8 @@ export class UsersService {
       data: {
         displayName: data.displayName,
         birthday: data.birthday,
-        borough: data.borough,
+        city: data.city,
+        state: data.state,
         climbingLevel: data.climbingLevel,
         climbingType: data.climbingType,
       },
@@ -73,6 +75,9 @@ export class UsersService {
       id: updatedUser.id,
       email: updatedUser.email,
       displayName: updatedUser.displayName,
+      city: updatedUser.city,
+      state: updatedUser.state,
+      climbingType: updatedUser.climbingType,
     };
   }
 
@@ -84,7 +89,8 @@ export class UsersService {
           select: {
             id: true,
             name: true,
-            borough: true,
+            city: true,
+            state: true,
           },
         },
       },
@@ -104,6 +110,8 @@ export class UsersService {
           select: {
             id: true,
             name: true,
+            city: true,
+            state: true,
           },
         },
       },
@@ -115,7 +123,6 @@ export class UsersService {
     return photos;
   }
 
-  // NEW: Get follower/following stats
   async getFollowStats(userId: string) {
     const [followersCount, followingCount] = await Promise.all([
       this.prisma.follow.count({ where: { followingId: userId } }),
@@ -128,7 +135,6 @@ export class UsersService {
     };
   }
 
-  // NEW: Get followers list
   async getFollowers(userId: string) {
     const followers = await this.prisma.follow.findMany({
       where: { followingId: userId },
@@ -138,7 +144,8 @@ export class UsersService {
             id: true,
             displayName: true,
             climbingLevel: true,
-            borough: true,
+            city: true,
+            state: true,
           },
         },
       },
@@ -150,7 +157,6 @@ export class UsersService {
     return followers.map(f => f.follower);
   }
 
-  // NEW: Get following list
   async getFollowing(userId: string) {
     const following = await this.prisma.follow.findMany({
       where: { followerId: userId },
@@ -160,7 +166,8 @@ export class UsersService {
             id: true,
             displayName: true,
             climbingLevel: true,
-            borough: true,
+            city: true,
+            state: true,
           },
         },
       },
@@ -172,7 +179,6 @@ export class UsersService {
     return following.map(f => f.following);
   }
 
-  // NEW: Search users
   async searchUsers(query: string, currentUserId: string) {
     const users = await this.prisma.user.findMany({
       where: {
@@ -183,7 +189,7 @@ export class UsersService {
               { email: { contains: query, mode: 'insensitive' } },
             ],
           },
-          { id: { not: currentUserId } }, // Exclude current user
+          { id: { not: currentUserId } },
         ],
       },
       select: {
@@ -191,7 +197,8 @@ export class UsersService {
         displayName: true,
         email: true,
         climbingLevel: true,
-        borough: true,
+        city: true,
+        state: true,
       },
       take: 20,
     });
@@ -208,7 +215,6 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    // Upload to S3
     const key = `profile-photos/${uuidv4()}-${file.originalname}`;
     const command = new PutObjectCommand({
       Bucket: this.bucketName,
@@ -221,7 +227,6 @@ export class UsersService {
 
     const photoUrl = `https://${this.bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
 
-    // Update user
     const updatedUser = await this.prisma.user.update({
       where: { id: userId },
       data: { profilePhoto: photoUrl },

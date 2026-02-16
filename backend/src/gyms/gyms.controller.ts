@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Patch, UseGuards, Body, Request } from '@nestjs/common';
+import { Controller, Get, Param, Post, Patch, UseGuards, Body, Request, Query } from '@nestjs/common';
 import { GymsService } from './gyms.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -12,17 +12,17 @@ export class GymsController {
     return this.gymsService.getAllGyms();
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Get('popular')
-  async getPopularGyms() {
-    return this.gymsService.getPopularGyms();
-  }
+@UseGuards(JwtAuthGuard)
+@Get('popular')
+async getPopularGyms(@Query('climbingType') climbingType?: string) {
+  return this.gymsService.getPopularGyms(climbingType);
+}
 
-  @UseGuards(JwtAuthGuard)
-  @Get('nearby')
-  async getNearbyGyms() {
-    return this.gymsService.getNearbyGyms();
-  }
+@UseGuards(JwtAuthGuard)
+@Get('nearby')
+async getNearbyGyms(@Query('climbingType') climbingType?: string) {
+  return this.gymsService.getNearbyGyms(climbingType);
+}
 
   @UseGuards(JwtAuthGuard)
   @Get(':id')
@@ -79,7 +79,8 @@ export class GymsController {
   async createGym(@Body() body: {
     name: string;
     address: string;
-    borough: string;
+    city: string;
+    state: string;
     latitude?: number;  // Optional now
     longitude?: number; // Optional now
     amenities?: string[];

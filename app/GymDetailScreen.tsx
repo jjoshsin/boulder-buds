@@ -214,12 +214,12 @@ export default function GymDetailScreen() {
           </View>
         </View>
           {/* Address */}
-          <View style={styles.addressRow}>
-            <View style={styles.addressInfo}>
-              <Text style={styles.address}>{gym.address || 'Address not available'}</Text>
-              <Text style={styles.borough}>{gym.borough || ''}</Text>
-            </View>
-          </View>
+<View style={styles.addressRow}>
+  <View style={styles.addressInfo}>
+    <Text style={styles.address}>{gym.address || 'Address not available'}</Text>
+    <Text style={styles.borough}>{gym.city}, {gym.state}</Text>
+  </View>
+</View>
 
           {/* Climbing Types */}
           {gym.climbingTypes && gym.climbingTypes.length > 0 && (

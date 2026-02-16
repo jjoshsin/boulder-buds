@@ -185,7 +185,7 @@ class AuthService {
 
   async updateUserPreferences(
     userId: string, 
-    preferences: { climbingLevel: string; climbingType: string }
+    preferences: { climbingLevel?: string; climbingType?: string }
   ): Promise<void> {
     try {
       const token = await this.getStoredToken();
