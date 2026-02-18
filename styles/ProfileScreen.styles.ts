@@ -83,11 +83,17 @@ export const styles = StyleSheet.create({
     color: '#6B7280',
   },
   settingsButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  width: 40,
+  height: 40,
+  borderRadius: 20,
+  backgroundColor: '#F3F4F6',
+  justifyContent: 'center',
+  alignItems: 'center',
+  marginLeft: 'auto',
+},
+settingsButtonText: {
+  fontSize: 20,
+},
   settingsIcon: {
     fontSize: 24,
   },
@@ -310,4 +316,15 @@ export const styles = StyleSheet.create({
   bottomPadding: {
     height: 40,
   },
+  reviewsHeader: {
+  paddingHorizontal: 20,
+  paddingVertical: 16,
+  borderBottomWidth: 1,
+  borderBottomColor: '#F3F4F6',
+},
+reviewsTitle: {
+  fontSize: 18,
+  fontWeight: '700',
+  color: '#1F2937',
+},
 });

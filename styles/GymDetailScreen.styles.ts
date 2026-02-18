@@ -370,4 +370,13 @@ addAmenitiesText: {
   fontWeight: '600',
   color: '#6B7280',
 },
+primaryButtonFull: {
+  flex: 1,
+  backgroundColor: '#FF8C00',
+  paddingVertical: 14,
+  borderRadius: 12,
+  alignItems: 'center',
+  marginHorizontal: 20,
+  marginTop: 16,
+},
 });

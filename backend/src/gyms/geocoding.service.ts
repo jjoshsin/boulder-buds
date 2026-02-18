@@ -13,8 +13,8 @@ export class GeocodingService {
 
 async geocodeAddress(address: string, city: string, state: string): Promise<{ lat: number; lng: number } | null> {
   try {
-    const normalizedAddress = address.replace(/(\d+)-(\d+)/, '$1$2');
-    const fullAddress = `${normalizedAddress}, ${city}, ${state}`;
+    // Use full address with city and state for better accuracy
+    const fullAddress = `${address}, ${city}, ${state}, USA`;
 
     console.log(`🗺️ Geocoding address: ${fullAddress}`);
 
@@ -31,19 +31,7 @@ async geocodeAddress(address: string, city: string, state: string): Promise<{ la
       return { lat: location.lat, lng: location.lng };
     }
 
-    // Fallback: try original address
-    const fallbackResponse = await this.client.geocode({
-      params: {
-        address: `${address}, ${city}, ${state}`,
-        key: this.apiKey,
-      },
-    });
-
-    if (fallbackResponse.data.results && fallbackResponse.data.results.length > 0) {
-      const location = fallbackResponse.data.results[0].geometry.location;
-      return { lat: location.lat, lng: location.lng };
-    }
-
+    console.log(`❌ No results found for: ${fullAddress}`);
     return null;
   } catch (error) {
     console.error('Geocoding error:', error);

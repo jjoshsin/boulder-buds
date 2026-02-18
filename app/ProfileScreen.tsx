@@ -15,7 +15,7 @@ import { RootStackParamList } from '../App';
 import { styles } from '../styles/ProfileScreen.styles';
 import * as SecureStore from 'expo-secure-store';
 import * as ImagePicker from 'expo-image-picker';
-
+import PhotoGrid from './components/PhotoGrid';
 type ProfileNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 interface ProfileScreenProps {
@@ -29,7 +29,8 @@ interface UserProfile {
   profilePhoto?: string;
   climbingLevel?: string;
   climbingType?: string;
-  borough?: string;
+  city?: string;
+  state?: string;
   age?: string;
 }
 
@@ -39,20 +40,12 @@ interface UserReview {
   reviewText?: string;
   createdAt: string;
   tags: string[];
+  photos: string[];
   gym: {
     id: string;
     name: string;
-    borough: string;
-  };
-}
-
-interface CommunityPhoto {
-  id: string;
-  url: string;
-  createdAt: string;
-  gym: {
-    id: string;
-    name: string;
+    city: string;
+    state: string;
   };
 }
 
@@ -61,12 +54,10 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
 
   const [user, setUser] = useState<UserProfile | null>(null);
   const [reviews, setReviews] = useState<UserReview[]>([]);
-  const [photos, setPhotos] = useState<CommunityPhoto[]>([]);
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
-  const [activeTab, setActiveTab] = useState<'reviews' | 'photos'>('reviews');
 
   useEffect(() => {
     loadProfileData();
@@ -83,11 +74,8 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
 
         const token = await SecureStore.getItemAsync('authToken');
         
-        const [reviewsRes, photosRes, statsRes, userRes] = await Promise.all([
+        const [reviewsRes, statsRes, userRes] = await Promise.all([
           fetch(`http://192.168.1.166:3000/users/${userData.id}/reviews`, {
-            headers: { 'Authorization': `Bearer ${token}` },
-          }),
-          fetch(`http://192.168.1.166:3000/users/${userData.id}/photos`, {
             headers: { 'Authorization': `Bearer ${token}` },
           }),
           fetch(`http://192.168.1.166:3000/users/${userData.id}/follow-stats`, {
@@ -101,18 +89,12 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
         if (userRes.ok) {
           const freshUserData = await userRes.json();
           setUser(freshUserData);
-          // Update stored user data
           await SecureStore.setItemAsync('user', JSON.stringify(freshUserData));
         }
 
         if (reviewsRes.ok) {
           const reviewsData = await reviewsRes.json();
           setReviews(reviewsData);
-        }
-
-        if (photosRes.ok) {
-          const photosData = await photosRes.json();
-          setPhotos(photosData);
         }
 
         if (statsRes.ok) {
@@ -175,7 +157,6 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
           const data = await response.json();
           setUser({ ...user, profilePhoto: data.profilePhoto });
           
-          // Update stored user data
           const updatedUser = { ...user, profilePhoto: data.profilePhoto };
           await SecureStore.setItemAsync('user', JSON.stringify(updatedUser));
           
@@ -248,7 +229,9 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
       <View style={styles.reviewHeader}>
         <View style={styles.reviewGymInfo}>
           <Text style={styles.reviewGymName}>{review.gym.name}</Text>
-          <Text style={styles.reviewGymBorough}>{review.gym.borough}</Text>
+          <Text style={styles.reviewGymBorough}>
+            {review.gym.city}{review.gym.state ? `, ${review.gym.state}` : ''}
+          </Text>
         </View>
         <Text style={styles.reviewRating}>⭐ {review.overallRating.toFixed(1)}</Text>
       </View>
@@ -267,6 +250,11 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
             </View>
           ))}
         </View>
+      )}
+
+      {/* Photo Grid */}
+      {review.photos && review.photos.length > 0 && (
+        <PhotoGrid photos={review.photos} />
       )}
 
       <View style={styles.reviewFooter}>
@@ -289,21 +277,6 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
             <Text style={[styles.reviewActionText, styles.reviewActionDelete]}>Delete</Text>
           </TouchableOpacity>
         </View>
-      </View>
-    </TouchableOpacity>
-  );
-
-  const renderPhoto = (photo: CommunityPhoto) => (
-    <TouchableOpacity
-      key={photo.id}
-      style={styles.photoCard}
-      onPress={() => navigation.navigate('GymDetail', { gymId: photo.gym.id })}
-    >
-      <Image source={{ uri: photo.url }} style={styles.photoImage} resizeMode="cover" />
-      <View style={styles.photoOverlay}>
-        <Text style={styles.photoGymName} numberOfLines={1}>
-          {photo.gym.name}
-        </Text>
       </View>
     </TouchableOpacity>
   );
@@ -357,12 +330,12 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
             </View>
           </View>
 
-          <TouchableOpacity 
-  style={styles.settingsButton} 
-  onPress={() => navigation.navigate('Settings')}
->
-  <Text style={styles.settingsIcon}>⚙️</Text>
-</TouchableOpacity>
+          <TouchableOpacity
+            style={styles.settingsButton}
+            onPress={() => navigation.navigate('Settings', { onLogout: onLogout })}
+          >
+            <Text style={styles.settingsButtonText}>⚙️</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Stats */}
@@ -396,65 +369,36 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
         </View>
 
         {/* User Details */}
-        {(user.climbingType || user.borough) && (
+        {(user.climbingType || user.city) && (
           <View style={styles.detailsContainer}>
             {user.climbingType && (
               <View style={styles.detailChip}>
                 <Text style={styles.detailChipText}>🧗 {user.climbingType}</Text>
               </View>
             )}
-            {user.borough && (
+            {user.city && user.state && (
               <View style={styles.detailChip}>
-                <Text style={styles.detailChipText}>📍 {user.borough}</Text>
+                <Text style={styles.detailChipText}>📍 {user.city}, {user.state}</Text>
               </View>
             )}
           </View>
         )}
 
-        {/* Tabs */}
-        <View style={styles.tabsContainer}>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'reviews' && styles.tabActive]}
-            onPress={() => setActiveTab('reviews')}
-          >
-            <Text style={[styles.tabText, activeTab === 'reviews' && styles.tabTextActive]}>
-              Reviews ({reviews.length})
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'photos' && styles.tabActive]}
-            onPress={() => setActiveTab('photos')}
-          >
-            <Text style={[styles.tabText, activeTab === 'photos' && styles.tabTextActive]}>
-              Photos ({photos.length})
-            </Text>
-          </TouchableOpacity>
+        {/* Reviews Section Title */}
+        <View style={styles.reviewsHeader}>
+          <Text style={styles.reviewsTitle}>Reviews ({reviews.length})</Text>
         </View>
 
         {/* Content */}
         <View style={styles.contentContainer}>
-          {activeTab === 'reviews' ? (
-            reviews.length > 0 ? (
-              reviews.map(renderReview)
-            ) : (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyStateEmoji}>✍️</Text>
-                <Text style={styles.emptyStateText}>No reviews yet</Text>
-                <Text style={styles.emptyStateSubtext}>Start reviewing gyms to see them here</Text>
-              </View>
-            )
+          {reviews.length > 0 ? (
+            reviews.map(renderReview)
           ) : (
-            photos.length > 0 ? (
-              <View style={styles.photosGrid}>
-                {photos.map(renderPhoto)}
-              </View>
-            ) : (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyStateEmoji}>📸</Text>
-                <Text style={styles.emptyStateText}>No photos yet</Text>
-                <Text style={styles.emptyStateSubtext}>Upload photos to gyms to see them here</Text>
-              </View>
-            )
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateEmoji}>✍️</Text>
+              <Text style={styles.emptyStateText}>No reviews yet</Text>
+              <Text style={styles.emptyStateSubtext}>Start reviewing gyms to see them here</Text>
+            </View>
           )}
         </View>
 

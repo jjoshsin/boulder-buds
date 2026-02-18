@@ -26,6 +26,7 @@ interface Activity {
   gymId: string;
   rating?: number;
   text?: string;
+  photos?: string[];
   photoUrl?: string;
   createdAt: string;
 }
@@ -176,10 +177,21 @@ const renderActivity = (activity: Activity, index: number) => {
             "{activity.text}"
           </Text>
         )}
+        
+        {/* Show first photo if review has photos */}
+        {activity.photos && activity.photos.length > 0 && (
+          <Image 
+            source={{ uri: activity.photos[0] }} 
+            style={styles.activityPhoto}
+            resizeMode="cover"
+          />
+        )}
+        
         <Text style={styles.activityTime}>{getTimeAgo(activity.createdAt)}</Text>
       </TouchableOpacity>
     );
   } else {
+    // Keep photo activity as-is
     return (
       <TouchableOpacity 
         key={index} 
@@ -190,12 +202,17 @@ const renderActivity = (activity: Activity, index: number) => {
           <Text style={styles.activityUser}>{activity.user}</Text> added a photo to{' '}
           <Text style={styles.activityGym}>{activity.gym}</Text>
         </Text>
-        {activity.photoUrl && (
+        {activity.photoUrl && !activity.photoUrl.toLowerCase().endsWith('.heic') && (
           <Image 
             source={{ uri: activity.photoUrl }} 
             style={styles.activityPhoto}
             resizeMode="cover"
           />
+        )}
+        {activity.photoUrl && activity.photoUrl.toLowerCase().endsWith('.heic') && (
+          <View style={[styles.activityPhoto, { backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' }]}>
+            <Text style={{ fontSize: 32 }}>📸</Text>
+          </View>
         )}
         <Text style={styles.activityTime}>{getTimeAgo(activity.createdAt)}</Text>
       </TouchableOpacity>

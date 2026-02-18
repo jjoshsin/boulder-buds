@@ -98,75 +98,78 @@ export class FollowsService {
     }
 
     // Get recent reviews from followed users
-    const reviews = await this.prisma.review.findMany({
-      where: {
-        userId: { in: followingIds },
+const reviews = await this.prisma.review.findMany({
+  where: {
+    userId: { in: followingIds },
+  },
+  include: {
+    user: {
+      select: {
+        displayName: true,
       },
-      include: {
-        user: {
-          select: {
-            displayName: true,
-          },
-        },
-        gym: {
-          select: {
-            name: true,
-          },
-        },
+    },
+    gym: {
+      select: {
+        id: true, 
+        name: true,
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
-      take: limit,
-    });
+    },
+  },
+  orderBy: {
+    createdAt: 'desc',
+  },
+  take: limit,
+});
 
-    // Get recent community photos from followed users
-    const photos = await this.prisma.communityPhoto.findMany({
-      where: {
-        userId: { in: followingIds },
+// Get recent community photos from followed users
+const photos = await this.prisma.communityPhoto.findMany({
+  where: {
+    userId: { in: followingIds },
+  },
+  include: {
+    user: {
+      select: {
+        displayName: true,
       },
-      include: {
-        user: {
-          select: {
-            displayName: true,
-          },
-        },
-        gym: {
-          select: {
-            name: true,
-          },
-        },
+    },
+    gym: {
+      select: {
+        id: true,  
+        name: true,
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
-      take: limit,
-    });
+    },
+  },
+  orderBy: {
+    createdAt: 'desc',
+  },
+  take: limit,
+});
 
-    // Combine and sort by date
-    const activities = [
-      ...reviews.map(review => ({
-        type: 'review' as const,
-        id: review.id,
-        user: review.user.displayName,
-        gym: review.gym.name,
-        gymId: review.gymId,
-        rating: review.overallRating,
-        text: review.reviewText,
-        createdAt: review.createdAt,
-      })),
-      ...photos.map(photo => ({
-        type: 'photo' as const,
-        id: photo.id,
-        user: photo.user.displayName,
-        gym: photo.gym.name,
-        gymId: photo.gymId,
-        photoUrl: photo.url,
-        createdAt: photo.createdAt,
-      })),
-    ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-     .slice(0, limit);
+// Combine and sort by date
+const activities = [
+  ...reviews.map(review => ({
+    type: 'review' as const,
+    id: review.id,
+    user: review.user.displayName,
+    gym: review.gym.name,
+    gymId: review.gymId,
+    rating: review.overallRating,
+    text: review.reviewText,
+    photos: review.photos || [],
+    createdAt: review.createdAt.toISOString(),  // Convert to string
+  })),
+  ...photos.map(photo => ({
+    type: 'photo' as const,
+    id: photo.id,
+    user: photo.user.displayName,
+    gym: photo.gym.name,
+    gymId: photo.gymId,
+    photoUrl: photo.url,
+    createdAt: photo.createdAt.toISOString(),  // Convert to string
+  })),
+].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+ .slice(0, limit);
 
-    return activities;
+return activities;
   }
 }

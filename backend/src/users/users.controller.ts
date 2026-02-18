@@ -1,4 +1,4 @@
-import { Controller, Patch, Get, Param, Body, UseGuards, Request, Query, Post, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Patch, Get, Param, Body, UseGuards, Request, Query, Post, UseInterceptors, UploadedFile, UnauthorizedException, Delete } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -81,4 +81,19 @@ export class UsersController {
     }
     return this.usersService.updateProfilePhoto(id, file);
   }
+
+  @UseGuards(JwtAuthGuard)
+@Delete(':id')
+async deleteAccount(
+  @Param('id') id: string,
+  @Request() req,
+) {
+  // Security: Only allow users to delete their own account
+  if (req.user.userId !== id) {
+    throw new UnauthorizedException('You can only delete your own account');
+  }
+
+  await this.usersService.deleteAccount(id);
+  return { message: 'Account successfully deleted' };
+}
 }

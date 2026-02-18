@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -21,6 +21,7 @@ type ExploreNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function ExploreScreen() {
   const navigation = useNavigation<ExploreNavigationProp>();
+  const mapRef = useRef<MapView>(null);
 
   const [gyms, setGyms] = useState<Gym[]>([]);
   const [filteredGyms, setFilteredGyms] = useState<Gym[]>([]);
@@ -147,7 +148,6 @@ export default function ExploreScreen() {
     return count;
   };
 
-  // Calculate initial map region to fit all gyms
   const getMapRegion = () => {
     const gymsWithCoords = filteredGyms.filter(g => g.latitude && g.longitude);
     if (gymsWithCoords.length === 0) {
@@ -172,6 +172,17 @@ export default function ExploreScreen() {
       latitudeDelta: Math.max((maxLat - minLat) * 1.5, 0.1),
       longitudeDelta: Math.max((maxLng - minLng) * 1.5, 0.1),
     };
+  };
+
+  const handleMarkerPress = (gym: Gym) => {
+    if (mapRef.current && gym.latitude && gym.longitude) {
+      mapRef.current.animateToRegion({
+        latitude: gym.latitude,
+        longitude: gym.longitude,
+        latitudeDelta: 0.005,
+        longitudeDelta: 0.005,
+      }, 500);
+    }
   };
 
   const renderGymCard = (gym: Gym) => (
@@ -237,6 +248,7 @@ export default function ExploreScreen() {
 
   const renderMapView = () => (
     <MapView
+      ref={mapRef}
       style={styles.map}
       initialRegion={getMapRegion()}
       showsUserLocation
@@ -252,6 +264,7 @@ export default function ExploreScreen() {
               longitude: gym.longitude!,
             }}
             pinColor="#FF8C00"
+            onPress={() => handleMarkerPress(gym)}
           >
             <Callout
               onPress={() => navigation.navigate('GymDetail', { gymId: gym.id })}

@@ -2,13 +2,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
+import { UploadService } from '../upload/upload.service';
 
 @Injectable()
 export class UsersService {
   private s3Client: S3Client;
   private bucketName: string;
 
-  constructor(private prisma: PrismaService) {
+  constructor(private prisma: PrismaService, private uploadService: UploadService) {
     this.s3Client = new S3Client({
       region: process.env.AWS_REGION,
       credentials: {
@@ -234,4 +235,60 @@ export class UsersService {
 
     return { profilePhoto: updatedUser.profilePhoto };
   }
+
+  async deleteAccount(userId: string): Promise<void> {
+  console.log(`🗑️ Starting account deletion for user ${userId}`);
+
+  // 1. Collect all S3 photo URLs that need to be deleted
+  const photoUrls: string[] = [];
+
+  // Get user's profile photo
+  const user = await this.prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+
+  if (user.profilePhoto) {
+    photoUrls.push(user.profilePhoto);
+  }
+
+  // Get all review photos by this user
+  const reviews = await this.prisma.review.findMany({
+    where: { userId },
+    select: { photos: true },
+  });
+
+  reviews.forEach(review => {
+    if (review.photos && review.photos.length > 0) {
+      photoUrls.push(...review.photos);
+    }
+  });
+
+  // Get all community photos by this user
+  const communityPhotos = await this.prisma.communityPhoto.findMany({
+    where: { userId },
+    select: { url: true },
+  });
+
+  communityPhotos.forEach(photo => {
+    photoUrls.push(photo.url);
+  });
+
+  console.log(`📸 Found ${photoUrls.length} photos to delete from S3`);
+
+  // 2. Delete all photos from S3
+  if (photoUrls.length > 0) {
+    await this.uploadService.deleteImages(photoUrls);
+  }
+
+  // 3. Delete user from database (cascades will handle related records)
+  await this.prisma.user.delete({
+    where: { id: userId },
+  });
+
+  console.log(`✅ Successfully deleted account for user ${userId}`);
+}
 }

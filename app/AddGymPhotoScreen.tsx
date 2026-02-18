@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { styles } from '../styles/AddGymPhotoScreen.styles';
 import uploadService from '../services/uploadService';
 import gymService from '../services/gymService';
@@ -34,13 +35,26 @@ export default function AddGymPhotoScreen({ onClose, preselectedGym }: AddGymPho
     }
   }, []);
 
-
   const loadGyms = async () => {
     try {
       const allGyms = await gymService.getAllGyms();
       setGyms(allGyms);
     } catch (error) {
       console.error('Error loading gyms:', error);
+    }
+  };
+
+  const convertToJpeg = async (uri: string): Promise<string> => {
+    try {
+      const manipulatedImage = await ImageManipulator.manipulateAsync(
+        uri,
+        [],
+        { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+      );
+      return manipulatedImage.uri;
+    } catch (error) {
+      console.error('Error converting image:', error);
+      return uri; // Fallback to original if conversion fails
     }
   };
 
@@ -54,15 +68,20 @@ export default function AddGymPhotoScreen({ onClose, preselectedGym }: AddGymPho
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsMultipleSelection: true,
+        mediaTypes: ['images'],
+        allowsEditing: true,
         quality: 0.8,
-        aspect: [16, 9],
+        exif: false,
+        base64: false,
+        allowsMultipleSelection: false,
       });
 
       if (!result.canceled) {
-        const uris = result.assets.map(asset => asset.uri);
-        setSelectedImages([...selectedImages, ...uris]);
+        // Convert all images to JPEG
+        const convertedUris = await Promise.all(
+          result.assets.map(asset => convertToJpeg(asset.uri))
+        );
+        setSelectedImages([...selectedImages, ...convertedUris]);
       }
     } catch (error) {
       console.error('Error picking image:', error);
@@ -85,7 +104,8 @@ export default function AddGymPhotoScreen({ onClose, preselectedGym }: AddGymPho
       });
 
       if (!result.canceled) {
-        setSelectedImages([...selectedImages, result.assets[0].uri]);
+        const convertedUri = await convertToJpeg(result.assets[0].uri);
+        setSelectedImages([...selectedImages, convertedUri]);
       }
     } catch (error) {
       console.error('Error taking photo:', error);
@@ -94,55 +114,55 @@ export default function AddGymPhotoScreen({ onClose, preselectedGym }: AddGymPho
   };
 
   const handleUpload = async () => {
-  if (!selectedGym) {
-    Alert.alert('Select a gym', 'Please select which gym these photos are for');
-    return;
-  }
-
-  if (selectedImages.length === 0) {
-    Alert.alert('No photos', 'Please add at least one photo');
-    return;
-  }
-
-  try {
-    setIsUploading(true);
-
-    // Upload all images to S3
-    const uploadPromises = selectedImages.map(uri => uploadService.uploadImage(uri));
-    const imageUrls = await Promise.all(uploadPromises);
-
-    console.log('✅ Uploaded images:', imageUrls);
-
-    // Save as community photos (one at a time)
-    const token = await SecureStore.getItemAsync('authToken');
-    
-    for (const url of imageUrls) {
-      const response = await fetch(`http://192.168.1.166:3000/gyms/${selectedGym}/community-photos`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ 
-          url: url,
-          caption: null, // Add caption input later if you want
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to save community photo');
-      }
+    if (!selectedGym) {
+      Alert.alert('Select a gym', 'Please select which gym these photos are for');
+      return;
     }
 
-    Alert.alert('Success', `Uploaded ${imageUrls.length} photo(s) to ${gyms.find(g => g.id === selectedGym)?.name}`);
-    onClose();
-  } catch (error) {
-    console.error('Upload error:', error);
-    Alert.alert('Error', 'Failed to upload photos. Please try again.');
-  } finally {
-    setIsUploading(false);
-  }
-};
+    if (selectedImages.length === 0) {
+      Alert.alert('No photos', 'Please add at least one photo');
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+
+      // Upload all images to S3 (already converted to JPEG)
+      const uploadPromises = selectedImages.map(uri => uploadService.uploadImage(uri));
+      const imageUrls = await Promise.all(uploadPromises);
+
+      console.log('✅ Uploaded images:', imageUrls);
+
+      // Save as community photos
+      const token = await SecureStore.getItemAsync('authToken');
+      
+      for (const url of imageUrls) {
+        const response = await fetch(`http://192.168.1.166:3000/gyms/${selectedGym}/community-photos`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({ 
+            url: url,
+            caption: null,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to save community photo');
+        }
+      }
+
+      Alert.alert('Success', `Uploaded ${imageUrls.length} photo(s) to ${gyms.find(g => g.id === selectedGym)?.name}`);
+      onClose();
+    } catch (error) {
+      console.error('Upload error:', error);
+      Alert.alert('Error', 'Failed to upload photos. Please try again.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>

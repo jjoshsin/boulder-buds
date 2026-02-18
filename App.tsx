@@ -35,7 +35,7 @@ export type RootStackParamList = {
   };
   FollowList: { userId: string; tab: 'followers' | 'following' };
   UserProfile: { userId: string };
-  Settings: undefined;
+  Settings: { onLogout?: () => void };
 };
 
 export type TabParamList = {

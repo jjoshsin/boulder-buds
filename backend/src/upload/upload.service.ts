@@ -3,6 +3,7 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
 import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 
+
 @Injectable()
 export class UploadService {
   private s3Client: S3Client;
@@ -52,6 +53,25 @@ export class UploadService {
   } catch (error) {
     // Don't throw - if S3 delete fails, still delete from DB
     console.error('Failed to delete S3 object:', error);
+  }
+}
+
+async deleteImages(imageUrls: string[]): Promise<void> {
+  try {
+    for (const imageUrl of imageUrls) {
+      const url = new URL(imageUrl);
+      const key = url.pathname.substring(1); // Remove leading slash
+
+      const command = new DeleteObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+      });
+
+      await this.s3Client.send(command);
+      console.log(`✅ Deleted S3 object: ${key}`);
+    }
+  } catch (error) {
+    console.error('Failed to delete S3 objects:', error);
   }
 }
 }

@@ -7,6 +7,93 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  password      String
+  displayName   String
+  profilePhoto  String?
+  age           String?
+  birthday      String?
+  city          String?
+  state         String?
+  climbingLevel String?
+  climbingType  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  following       Follow[]         @relation("UserFollowing")
+  followers       Follow[]         @relation("UserFollowers")
+  reviews         Review[]
+  communityPhotos CommunityPhoto[]
+  reviewLikes     ReviewLike[]
+
+  @@map("users")
+}
+
+model Review {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gymId          String
+  gym            Gym      @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  overallRating  Float
+  settingQuality Float?
+  difficulty     Float?
+  variety        Float?
+  crowding       Float?
+  cleanliness    Float?
+  vibe           Float?
+  reviewText     String?
+  tags           String[]
+  photos         String[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  likes          ReviewLike[]
+
+  @@unique([userId, gymId])
+  @@map("reviews")
+}
+
+model CommunityPhoto {
+  id        String   @id @default(uuid())
+  url       String
+  gymId     String
+  gym       Gym      @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  caption   String?
+  createdAt DateTime @default(now())
+
+  @@map("community_photos")
+}
+
+model Follow {
+  id          String   @id @default(uuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@map("follows")
+}
+
+model ReviewLike {
+  id        String   @id @default(uuid())
+  reviewId  String
+  review    Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([reviewId, userId])
+  @@map("review_likes")
+}
+
 model Gym {
   id             String   @id @default(uuid())
   name           String
@@ -26,100 +113,4 @@ model Gym {
   communityPhotos CommunityPhoto[]
 
   @@map("gyms")
-}
-
-model CommunityPhoto {
-  id        String   @id @default(uuid())
-  url       String
-  gymId     String
-  gym       Gym      @relation(fields: [gymId], references: [id])
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  caption   String?  // Optional caption
-  createdAt DateTime @default(now())
-  
-
-  @@map("community_photos")
-}
-
-model ReviewLike {
-  id        String   @id @default(uuid())
-  reviewId  String
-  review    Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-
-  @@unique([reviewId, userId])
-  @@map("review_likes")
-}
-
-model User {
-  id            String   @id @default(uuid())
-  email         String   @unique
-  password      String
-  displayName   String
-  profilePhoto  String?
-  age           String?
-  appleId       String?  @unique
-  googleId      String?  @unique
-  city          String?
-  state         String?
-  birthday      String?
-  climbingLevel String?
-  climbingType  String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
-  reviews         Review[]
-  communityPhotos CommunityPhoto[]
-  reviewLikes     ReviewLike[]
-  
-  // Follower relationships
-  following       Follow[] @relation("UserFollowing")
-  followers       Follow[] @relation("UserFollowers")
-
-  @@map("users")
-}
-
-model Follow {
-  id          String   @id @default(uuid())
-  followerId  String   // Person doing the following
-  followingId String   // Person being followed
-  createdAt   DateTime @default(now())
-
-  follower    User @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
-  following   User @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
-
-  @@unique([followerId, followingId])
-  @@map("follows")
-}
-
-// ... rest of your models stay the same
-
-model Review {
-  id              String   @id @default(uuid())
-  userId          String
-  user            User     @relation(fields: [userId], references: [id])
-  gymId           String
-  gym             Gym      @relation(fields: [gymId], references: [id])
-  
-  overallRating   Float
-  settingQuality  Float?
-  difficulty      Float?
-  variety         Float?
-  crowding        Float?
-  cleanliness     Float?
-  vibe            Float?
-  
-  reviewText      String?
-  photos          String[] // Keep this for review photos
-  tags            String[]
-  likes           ReviewLike[]
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
-  @@map("reviews")
-  @@unique([userId, gymId])
 }

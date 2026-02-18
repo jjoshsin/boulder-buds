@@ -10,13 +10,16 @@ import {
   Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../App';
 import { styles } from '../styles/SettingsScreen.styles';
 import * as SecureStore from 'expo-secure-store';
 
 type SettingsNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+type SettingsRouteProp = RouteProp<RootStackParamList, 'Settings'>;
+
 
 interface UserProfile {
   id: string;
@@ -37,6 +40,8 @@ const US_STATES = [
 
 export default function SettingsScreen() {
   const navigation = useNavigation<SettingsNavigationProp>();
+  const route = useRoute<SettingsRouteProp>();
+  const onLogout = (route.params as any)?.onLogout;
 
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -163,20 +168,48 @@ export default function SettingsScreen() {
     }
   };
 
-  const handleDeleteAccount = () => {
-    Alert.alert(
-      'Delete Account',
-      'Are you sure you want to delete your account? This action cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => Alert.alert('Coming Soon', 'Account deletion will be available soon.'),
+const handleDeleteAccount = () => {
+  Alert.alert(
+    'Delete Account',
+    'Are you sure you want to delete your account? This will permanently delete:\n\n• Your profile and all photos\n• All your reviews and photos\n• Your followers and following\n• All your activity\n\nThis action cannot be undone.',
+    [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const token = await SecureStore.getItemAsync('authToken');
+            const response = await fetch(`http://192.168.1.166:3000/users/${user?.id}`, {
+              method: 'DELETE',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+              },
+            });
+
+            if (response.ok) {
+              // Clear all stored data
+              await SecureStore.deleteItemAsync('authToken');
+              await SecureStore.deleteItemAsync('user');
+              
+              // Call the logout handler which will reset everything
+              if (onLogout) {
+                onLogout();
+              }
+              
+              Alert.alert('Account Deleted', 'Your account has been permanently deleted.');
+            } else {
+              throw new Error('Failed to delete account');
+            }
+          } catch (error) {
+            console.error('Delete account error:', error);
+            Alert.alert('Error', 'Failed to delete account. Please try again.');
+          }
         },
-      ]
-    );
-  };
+      },
+    ]
+  );
+};
 
   if (isLoading) {
     return (
