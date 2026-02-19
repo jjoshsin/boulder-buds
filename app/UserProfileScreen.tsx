@@ -7,6 +7,7 @@ import {
   Image,
   ActivityIndicator,
   Alert,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
@@ -14,6 +15,9 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
 import { styles } from '../styles/UserProfileScreen.styles';
 import * as SecureStore from 'expo-secure-store';
+import SimplePhotoGrid from './components/SimplePhotoGrid';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 type UserProfileNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -23,7 +27,8 @@ interface UserProfile {
   email: string;
   climbingLevel?: string;
   climbingType?: string;
-  borough?: string;
+  city?: string;
+  state?: string;
 }
 
 interface UserReview {
@@ -32,20 +37,12 @@ interface UserReview {
   reviewText?: string;
   createdAt: string;
   tags: string[];
+  photos: string[];
   gym: {
     id: string;
     name: string;
-    borough: string;
-  };
-}
-
-interface CommunityPhoto {
-  id: string;
-  url: string;
-  createdAt: string;
-  gym: {
-    id: string;
-    name: string;
+    city: string;
+    state: string;
   };
 }
 
@@ -56,12 +53,10 @@ export default function UserProfileScreen() {
 
   const [user, setUser] = useState<UserProfile | null>(null);
   const [reviews, setReviews] = useState<UserReview[]>([]);
-  const [photos, setPhotos] = useState<CommunityPhoto[]>([]);
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'reviews' | 'photos'>('reviews');
 
   useEffect(() => {
     loadUserProfile();
@@ -72,14 +67,11 @@ export default function UserProfileScreen() {
       setIsLoading(true);
       const token = await SecureStore.getItemAsync('authToken');
 
-      const [userRes, reviewsRes, photosRes, statsRes, followStatusRes] = await Promise.all([
+      const [userRes, reviewsRes, statsRes, followStatusRes] = await Promise.all([
         fetch(`http://192.168.1.166:3000/users/${userId}`, {
           headers: { 'Authorization': `Bearer ${token}` },
         }),
         fetch(`http://192.168.1.166:3000/users/${userId}/reviews`, {
-          headers: { 'Authorization': `Bearer ${token}` },
-        }),
-        fetch(`http://192.168.1.166:3000/users/${userId}/photos`, {
           headers: { 'Authorization': `Bearer ${token}` },
         }),
         fetch(`http://192.168.1.166:3000/users/${userId}/follow-stats`, {
@@ -98,11 +90,6 @@ export default function UserProfileScreen() {
       if (reviewsRes.ok) {
         const reviewsData = await reviewsRes.json();
         setReviews(reviewsData);
-      }
-
-      if (photosRes.ok) {
-        const photosData = await photosRes.json();
-        setPhotos(photosData);
       }
 
       if (statsRes.ok) {
@@ -148,18 +135,18 @@ export default function UserProfileScreen() {
   };
 
   const renderReview = (review: UserReview) => (
-    <TouchableOpacity
-      key={review.id}
-      style={styles.reviewCard}
-      onPress={() => navigation.navigate('GymDetail', { gymId: review.gym.id })}
-    >
-      <View style={styles.reviewHeader}>
-        <View style={styles.reviewGymInfo}>
-          <Text style={styles.reviewGymName}>{review.gym.name}</Text>
-          <Text style={styles.reviewGymBorough}>{review.gym.borough}</Text>
+    <View key={review.id} style={styles.reviewCard}>
+      <TouchableOpacity onPress={() => navigation.navigate('GymDetail', { gymId: review.gym.id })}>
+        <View style={styles.reviewHeader}>
+          <View style={styles.reviewGymInfo}>
+            <Text style={styles.reviewGymName}>{review.gym.name}</Text>
+            <Text style={styles.reviewGymBorough}>
+              {review.gym.city}{review.gym.state ? `, ${review.gym.state}` : ''}
+            </Text>
+          </View>
+          <Text style={styles.reviewRating}>⭐ {review.overallRating.toFixed(1)}</Text>
         </View>
-        <Text style={styles.reviewRating}>⭐ {review.overallRating.toFixed(1)}</Text>
-      </View>
+      </TouchableOpacity>
 
       {review.reviewText && (
         <Text style={styles.reviewText} numberOfLines={3}>
@@ -177,25 +164,18 @@ export default function UserProfileScreen() {
         </View>
       )}
 
+      {/* Photo Grid */}
+      {review.photos && review.photos.length > 0 && (
+        <SimplePhotoGrid 
+          photos={review.photos} 
+          containerWidth={SCREEN_WIDTH - 40 - 32}
+        />
+      )}
+
       <Text style={styles.reviewDate}>
         {new Date(review.createdAt).toLocaleDateString()}
       </Text>
-    </TouchableOpacity>
-  );
-
-  const renderPhoto = (photo: CommunityPhoto) => (
-    <TouchableOpacity
-      key={photo.id}
-      style={styles.photoCard}
-      onPress={() => navigation.navigate('GymDetail', { gymId: photo.gym.id })}
-    >
-      <Image source={{ uri: photo.url }} style={styles.photoImage} resizeMode="cover" />
-      <View style={styles.photoOverlay}>
-        <Text style={styles.photoGymName} numberOfLines={1}>
-          {photo.gym.name}
-        </Text>
-      </View>
-    </TouchableOpacity>
+    </View>
   );
 
   if (isLoading) {
@@ -277,7 +257,7 @@ export default function UserProfileScreen() {
         </View>
 
         {/* User Details */}
-        {(user.climbingType || user.borough || user.climbingLevel) && (
+        {(user.climbingType || user.city || user.climbingLevel) && (
           <View style={styles.detailsContainer}>
             {user.climbingLevel && (
               <View style={styles.detailChip}>
@@ -289,56 +269,28 @@ export default function UserProfileScreen() {
                 <Text style={styles.detailChipText}>⛰️ {user.climbingType}</Text>
               </View>
             )}
-            {user.borough && (
+            {user.city && user.state && (
               <View style={styles.detailChip}>
-                <Text style={styles.detailChipText}>📍 {user.borough}</Text>
+                <Text style={styles.detailChipText}>📍 {user.city}, {user.state}</Text>
               </View>
             )}
           </View>
         )}
 
-        {/* Tabs */}
-        <View style={styles.tabsContainer}>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'reviews' && styles.tabActive]}
-            onPress={() => setActiveTab('reviews')}
-          >
-            <Text style={[styles.tabText, activeTab === 'reviews' && styles.tabTextActive]}>
-              Reviews ({reviews.length})
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'photos' && styles.tabActive]}
-            onPress={() => setActiveTab('photos')}
-          >
-            <Text style={[styles.tabText, activeTab === 'photos' && styles.tabTextActive]}>
-              Photos ({photos.length})
-            </Text>
-          </TouchableOpacity>
+        {/* Reviews Section Title */}
+        <View style={styles.reviewsHeader}>
+          <Text style={styles.reviewsTitle}>Reviews ({reviews.length})</Text>
         </View>
 
         {/* Content */}
         <View style={styles.contentContainer}>
-          {activeTab === 'reviews' ? (
-            reviews.length > 0 ? (
-              reviews.map(renderReview)
-            ) : (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyStateEmoji}>✍️</Text>
-                <Text style={styles.emptyStateText}>No reviews yet</Text>
-              </View>
-            )
+          {reviews.length > 0 ? (
+            reviews.map(renderReview)
           ) : (
-            photos.length > 0 ? (
-              <View style={styles.photosGrid}>
-                {photos.map(renderPhoto)}
-              </View>
-            ) : (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyStateEmoji}>📸</Text>
-                <Text style={styles.emptyStateText}>No photos yet</Text>
-              </View>
-            )
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateEmoji}>✍️</Text>
+              <Text style={styles.emptyStateText}>No reviews yet</Text>
+            </View>
           )}
         </View>
 

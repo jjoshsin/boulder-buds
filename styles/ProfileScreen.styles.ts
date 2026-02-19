@@ -227,6 +227,7 @@ settingsButtonText: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop: 16,
   },
   reviewDate: {
     fontSize: 13,

@@ -7,6 +7,7 @@ import {
   Image,
   ActivityIndicator,
   Alert,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -15,7 +16,7 @@ import { RootStackParamList } from '../App';
 import { styles } from '../styles/ProfileScreen.styles';
 import * as SecureStore from 'expo-secure-store';
 import * as ImagePicker from 'expo-image-picker';
-import PhotoGrid from './components/PhotoGrid';
+import SimplePhotoGrid from './components/SimplePhotoGrid';
 type ProfileNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 interface ProfileScreenProps {
@@ -48,6 +49,8 @@ interface UserReview {
     state: string;
   };
 }
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
   const navigation = useNavigation<ProfileNavigationProp>();
@@ -220,12 +223,12 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
     );
   };
 
-  const renderReview = (review: UserReview) => (
-    <TouchableOpacity
-      key={review.id}
-      style={styles.reviewCard}
-      onPress={() => navigation.navigate('GymDetail', { gymId: review.gym.id })}
-    >
+const renderReview = (review: UserReview) => (
+  <View
+    key={review.id}
+    style={styles.reviewCard}
+  >
+    <TouchableOpacity onPress={() => navigation.navigate('GymDetail', { gymId: review.gym.id })}>
       <View style={styles.reviewHeader}>
         <View style={styles.reviewGymInfo}>
           <Text style={styles.reviewGymName}>{review.gym.name}</Text>
@@ -235,51 +238,55 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
         </View>
         <Text style={styles.reviewRating}>⭐ {review.overallRating.toFixed(1)}</Text>
       </View>
-
-      {review.reviewText && (
-        <Text style={styles.reviewText} numberOfLines={3}>
-          {review.reviewText}
-        </Text>
-      )}
-
-      {review.tags && review.tags.length > 0 && (
-        <View style={styles.reviewTags}>
-          {review.tags.slice(0, 3).map((tag, index) => (
-            <View key={index} style={styles.reviewTag}>
-              <Text style={styles.reviewTagText}>{tag.replace(/_/g, ' ')}</Text>
-            </View>
-          ))}
-        </View>
-      )}
-
-      {/* Photo Grid */}
-      {review.photos && review.photos.length > 0 && (
-        <PhotoGrid photos={review.photos} />
-      )}
-
-      <View style={styles.reviewFooter}>
-        <Text style={styles.reviewDate}>
-          {new Date(review.createdAt).toLocaleDateString()}
-        </Text>
-        <View style={styles.reviewActions}>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('WriteReview', {
-              gymId: review.gym.id,
-              gymName: review.gym.name,
-              reviewId: review.id,
-              existingReview: review,
-            } as any)}
-          >
-            <Text style={styles.reviewActionText}>Edit</Text>
-          </TouchableOpacity>
-          <Text style={styles.reviewActionSeparator}>•</Text>
-          <TouchableOpacity onPress={() => handleDeleteReview(review.id)}>
-            <Text style={[styles.reviewActionText, styles.reviewActionDelete]}>Delete</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
     </TouchableOpacity>
-  );
+
+    {review.reviewText && (
+      <Text style={styles.reviewText} numberOfLines={3}>
+        {review.reviewText}
+      </Text>
+    )}
+
+    {review.tags && review.tags.length > 0 && (
+      <View style={styles.reviewTags}>
+        {review.tags.slice(0, 3).map((tag, index) => (
+          <View key={index} style={styles.reviewTag}>
+            <Text style={styles.reviewTagText}>{tag.replace(/_/g, ' ')}</Text>
+          </View>
+        ))}
+      </View>
+    )}
+
+    {/* Photo Grid */}
+    {review.photos && review.photos.length > 0 && (
+      <SimplePhotoGrid 
+        photos={review.photos} 
+        containerWidth={SCREEN_WIDTH - 40 - 32}
+      />
+    )}
+
+    <View style={styles.reviewFooter}>
+      <Text style={styles.reviewDate}>
+        {new Date(review.createdAt).toLocaleDateString()}
+      </Text>
+      <View style={styles.reviewActions}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('WriteReview', {
+            gymId: review.gym.id,
+            gymName: review.gym.name,
+            reviewId: review.id,
+            existingReview: review,
+          } as any)}
+        >
+          <Text style={styles.reviewActionText}>Edit</Text>
+        </TouchableOpacity>
+        <Text style={styles.reviewActionSeparator}>•</Text>
+        <TouchableOpacity onPress={() => handleDeleteReview(review.id)}>
+          <Text style={[styles.reviewActionText, styles.reviewActionDelete]}>Delete</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  </View>
+);
 
   if (isLoading) {
     return (

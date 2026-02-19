@@ -257,4 +257,15 @@ export const styles = StyleSheet.create({
   bottomPadding: {
     height: 40,
   },
+  reviewsHeader: {
+  paddingHorizontal: 20,
+  paddingVertical: 16,
+  borderBottomWidth: 1,
+  borderBottomColor: '#F3F4F6',
+},
+reviewsTitle: {
+  fontSize: 18,
+  fontWeight: '700',
+  color: '#1F2937',
+},
 });
