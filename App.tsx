@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StatusBar } from 'expo-status-bar';
 import { View, Text, TouchableOpacity } from 'react-native';
+import AllReviewsScreen from './app/AllReviewsScreen';
 import LandingScreen from './app/LandingScreen';
 import SignUpScreen from './app/SignUpScreen';
 import LoginScreen from './app/LoginScreen';
@@ -36,6 +37,7 @@ export type RootStackParamList = {
   FollowList: { userId: string; tab: 'followers' | 'following' };
   UserProfile: { userId: string };
   Settings: { onLogout?: () => void };
+  AllReviews: { reviews: any[]; currentUserId: string; gymName: string };
 };
 
 export type TabParamList = {
@@ -260,6 +262,11 @@ export default function App() {
               <Stack.Screen 
                 name="Settings" 
                 component={SettingsScreen}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen 
+                name="AllReviews" 
+                component={AllReviewsScreen}
                 options={{ headerShown: false }}
               />
             </>

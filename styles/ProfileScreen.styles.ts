@@ -210,19 +210,6 @@ settingsButtonText: {
     flexWrap: 'wrap',
     marginBottom: 12,
   },
-  reviewTag: {
-    backgroundColor: '#E0E7FF',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginRight: 6,
-    marginBottom: 6,
-  },
-  reviewTagText: {
-    fontSize: 12,
-    color: '#3730A3',
-    fontWeight: '500',
-  },
   reviewFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -327,5 +314,21 @@ reviewsTitle: {
   fontSize: 18,
   fontWeight: '700',
   color: '#1F2937',
+},
+reviewTagsRow: {
+  flexDirection: 'row',
+  gap: 8,
+  marginBottom: 12,
+},
+reviewTag: {
+  paddingHorizontal: 12,
+  paddingVertical: 6,
+  backgroundColor: '#F3F4F6',
+  borderRadius: 12,
+},
+reviewTagText: {
+  fontSize: 13,
+  fontWeight: '500',
+  color: '#6B7280',
 },
 });

@@ -16,6 +16,8 @@ import { RootStackParamList } from '../App';
 import { styles } from '../styles/UserProfileScreen.styles';
 import * as SecureStore from 'expo-secure-store';
 import SimplePhotoGrid from './components/SimplePhotoGrid';
+import { getSettingLabel, getDifficultyLabel } from './utils/reviewLabels';
+
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -36,6 +38,8 @@ interface UserReview {
   overallRating: number;
   reviewText?: string;
   createdAt: string;
+  setting: string;
+  difficulty: string;
   tags: string[];
   photos: string[];
   gym: {
@@ -134,49 +138,51 @@ export default function UserProfileScreen() {
     }
   };
 
-  const renderReview = (review: UserReview) => (
-    <View key={review.id} style={styles.reviewCard}>
-      <TouchableOpacity onPress={() => navigation.navigate('GymDetail', { gymId: review.gym.id })}>
-        <View style={styles.reviewHeader}>
-          <View style={styles.reviewGymInfo}>
-            <Text style={styles.reviewGymName}>{review.gym.name}</Text>
-            <Text style={styles.reviewGymBorough}>
-              {review.gym.city}{review.gym.state ? `, ${review.gym.state}` : ''}
-            </Text>
-          </View>
-          <Text style={styles.reviewRating}>⭐ {review.overallRating.toFixed(1)}</Text>
+const renderReview = (review: UserReview) => (
+  <View key={review.id} style={styles.reviewCard}>
+    <TouchableOpacity onPress={() => navigation.navigate('GymDetail', { gymId: review.gym.id })}>
+      <View style={styles.reviewHeader}>
+        <View style={styles.reviewGymInfo}>
+          <Text style={styles.reviewGymName}>{review.gym.name}</Text>
+          <Text style={styles.reviewGymBorough}>
+            {review.gym.city}{review.gym.state ? `, ${review.gym.state}` : ''}
+          </Text>
         </View>
-      </TouchableOpacity>
+        <Text style={styles.reviewRating}>⭐ {review.overallRating.toFixed(1)}</Text>
+      </View>
+    </TouchableOpacity>
 
-      {review.reviewText && (
-        <Text style={styles.reviewText} numberOfLines={3}>
-          {review.reviewText}
-        </Text>
-      )}
-
-      {review.tags && review.tags.length > 0 && (
-        <View style={styles.reviewTags}>
-          {review.tags.slice(0, 3).map((tag, index) => (
-            <View key={index} style={styles.reviewTag}>
-              <Text style={styles.reviewTagText}>{tag.replace(/_/g, ' ')}</Text>
-            </View>
-          ))}
+    {/* Setting & Difficulty Tags */}
+    {review.setting && review.difficulty && (
+      <View style={styles.reviewTagsRow}>
+        <View style={styles.reviewTag}>
+          <Text style={styles.reviewTagText}>{getSettingLabel(review.setting)}</Text>
         </View>
-      )}
+        <View style={styles.reviewTag}>
+          <Text style={styles.reviewTagText}>{getDifficultyLabel(review.difficulty)}</Text>
+        </View>
+      </View>
+    )}
 
-      {/* Photo Grid */}
-      {review.photos && review.photos.length > 0 && (
-        <SimplePhotoGrid 
-          photos={review.photos} 
-          containerWidth={SCREEN_WIDTH - 40 - 32}
-        />
-      )}
-
-      <Text style={styles.reviewDate}>
-        {new Date(review.createdAt).toLocaleDateString()}
+    {review.reviewText && (
+      <Text style={styles.reviewText} numberOfLines={3}>
+        {review.reviewText}
       </Text>
-    </View>
-  );
+    )}
+
+    {/* Photo Grid */}
+    {review.photos && review.photos.length > 0 && (
+      <SimplePhotoGrid 
+        photos={review.photos} 
+        containerWidth={SCREEN_WIDTH - 40 - 32}
+      />
+    )}
+
+    <Text style={styles.reviewDate}>
+      {new Date(review.createdAt).toLocaleDateString()}
+    </Text>
+  </View>
+);
 
   if (isLoading) {
     return (

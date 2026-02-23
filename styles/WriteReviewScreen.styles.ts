@@ -185,4 +185,29 @@ export const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFFFFF',
   },
+  optionsContainer: {
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  gap: 12,
+},
+optionChip: {
+  paddingHorizontal: 16,
+  paddingVertical: 10,
+  borderRadius: 20,
+  backgroundColor: '#F3F4F6',
+  borderWidth: 2,
+  borderColor: '#F3F4F6',
+},
+optionChipSelected: {
+  backgroundColor: '#FFF7ED',
+  borderColor: '#FF8C00',
+},
+optionText: {
+  fontSize: 15,
+  fontWeight: '600',
+  color: '#6B7280',
+},
+optionTextSelected: {
+  color: '#FF8C00',
+},
 });

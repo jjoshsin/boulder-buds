@@ -14,16 +14,24 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { styles } from '../styles/WriteReviewScreen.styles';
 import * as SecureStore from 'expo-secure-store';
 
-interface RatingCategory {
-  key: string;
-  label: string;
-  icon: string;
-}
-
 type WriteReviewNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
+const SETTING_OPTIONS = [
+  { value: 'comp_style', label: 'Comp Style'},
+  { value: 'fun', label: 'Fun'},
+  { value: 'creative', label: 'Creative'},
+  { value: 'straightforward', label: 'Straightforward'},
+];
+
+const DIFFICULTY_OPTIONS = [
+  { value: 'soft', label: 'Soft'},
+  { value: 'normal', label: 'Normal'},
+  { value: 'hard', label: 'Hard' },
+];
 
 export default function WriteReviewScreen() {
   const route = useRoute();
@@ -37,63 +45,12 @@ export default function WriteReviewScreen() {
 
   const isEditing = !!reviewId;
 
-  // Initialize with existing review data if editing
   const [overallRating, setOverallRating] = useState(existingReview?.overallRating || 0);
-  const [settingQuality, setSettingQuality] = useState(existingReview?.settingQuality || 0);
-  const [difficulty, setDifficulty] = useState(existingReview?.difficulty || 0);
-  const [variety, setVariety] = useState(existingReview?.variety || 0);
-  const [crowding, setCrowding] = useState(existingReview?.crowding || 0);
-  const [cleanliness, setCleanliness] = useState(existingReview?.cleanliness || 0);
-  const [vibe, setVibe] = useState(existingReview?.vibe || 0);
+  const [setting, setSetting] = useState(existingReview?.setting || '');
+  const [difficulty, setDifficulty] = useState(existingReview?.difficulty || '');
   const [reviewText, setReviewText] = useState(existingReview?.reviewText || '');
-  const [selectedTags, setSelectedTags] = useState<string[]>(existingReview?.tags || []);
   const [selectedImages, setSelectedImages] = useState<string[]>(existingReview?.photos || []);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const ratingCategories: RatingCategory[] = [
-    { key: 'setting', label: 'Setting', icon: '🧗' },
-    { key: 'difficulty', label: 'Difficulty', icon: '💪' },
-    { key: 'variety', label: 'Variety', icon: '🎨' },
-    { key: 'crowding', label: 'Crowding', icon: '👥' },
-    { key: 'cleanliness', label: 'Cleanliness', icon: '✨' },
-    { key: 'vibe', label: 'Vibe', icon: '🎵' },
-  ];
-
-  const availableTags = [
-    'beginner_friendly',
-    'comp_style',
-    'soft_grades',
-    'stiff_grades',
-    'good_for_training',
-    'family_friendly',
-    'great_setting',
-    'crowded',
-    'well_maintained',
-    'friendly_staff',
-  ];
-
-  const getRatingState = (key: string) => {
-    switch (key) {
-      case 'setting': return settingQuality;
-      case 'difficulty': return difficulty;
-      case 'variety': return variety;
-      case 'crowding': return crowding;
-      case 'cleanliness': return cleanliness;
-      case 'vibe': return vibe;
-      default: return 0;
-    }
-  };
-
-  const setRatingState = (key: string, value: number) => {
-    switch (key) {
-      case 'setting': setSettingQuality(value); break;
-      case 'difficulty': setDifficulty(value); break;
-      case 'variety': setVariety(value); break;
-      case 'crowding': setCrowding(value); break;
-      case 'cleanliness': setCleanliness(value); break;
-      case 'vibe': setVibe(value); break;
-    }
-  };
 
   const renderStars = (rating: number, onPress: (star: number) => void) => {
     return (
@@ -113,11 +70,17 @@ export default function WriteReviewScreen() {
     );
   };
 
-  const toggleTag = (tag: string) => {
-    if (selectedTags.includes(tag)) {
-      setSelectedTags(selectedTags.filter(t => t !== tag));
-    } else {
-      setSelectedTags([...selectedTags, tag]);
+  const convertToJpeg = async (uri: string): Promise<string> => {
+    try {
+      const manipulatedImage = await ImageManipulator.manipulateAsync(
+        uri,
+        [],
+        { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+      );
+      return manipulatedImage.uri;
+    } catch (error) {
+      console.error('Error converting image:', error);
+      return uri;
     }
   };
 
@@ -131,14 +94,16 @@ export default function WriteReviewScreen() {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsMultipleSelection: true,
         quality: 0.8,
       });
 
       if (!result.canceled) {
-        const uris = result.assets.map(asset => asset.uri);
-        setSelectedImages([...selectedImages, ...uris]);
+        const convertedUris = await Promise.all(
+          result.assets.map(asset => convertToJpeg(asset.uri))
+        );
+        setSelectedImages([...selectedImages, ...convertedUris]);
       }
     } catch (error) {
       console.error('Error picking images:', error);
@@ -150,107 +115,111 @@ export default function WriteReviewScreen() {
     setSelectedImages(selectedImages.filter((_, i) => i !== index));
   };
 
-const uploadPhotos = async (imageUris: string[]): Promise<string[]> => {
-  const uploadedUrls: string[] = [];
-  const token = await SecureStore.getItemAsync('authToken');
-
-  console.log('📸 Starting upload for', imageUris.length, 'photos');
-
-  for (const uri of imageUris) {
-    try {
-      const filename = uri.split('/').pop() || 'photo.jpg';
-      const match = /\.(\w+)$/.exec(filename);
-      const type = match ? `image/${match[1]}` : 'image/jpeg';
-
-      const formData = new FormData();
-      formData.append('image', { uri, name: filename, type } as any); // 'image' not 'photo'
-
-      const response = await fetch('http://192.168.1.166:3000/upload/image', { // /upload/image not /upload/photo
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: formData,
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log('✅ Uploaded URL:', data.url);
-        uploadedUrls.push(data.url);
-      } else {
-        const error = await response.json();
-        console.error('❌ Upload failed:', error);
-      }
-    } catch (error) {
-      console.error('❌ Upload error:', error);
-    }
-  }
-
-  return uploadedUrls;
-};
-
-const handleSubmit = async () => {
-  if (overallRating === 0) {
-    Alert.alert('Rating required', 'Please provide an overall rating');
-    return;
-  }
-
-  try {
-    setIsSubmitting(true);
+  const uploadPhotos = async (imageUris: string[]): Promise<string[]> => {
+    const uploadedUrls: string[] = [];
     const token = await SecureStore.getItemAsync('authToken');
 
-    // Upload photos first if any selected
-    let uploadedPhotoUrls: string[] = [];
-    if (selectedImages.length > 0) {
-      uploadedPhotoUrls = await uploadPhotos(selectedImages);
+    console.log('📸 Starting upload for', imageUris.length, 'photos');
+
+    for (const uri of imageUris) {
+      try {
+        const filename = uri.split('/').pop() || 'photo.jpg';
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+        const formData = new FormData();
+        formData.append('image', { uri, name: filename, type } as any);
+
+        const response = await fetch('http://192.168.1.166:3000/upload/image', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: formData,
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log('✅ Uploaded URL:', data.url);
+          uploadedUrls.push(data.url);
+        } else {
+          const error = await response.json();
+          console.error('❌ Upload failed:', error);
+        }
+      } catch (error) {
+        console.error('❌ Upload error:', error);
+      }
     }
 
-    const url = isEditing
-      ? `http://192.168.1.166:3000/reviews/${reviewId}`
-      : `http://192.168.1.166:3000/reviews`;
+    return uploadedUrls;
+  };
 
-    const method = isEditing ? 'PATCH' : 'POST';
-
-    const body: any = {
-      overallRating,
-      settingQuality: settingQuality || null,
-      difficulty: difficulty || null,
-      variety: variety || null,
-      crowding: crowding || null,
-      cleanliness: cleanliness || null,
-      vibe: vibe || null,
-      reviewText: reviewText.trim() || null,
-      tags: selectedTags,
-      photos: uploadedPhotoUrls,
-    };
-
-    if (!isEditing) {
-      body.gymId = gymId;
+  const handleSubmit = async () => {
+    if (overallRating === 0) {
+      Alert.alert('Rating required', 'Please provide an overall rating');
+      return;
     }
 
-    const response = await fetch(url, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify(body),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to submit review');
+    if (!setting) {
+      Alert.alert('Setting required', 'Please select a setting quality');
+      return;
     }
 
-    Alert.alert(
-      'Success',
-      isEditing ? 'Your review has been updated!' : 'Your review has been posted!',
-      [{ text: 'OK', onPress: () => navigation.goBack() }]
-    );
-  } catch (error: any) {
-    Alert.alert('Error', error.message || 'Failed to submit review');
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+    if (!difficulty) {
+      Alert.alert('Difficulty required', 'Please select a difficulty level');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const token = await SecureStore.getItemAsync('authToken');
+
+      let uploadedPhotoUrls: string[] = [];
+      if (selectedImages.length > 0) {
+        uploadedPhotoUrls = await uploadPhotos(selectedImages);
+      }
+
+      const url = isEditing
+        ? `http://192.168.1.166:3000/reviews/${reviewId}`
+        : `http://192.168.1.166:3000/reviews`;
+
+      const method = isEditing ? 'PATCH' : 'POST';
+
+      const body: any = {
+        overallRating,
+        setting,
+        difficulty,
+        reviewText: reviewText.trim() || null,
+        photos: uploadedPhotoUrls,
+      };
+
+      if (!isEditing) {
+        body.gymId = gymId;
+      }
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to submit review');
+      }
+
+      Alert.alert(
+        'Success',
+        isEditing ? 'Your review has been updated!' : 'Your review has been posted!',
+        [{ text: 'OK', onPress: () => navigation.goBack() }]
+      );
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to submit review');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top','bottom']}>
@@ -260,9 +229,9 @@ const handleSubmit = async () => {
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Text style={styles.closeButton}>✕</Text>
           </TouchableOpacity>
-            <Text style={styles.headerTitle}>
-              {isEditing ? 'Edit Review' : 'Write Review'}
-            </Text>          
+          <Text style={styles.headerTitle}>
+            {isEditing ? 'Edit Review' : 'Write Review'}
+          </Text>          
           <View style={{ width: 40 }} />
         </View>
 
@@ -276,20 +245,52 @@ const handleSubmit = async () => {
             {renderStars(overallRating, setOverallRating)}
           </View>
 
-          {/* Detailed Ratings */}
+          {/* Setting Quality */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Rate Different Aspects</Text>
-            <Text style={styles.sectionSubtitle}>Optional but helpful!</Text>
-            
-            {ratingCategories.map((category) => (
-              <View key={category.key} style={styles.ratingRow}>
-                <View style={styles.ratingLabel}>
-                  <Text style={styles.ratingIcon}>{category.icon}</Text>
-                  <Text style={styles.ratingLabelText}>{category.label}</Text>
-                </View>
-                {renderStars(getRatingState(category.key), (value) => setRatingState(category.key, value))}
-              </View>
-            ))}
+            <Text style={styles.sectionTitle}>Setting Quality *</Text>
+            <View style={styles.optionsContainer}>
+{SETTING_OPTIONS.map((option) => (
+  <TouchableOpacity
+    key={option.value}
+    style={[
+      styles.optionChip,
+      setting === option.value && styles.optionChipSelected,
+    ]}
+    onPress={() => setSetting(option.value)}
+  >
+    <Text style={[
+      styles.optionText,
+      setting === option.value && styles.optionTextSelected,
+    ]}>
+      {option.label}
+    </Text>
+  </TouchableOpacity>
+))}
+            </View>
+          </View>
+
+          {/* Difficulty */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Difficulty *</Text>
+            <View style={styles.optionsContainer}>
+              {DIFFICULTY_OPTIONS.map((option) => (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[
+                    styles.optionChip,
+                    difficulty === option.value && styles.optionChipSelected,
+                  ]}
+                  onPress={() => setDifficulty(option.value)}
+                >
+                  <Text style={[
+                    styles.optionText,
+                    difficulty === option.value && styles.optionTextSelected,
+                  ]}>
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
 
           {/* Review Text */}
@@ -307,30 +308,6 @@ const handleSubmit = async () => {
               maxLength={500}
             />
             <Text style={styles.charCount}>{reviewText.length}/500</Text>
-          </View>
-
-          {/* Tags */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Add Tags</Text>
-            <View style={styles.tagsContainer}>
-              {availableTags.map((tag) => (
-                <TouchableOpacity
-                  key={tag}
-                  style={[
-                    styles.tagChip,
-                    selectedTags.includes(tag) && styles.tagChipSelected,
-                  ]}
-                  onPress={() => toggleTag(tag)}
-                >
-                  <Text style={[
-                    styles.tagChipText,
-                    selectedTags.includes(tag) && styles.tagChipTextSelected,
-                  ]}>
-                    {tag.replace(/_/g, ' ')}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
           </View>
 
           {/* Photos */}
@@ -360,9 +337,12 @@ const handleSubmit = async () => {
 
           {/* Submit Button */}
           <TouchableOpacity
-            style={[styles.submitButton, (overallRating === 0 || isSubmitting) && styles.submitButtonDisabled]}
+            style={[
+              styles.submitButton, 
+              (overallRating === 0 || !setting || !difficulty || isSubmitting) && styles.submitButtonDisabled
+            ]}
             onPress={handleSubmit}
-            disabled={overallRating === 0 || isSubmitting}
+            disabled={overallRating === 0 || !setting || !difficulty || isSubmitting}
           >
             {isSubmitting ? (
               <ActivityIndicator color="#FFFFFF" />

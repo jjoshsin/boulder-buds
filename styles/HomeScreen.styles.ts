@@ -208,4 +208,20 @@ export const styles = StyleSheet.create({
   textAlign: 'center',
   paddingHorizontal: 20,
   },
+  activityTags: {
+  flexDirection: 'row',
+  gap: 6,
+  marginTop: 8,
+},
+activityTag: {
+  paddingHorizontal: 10,
+  paddingVertical: 4,
+  backgroundColor: '#F3F4F6',
+  borderRadius: 10,
+},
+activityTagText: {
+  fontSize: 11,
+  fontWeight: '500',
+  color: '#6B7280',
+},
 });

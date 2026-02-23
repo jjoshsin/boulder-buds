@@ -379,4 +379,102 @@ primaryButtonFull: {
   marginHorizontal: 20,
   marginTop: 16,
 },
+sectionHeader: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: 16,
+},
+seeAllButton: {
+  fontSize: 15,
+  fontWeight: '600',
+  color: '#FF8C00',
+},
+reviewCard: {
+  padding: 16,
+  backgroundColor: '#FFFFFF',
+  borderRadius: 12,
+  marginBottom: 12,
+  borderWidth: 1,
+  borderColor: '#F3F4F6',
+},
+reviewHeader: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: 12,
+},
+reviewUserInfo: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 12,
+},
+reviewAvatar: {
+  width: 36,
+  height: 36,
+  borderRadius: 18,
+  backgroundColor: '#FF8C00',
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+reviewAvatarText: {
+  fontSize: 16,
+  fontWeight: '700',
+  color: '#FFFFFF',
+},
+reviewUserName: {
+  fontSize: 15,
+  fontWeight: '600',
+  color: '#1F2937',
+},
+reviewDate: {
+  fontSize: 12,
+  color: '#9CA3AF',
+  marginTop: 2,
+},
+reviewRating: {
+  fontSize: 16,
+  fontWeight: '600',
+  color: '#1F2937',
+},
+reviewTagsRow: {
+  flexDirection: 'row',
+  gap: 8,
+  marginBottom: 12,
+},
+reviewTag: {
+  paddingHorizontal: 12,
+  paddingVertical: 6,
+  backgroundColor: '#F3F4F6',
+  borderRadius: 12,
+},
+reviewTagText: {
+  fontSize: 13,
+  fontWeight: '500',
+  color: '#6B7280',
+},
+reviewText: {
+  fontSize: 15,
+  lineHeight: 22,
+  color: '#374151',
+  marginBottom: 12,
+},
+emptyReviews: {
+  alignItems: 'center',
+  paddingVertical: 40,
+},
+emptyReviewsEmoji: {
+  fontSize: 48,
+  marginBottom: 12,
+},
+emptyReviewsText: {
+  fontSize: 16,
+  fontWeight: '600',
+  color: '#1F2937',
+  marginBottom: 4,
+},
+emptyReviewsSubtext: {
+  fontSize: 14,
+  color: '#9CA3AF',
+},
 });

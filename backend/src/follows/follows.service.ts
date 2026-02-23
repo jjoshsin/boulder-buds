@@ -155,6 +155,8 @@ const activities = [
     gymId: review.gymId,
     rating: review.overallRating,
     text: review.reviewText,
+    setting: review.setting,
+    difficulty: review.difficulty,
     photos: review.photos || [],
     createdAt: review.createdAt.toISOString(),  // Convert to string
   })),

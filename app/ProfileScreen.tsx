@@ -17,6 +17,7 @@ import { styles } from '../styles/ProfileScreen.styles';
 import * as SecureStore from 'expo-secure-store';
 import * as ImagePicker from 'expo-image-picker';
 import SimplePhotoGrid from './components/SimplePhotoGrid';
+import { getSettingLabel, getDifficultyLabel } from './utils/reviewLabels';
 type ProfileNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 interface ProfileScreenProps {
@@ -40,6 +41,8 @@ interface UserReview {
   overallRating: number;
   reviewText?: string;
   createdAt: string;
+  setting: string;
+  difficulty: string;
   tags: string[];
   photos: string[];
   gym: {
@@ -224,10 +227,7 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
   };
 
 const renderReview = (review: UserReview) => (
-  <View
-    key={review.id}
-    style={styles.reviewCard}
-  >
+  <View key={review.id} style={styles.reviewCard}>
     <TouchableOpacity onPress={() => navigation.navigate('GymDetail', { gymId: review.gym.id })}>
       <View style={styles.reviewHeader}>
         <View style={styles.reviewGymInfo}>
@@ -240,20 +240,22 @@ const renderReview = (review: UserReview) => (
       </View>
     </TouchableOpacity>
 
+    {/* Setting & Difficulty Tags */}
+    {review.setting && review.difficulty && (
+      <View style={styles.reviewTagsRow}>
+        <View style={styles.reviewTag}>
+          <Text style={styles.reviewTagText}>{getSettingLabel(review.setting)}</Text>
+        </View>
+        <View style={styles.reviewTag}>
+          <Text style={styles.reviewTagText}>{getDifficultyLabel(review.difficulty)}</Text>
+        </View>
+      </View>
+    )}
+
     {review.reviewText && (
       <Text style={styles.reviewText} numberOfLines={3}>
         {review.reviewText}
       </Text>
-    )}
-
-    {review.tags && review.tags.length > 0 && (
-      <View style={styles.reviewTags}>
-        {review.tags.slice(0, 3).map((tag, index) => (
-          <View key={index} style={styles.reviewTag}>
-            <Text style={styles.reviewTagText}>{tag.replace(/_/g, ' ')}</Text>
-          </View>
-        ))}
-      </View>
     )}
 
     {/* Photo Grid */}

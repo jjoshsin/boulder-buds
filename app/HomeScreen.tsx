@@ -15,6 +15,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
 import * as SecureStore from 'expo-secure-store';
+import { getSettingLabel, getDifficultyLabel } from './utils/reviewLabels';
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -26,6 +27,8 @@ interface Activity {
   gymId: string;
   rating?: number;
   text?: string;
+  setting?: string;
+  difficulty?: string;
   photos?: string[];
   photoUrl?: string;
   createdAt: string;
@@ -156,41 +159,53 @@ const renderNearbyGym = (gym: Gym) => (
 );
 
 const renderActivity = (activity: Activity, index: number) => {
-  if (activity.type === 'review') {
-    return (
-      <TouchableOpacity 
-        key={index} 
-        style={styles.activityCard}
-        onPress={() => navigation.navigate('GymDetail', { gymId: activity.gymId })}
-      >
-        <Text style={styles.activityText}>
-          <Text style={styles.activityUser}>{activity.user}</Text> reviewed{' '}
-          <Text style={styles.activityGym}>{activity.gym}</Text>
+if (activity.type === 'review') {
+  return (
+    <TouchableOpacity 
+      key={index} 
+      style={styles.activityCard}
+      onPress={() => navigation.navigate('GymDetail', { gymId: activity.gymId })}
+    >
+      <Text style={styles.activityText}>
+        <Text style={styles.activityUser}>{activity.user}</Text> reviewed{' '}
+        <Text style={styles.activityGym}>{activity.gym}</Text>
+      </Text>
+      {activity.rating && (
+        <Text style={styles.activityRating}>
+          {'⭐'.repeat(Math.round(activity.rating))}
         </Text>
-        {activity.rating && (
-          <Text style={styles.activityRating}>
-            {'⭐'.repeat(Math.round(activity.rating))}
-          </Text>
-        )}
-        {activity.text && (
-          <Text style={styles.activityReview} numberOfLines={2}>
-            "{activity.text}"
-          </Text>
-        )}
-        
-        {/* Show first photo if review has photos */}
-        {activity.photos && activity.photos.length > 0 && (
-          <Image 
-            source={{ uri: activity.photos[0] }} 
-            style={styles.activityPhoto}
-            resizeMode="cover"
-          />
-        )}
-        
-        <Text style={styles.activityTime}>{getTimeAgo(activity.createdAt)}</Text>
-      </TouchableOpacity>
-    );
-  } else {
+      )}
+      
+      {/* Add tags if available */}
+      {activity.setting && activity.difficulty && (
+        <View style={styles.activityTags}>
+          <View style={styles.activityTag}>
+            <Text style={styles.activityTagText}>{getSettingLabel(activity.setting)}</Text>
+          </View>
+          <View style={styles.activityTag}>
+            <Text style={styles.activityTagText}>{getDifficultyLabel(activity.difficulty)}</Text>
+          </View>
+        </View>
+      )}
+      
+      {activity.text && (
+        <Text style={styles.activityReview} numberOfLines={2}>
+          "{activity.text}"
+        </Text>
+      )}
+      
+      {activity.photos && activity.photos.length > 0 && (
+        <Image 
+          source={{ uri: activity.photos[0] }} 
+          style={styles.activityPhoto}
+          resizeMode="cover"
+        />
+      )}
+      
+      <Text style={styles.activityTime}>{getTimeAgo(activity.createdAt)}</Text>
+    </TouchableOpacity>
+  );
+} else {
     // Keep photo activity as-is
     return (
       <TouchableOpacity 

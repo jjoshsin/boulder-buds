@@ -17,12 +17,12 @@ import { RootStackParamList } from '../App';
 import { styles } from '../styles/GymDetailScreen.styles';
 import EditAmenitiesScreen from './EditAmenitiesScreen';
 import gymService, { Gym } from '../services/gymService';
+import { getSettingLabel, getDifficultyLabel } from './utils/reviewLabels';
 import * as SecureStore from 'expo-secure-store';
 import PhotoGrid from './components/PhotoGrid';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 type GymDetailScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
-
 
 export default function GymDetailScreen() {
   const route = useRoute();
@@ -53,20 +53,20 @@ export default function GymDetailScreen() {
   };
 
   const fetchGymDetails = async () => {
-  try {
-    setIsLoading(true);
-    const gymData = await gymService.getGymById(gymId);
-    console.log('📸 Reviews with photos:', JSON.stringify(
-      gymData.reviews?.map((r: any) => ({ id: r.id, photos: r.photos })),
-      null, 2
-    ));
-    setGym(gymData);
-  } catch (error) {
-    console.error('Error fetching gym details:', error);
-  } finally {
-    setIsLoading(false);
-  }
-};
+    try {
+      setIsLoading(true);
+      const gymData = await gymService.getGymById(gymId);
+      console.log('📸 Reviews with photos:', JSON.stringify(
+        gymData.reviews?.map((r: any) => ({ id: r.id, photos: r.photos })),
+        null, 2
+      ));
+      setGym(gymData);
+    } catch (error) {
+      console.error('Error fetching gym details:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleDeleteReview = async (reviewId: string) => {
     Alert.alert(
@@ -92,7 +92,7 @@ export default function GymDetailScreen() {
               }
 
               Alert.alert('Success', 'Review deleted');
-              fetchGymDetails(); // Refresh the gym details
+              fetchGymDetails();
             } catch (error) {
               console.error('Delete review error:', error);
               Alert.alert('Error', 'Failed to delete review');
@@ -178,7 +178,6 @@ export default function GymDetailScreen() {
               ))}
             </ScrollView>
             
-            {/* Photo Pagination Dots */}
             {gym.officialPhotos.length > 1 && (
               <View style={styles.pagination}>
                 {gym.officialPhotos.map((_, index) => (
@@ -199,7 +198,6 @@ export default function GymDetailScreen() {
         <View style={styles.infoSection}>
           <Text style={styles.gymName}>{gym.name}</Text>
           
-          {/* Rating */}
           <View style={styles.ratingRow}>
             <Text style={styles.rating}>
               ⭐ {gym.rating ? gym.rating.toFixed(1) : 'New'}
@@ -211,234 +209,224 @@ export default function GymDetailScreen() {
             <Text style={styles.priceRange}>{getPriceRangeText(gym.priceRange || 2)}</Text>
           </View>
         </View>
-          {/* Address */}
-<View style={styles.addressRow}>
-  <View style={styles.addressInfo}>
-    <Text style={styles.address}>{gym.address || 'Address not available'}</Text>
-    <Text style={styles.borough}>{gym.city}, {gym.state}</Text>
-  </View>
-</View>
 
-          {/* Climbing Types */}
-          {gym.climbingTypes && gym.climbingTypes.length > 0 && (
-            <View style={styles.climbingTypes}>
-              {gym.climbingTypes.map((type, index) => {
-                let displayText = '';
-                if (type === 'bouldering') {
-                  displayText = '🧗 Bouldering';
-                } else if (type === 'rope') {
-                  displayText = '🪢 Rope Climbing';
-                } else {
-                  displayText = `🧗 ${type}`;
-                }
-                
-                return (
-                  <View key={index} style={styles.typeChip}>
-                    <Text style={styles.typeChipText}>
-                      {displayText}
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
-          )}
+        {/* Address */}
+        <View style={styles.addressRow}>
+          <View style={styles.addressInfo}>
+            <Text style={styles.address}>{gym.address || 'Address not available'}</Text>
+            <Text style={styles.borough}>{gym.city}, {gym.state}</Text>
+          </View>
+        </View>
 
-          {/* Action Button */}
-<TouchableOpacity 
-  style={styles.primaryButtonFull}
-  onPress={() => navigation.navigate('WriteReview', { 
-    gymId: gym.id, 
-    gymName: gym.name 
-  })}
->
-  <Text style={styles.primaryButtonText}>✍️ Write Review</Text>
-</TouchableOpacity>
+        {/* Climbing Types */}
+        {gym.climbingTypes && gym.climbingTypes.length > 0 && (
+          <View style={styles.climbingTypes}>
+            {gym.climbingTypes.map((type, index) => {
+              let displayText = '';
+              if (type === 'bouldering') {
+                displayText = '🧗 Bouldering';
+              } else if (type === 'rope') {
+                displayText = '🪢 Rope Climbing';
+              } else {
+                displayText = `🧗 ${type}`;
+              }
+              
+              return (
+                <View key={index} style={styles.typeChip}>
+                  <Text style={styles.typeChipText}>{displayText}</Text>
+                </View>
+              );
+            })}
+          </View>
+        )}
+
+        {/* Action Button */}
+        <TouchableOpacity 
+          style={styles.primaryButtonFull}
+          onPress={() => navigation.navigate('WriteReview', { 
+            gymId: gym.id, 
+            gymName: gym.name 
+          })}
+        >
+          <Text style={styles.primaryButtonText}>✍️ Write Review</Text>
+        </TouchableOpacity>
 
         {/* Amenities */}
-{gym.amenities && gym.amenities.length > 0 && (
-  <View style={styles.section}>
-    <View style={styles.sectionHeader}>
-      <Text style={styles.sectionTitle}>Amenities</Text>
-      <TouchableOpacity onPress={() => setShowAmenitiesModal(true)}>
-        <Text style={styles.editText}>Edit</Text>
-      </TouchableOpacity>
-    </View>
-    <View style={styles.amenitiesGrid}>
-      {gym.amenities.map((amenity, index) => {
-        if (!amenity || typeof amenity !== 'string') {
-          console.warn('Invalid amenity:', amenity);
-          return null;
-        }
-        
-        const formattedAmenity = amenity
-          .replace(/_/g, ' ')
-          .replace(/\b\w/g, l => l.toUpperCase());
-        
-        return (
-          <View key={index} style={styles.amenityItem}>
-            <Text style={styles.amenityIcon}>{renderAmenityIcon(amenity)}</Text>
-            <Text style={styles.amenityText}>
-              {formattedAmenity}
-            </Text>
-          </View>
-        );
-      })}
-    </View>
-  </View>
-)}
-
-{/* If no amenities, show add button */}
-{(!gym.amenities || gym.amenities.length === 0) && (
-  <View style={styles.section}>
-    <Text style={styles.sectionTitle}>Amenities</Text>
-    <TouchableOpacity 
-      style={styles.addAmenitiesButton}
-      onPress={() => setShowAmenitiesModal(true)}
-    >
-      <Text style={styles.addAmenitiesText}>+ Add Amenities</Text>
-    </TouchableOpacity>
-  </View>
-)}
-
-{/* Reviews */}
-<View style={styles.section}>
-  <View style={styles.sectionHeader}>
-    <Text style={styles.sectionTitle}>Reviews</Text>
-    {gym.reviewCount !== undefined && gym.reviewCount > 0 && (
-      <Text style={styles.seeAllText}>
-        {gym.reviewCount} {gym.reviewCount === 1 ? 'review' : 'reviews'}
-      </Text>
-    )}
-  </View>
-
-  {gym.reviews && gym.reviews.length > 0 ? (
-    gym.reviews.map((review: any, index: number) => {
-      if (!review || !review.user || !review.user.displayName) return null;
-      const isOwnReview = currentUserId === review.userId;
-
-      return (
-        <View key={index} style={styles.reviewCard}>
-          <View style={styles.reviewHeader}>
-            <View style={styles.reviewUserInfo}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                  {review.user.displayName.charAt(0).toUpperCase()}
-                </Text>
-              </View>
-              <View>
-                <Text style={styles.reviewUserName}>{review.user.displayName}</Text>
-                <Text style={styles.reviewDate}>
-                  {new Date(review.createdAt).toLocaleDateString()}
-                </Text>
-              </View>
+        {gym.amenities && gym.amenities.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Amenities</Text>
+              <TouchableOpacity onPress={() => setShowAmenitiesModal(true)}>
+                <Text style={styles.editText}>Edit</Text>
+              </TouchableOpacity>
             </View>
-            <View style={styles.reviewRatingContainer}>
-              <Text style={styles.reviewRating}>
-                ⭐ {review.overallRating ? review.overallRating.toFixed(1) : 'N/A'}
-              </Text>
-              {isOwnReview && (
-                <TouchableOpacity
-                  style={styles.reviewOptionsButton}
-                  onPress={() => {
-                    Alert.alert(
-                      'Review Options',
-                      'What would you like to do?',
-                      [
-                        {
-                          text: 'Edit',
-                          onPress: () => navigation.navigate('WriteReview', {
-                            gymId: gym.id,
-                            gymName: gym.name,
-                            reviewId: review.id,
-                            existingReview: review,
-                          } as any),
-                        },
-                        {
-                          text: 'Delete',
-                          style: 'destructive',
-                          onPress: () => handleDeleteReview(review.id),
-                        },
-                        { text: 'Cancel', style: 'cancel' },
-                      ]
-                    );
-                  }}
-                >
-                  <Text style={styles.reviewOptionsText}>⋯</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          </View>
-
-          {/* Review Text */}
-          {review.reviewText && typeof review.reviewText === 'string' && (
-            <Text style={styles.reviewText} numberOfLines={3}>
-              {review.reviewText}
-            </Text>
-          )}
-
-          {/* Tags */}
-          {review.tags && Array.isArray(review.tags) && review.tags.length > 0 && (
-            <View style={styles.reviewTags}>
-              {review.tags.slice(0, 2).map((tag: any, tagIndex: number) => {
-                if (!tag || typeof tag !== 'string') return null;
+            <View style={styles.amenitiesGrid}>
+              {gym.amenities.map((amenity, index) => {
+                if (!amenity || typeof amenity !== 'string') {
+                  console.warn('Invalid amenity:', amenity);
+                  return null;
+                }
+                
+                const formattedAmenity = amenity
+                  .replace(/_/g, ' ')
+                  .replace(/\b\w/g, l => l.toUpperCase());
+                
                 return (
-                  <View key={tagIndex} style={styles.reviewTag}>
-                    <Text style={styles.reviewTagText}>
-                      {tag.replace(/_/g, ' ')}
-                    </Text>
+                  <View key={index} style={styles.amenityItem}>
+                    <Text style={styles.amenityIcon}>{renderAmenityIcon(amenity)}</Text>
+                    <Text style={styles.amenityText}>{formattedAmenity}</Text>
                   </View>
                 );
               })}
-              {review.tags.length > 2 && (
-                <View style={styles.reviewTag}>
-                  <Text style={styles.reviewTagText}>
-                    +{review.tags.length - 2} more
-                  </Text>
+            </View>
+          </View>
+        )}
+
+        {(!gym.amenities || gym.amenities.length === 0) && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Amenities</Text>
+            <TouchableOpacity 
+              style={styles.addAmenitiesButton}
+              onPress={() => setShowAmenitiesModal(true)}
+            >
+              <Text style={styles.addAmenitiesText}>+ Add Amenities</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Reviews Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>
+              ⭐ Reviews ({gym.reviewCount})
+            </Text>
+{gym.reviews && gym.reviews.length > 3 && (
+  <TouchableOpacity 
+    onPress={() => navigation.navigate('AllReviews', {
+      reviews: gym.reviews || [],
+      currentUserId: currentUserId || '',
+      gymName: gym.name,
+    })}
+  >
+    <Text style={styles.seeAllButton}>See All</Text>
+  </TouchableOpacity>
+)}
+          </View>
+
+          {gym.reviews && gym.reviews.length > 0 ? (
+            gym.reviews.slice(0, 3).map((review: any) => {
+              if (!review || !review.user || !review.user.displayName) return null;
+              const isOwnReview = currentUserId === review.userId;
+
+              return (
+                <View key={review.id} style={styles.reviewCard}>
+                  <View style={styles.reviewHeader}>
+                    <View style={styles.reviewUserInfo}>
+                      <View style={styles.reviewAvatar}>
+                        <Text style={styles.reviewAvatarText}>
+                          {review.user.displayName.charAt(0).toUpperCase()}
+                        </Text>
+                      </View>
+                      <View>
+                        <Text style={styles.reviewUserName}>{review.user.displayName}</Text>
+                        <Text style={styles.reviewDate}>
+                          {new Date(review.createdAt).toLocaleDateString()}
+                        </Text>
+                      </View>
+                    </View>
+                    <View style={styles.reviewRatingContainer}>
+                      <Text style={styles.reviewRating}>
+                        ⭐ {review.overallRating ? review.overallRating.toFixed(1) : 'N/A'}
+                      </Text>
+                      {isOwnReview && (
+                        <TouchableOpacity
+                          style={styles.reviewOptionsButton}
+                          onPress={() => {
+                            Alert.alert(
+                              'Review Options',
+                              'What would you like to do?',
+                              [
+                                {
+                                  text: 'Edit',
+                                  onPress: () => navigation.navigate('WriteReview', {
+                                    gymId: gym.id,
+                                    gymName: gym.name,
+                                    reviewId: review.id,
+                                    existingReview: review,
+                                  } as any),
+                                },
+                                {
+                                  text: 'Delete',
+                                  style: 'destructive',
+                                  onPress: () => handleDeleteReview(review.id),
+                                },
+                                { text: 'Cancel', style: 'cancel' },
+                              ]
+                            );
+                          }}
+                        >
+                          <Text style={styles.reviewOptionsText}>⋯</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  </View>
+
+                  {/* Setting & Difficulty Tags */}
+                  <View style={styles.reviewTagsRow}>
+                    <View style={styles.reviewTag}>
+                      <Text style={styles.reviewTagText}>{getSettingLabel(review.setting)}</Text>
+                    </View>
+                    <View style={styles.reviewTag}>
+                      <Text style={styles.reviewTagText}>{getDifficultyLabel(review.difficulty)}</Text>
+                    </View>
+                  </View>
+
+                  {review.reviewText && (
+                    <Text style={styles.reviewText} numberOfLines={3}>
+                      {review.reviewText}
+                    </Text>
+                  )}
+
+                  {review.photos && review.photos.length > 0 && (
+                    <PhotoGrid
+                      photos={review.photos}
+                      reviewId={review.id}
+                      initialLikeCount={review.likeCount || 0}
+                      initialLiked={review.likes?.some((l: any) => l.userId === currentUserId) || false}
+                      currentUserId={currentUserId || ''}
+                      containerWidth={SCREEN_WIDTH - 40 - 32}
+                    />
+                  )}
                 </View>
-              )}
+              );
+            })
+          ) : (
+            <View style={styles.emptyReviews}>
+              <Text style={styles.emptyReviewsEmoji}>✍️</Text>
+              <Text style={styles.emptyReviewsText}>No reviews yet</Text>
+              <Text style={styles.emptyReviewsSubtext}>Be the first to review!</Text>
             </View>
           )}
-
-          {/* Photo Grid */}
-          {review.photos && review.photos.length > 0 && (
-  <PhotoGrid
-    photos={review.photos}
-    reviewId={review.id}
-    initialLikeCount={review.likeCount || 0}
-    initialLiked={review.likes?.some((l: any) => l.userId === currentUserId) || false}
-    currentUserId={currentUserId || ''}
-    containerWidth={SCREEN_WIDTH - 40 - 32}
-  />
-)}
         </View>
-      );
-    })
-  ) : (
-    <View style={styles.noReviewsContainer}>
-      <Text style={styles.noReviewsEmoji}>✍️</Text>
-      <Text style={styles.noReviewsText}>No reviews yet</Text>
-      <Text style={styles.noReviewsSubtext}>Be the first to review this gym!</Text>
-    </View>
-  )}
-</View>
-        {/* Bottom Padding */}
+
         <View style={styles.bottomPadding} />
       </ScrollView>
+
       {/* Amenities Edit Modal */}
-<Modal
-  visible={showAmenitiesModal}
-  animationType="slide"
-  presentationStyle="pageSheet"
->
-  <EditAmenitiesScreen
-    gymId={gym.id}
-    currentAmenities={gym.amenities || []}
-    onClose={() => {
-      setShowAmenitiesModal(false);
-      fetchGymDetails(); // Refresh to show updated amenities
-    }}
-  />
-</Modal>
+      <Modal
+        visible={showAmenitiesModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <EditAmenitiesScreen
+          gymId={gym.id}
+          currentAmenities={gym.amenities || []}
+          onClose={() => {
+            setShowAmenitiesModal(false);
+            fetchGymDetails();
+          }}
+        />
+      </Modal>
     </SafeAreaView>
   );
 }

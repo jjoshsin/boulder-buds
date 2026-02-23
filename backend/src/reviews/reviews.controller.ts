@@ -6,49 +6,40 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 export class ReviewsController {
   constructor(private reviewsService: ReviewsService) {}
 
-  @UseGuards(JwtAuthGuard)
-  @Post()
-  async createReview(
-    @Body() body: {
-      gymId: string;
-      overallRating: number;
-      settingQuality?: number;
-      difficulty?: number;
-      variety?: number;
-      crowding?: number;
-      cleanliness?: number;
-      vibe?: number;
-      reviewText?: string;
-      tags?: string[];
-      photos?: string[];
-    },
-    @Request() req,
-  ) {
-    const userId = req.user.userId;
-    return this.reviewsService.createReview(userId, body);
-  }
+@Post()
+@UseGuards(JwtAuthGuard)
+async createReview(
+  @Request() req,
+  @Body() body: {
+    gymId: string;
+    overallRating: number;
+    setting: string;
+    difficulty: string;
+    reviewText?: string;
+    photos?: string[];
+  },
+) {
+  return this.reviewsService.createReview({
+    userId: req.user.userId,
+    ...body,
+  });
+}
 
-  @UseGuards(JwtAuthGuard)
-  @Patch(':id')
-  async updateReview(
-    @Param('id') id: string,
-    @Body() body: {
-      overallRating?: number;
-      settingQuality?: number;
-      difficulty?: number;
-      variety?: number;
-      crowding?: number;
-      cleanliness?: number;
-      vibe?: number;
-      reviewText?: string;
-      tags?: string[];
-      photos?: string[];
-    },
-    @Request() req,
-  ) {
-    const userId = req.user.userId;
-    return this.reviewsService.updateReview(id, userId, body);
-  }
+@Patch(':id')
+@UseGuards(JwtAuthGuard)
+async updateReview(
+  @Param('id') id: string,
+  @Request() req,
+  @Body() body: {
+    overallRating?: number;
+    setting?: string;
+    difficulty?: string;
+    reviewText?: string;
+    photos?: string[];
+  },
+) {
+  return this.reviewsService.updateReview(id, req.user.userId, body);
+}
 
   @UseGuards(JwtAuthGuard)
   @Delete(':id')

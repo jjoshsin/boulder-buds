@@ -194,6 +194,12 @@ async getGymById(id: string) {
     throw new NotFoundException('Gym not found');
   }
 
+  // Sort reviews by like count
+  const reviewsWithLikeCount = gym.reviews.map(review => ({
+    ...review,
+    likeCount: review.likes.length,
+  })).sort((a, b) => b.likeCount - a.likeCount);
+
   return {
     id: gym.id,
     name: gym.name,
@@ -209,10 +215,7 @@ async getGymById(id: string) {
     climbingTypes: gym.climbingTypes,
     rating: this.calculateAverageRating(gym.reviews),
     reviewCount: gym.reviews.length,
-    reviews: gym.reviews.map(review => ({
-      ...review,
-      likeCount: review.likes.length,
-    })),
+    reviews: reviewsWithLikeCount,
   };
 }
 
