@@ -20,6 +20,8 @@ import WriteReviewScreen from './app/WriteReviewScreen';
 import FollowListScreen from './app/FollowListScreen';
 import UserProfileScreen from './app/UserProfileScreen';
 import authService from './services/authService';
+import RegisterGymScreen from './app/RegisterGymScreen';
+import UploadVideoScreen from './app/UploadVideoScreen';
 
 export type RootStackParamList = {
   Landing: undefined;
@@ -38,6 +40,8 @@ export type RootStackParamList = {
   UserProfile: { userId: string };
   Settings: { onLogout?: () => void };
   AllReviews: { reviews: any[]; currentUserId: string; gymName: string };
+  RegisterGym: undefined;
+  UploadVideo: { gymId: string; gymName: string };
 };
 
 export type TabParamList = {
@@ -267,6 +271,16 @@ export default function App() {
               <Stack.Screen 
                 name="AllReviews" 
                 component={AllReviewsScreen}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen 
+                name="RegisterGym" 
+                component={RegisterGymScreen}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen 
+                name="UploadVideo" 
+                component={UploadVideoScreen}
                 options={{ headerShown: false }}
               />
             </>

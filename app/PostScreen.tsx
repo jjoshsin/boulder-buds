@@ -1,77 +1,59 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Modal } from 'react-native';
+import React from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
-import SelectGymScreen from './SelectGymScreen';
-import RegisterGymScreen from './RegisterGymScreen';
 import { styles } from '../styles/PostScreen.styles';
 
 type PostNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function PostScreen() {
   const navigation = useNavigation<PostNavigationProp>();
-  const [showSelectGym, setShowSelectGym] = useState(false);
-  const [showRegisterGym, setShowRegisterGym] = useState(false);
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.emoji}>➕</Text>
-        <Text style={styles.title}>Add Content</Text>
-        <Text style={styles.subtitle}>Share your gym experience</Text>
-
-        {/* Write Review */}
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => setShowSelectGym(true)}
-        >
-          <Text style={styles.actionIcon}>⭐</Text>
-          <View style={styles.actionContent}>
-            <Text style={styles.actionText}>Write Review</Text>
-            <Text style={styles.actionSubtext}>Share your experience at a gym</Text>
-          </View>
-          <Text style={styles.chevron}>›</Text>
-        </TouchableOpacity>
-
-        {/* Register New Gym */}
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => setShowRegisterGym(true)}
-        >
-          <Text style={styles.actionIcon}>🏢</Text>
-          <View style={styles.actionContent}>
-            <Text style={styles.actionText}>Register New Gym</Text>
-            <Text style={styles.actionSubtext}>Add a gym to our database</Text>
-          </View>
-          <Text style={styles.chevron}>›</Text>
-        </TouchableOpacity>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Add Gym</Text>
       </View>
 
-      {/* Select Gym for Review Modal */}
-      <Modal
-        visible={showSelectGym}
-        animationType="slide"
-        presentationStyle="pageSheet"
-      >
-        <SelectGymScreen 
-          onClose={() => setShowSelectGym(false)}
-          onSelectGym={(gymId, gymName) => {
-            setShowSelectGym(false);
-            navigation.navigate('WriteReview', { gymId, gymName });
-          }}
-        />
-      </Modal>
+      <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
+        <View style={styles.heroSection}>
+          <Text style={styles.heroEmoji}>🏢</Text>
+          <Text style={styles.heroTitle}>Can't find your gym?</Text>
+          <Text style={styles.heroSubtitle}>
+            Help grow our community by adding a climbing gym to Boulder Buds
+          </Text>
+        </View>
 
-      {/* Register Gym Modal */}
-      <Modal
-        visible={showRegisterGym}
-        animationType="slide"
-        presentationStyle="pageSheet"
-      >
-        <RegisterGymScreen onClose={() => setShowRegisterGym(false)} />
-      </Modal>
+        <TouchableOpacity
+          style={styles.registerButton}
+          onPress={() => navigation.navigate('RegisterGym')}
+        >
+          <Text style={styles.registerButtonText}>Register New Gym</Text>
+        </TouchableOpacity>
+
+        <View style={styles.infoSection}>
+          <Text style={styles.infoTitle}>What you'll need:</Text>
+          <View style={styles.infoItem}>
+            <Text style={styles.infoBullet}>•</Text>
+            <Text style={styles.infoText}>Gym name and address</Text>
+          </View>
+          <View style={styles.infoItem}>
+            <Text style={styles.infoBullet}>•</Text>
+            <Text style={styles.infoText}>City and state</Text>
+          </View>
+          <View style={styles.infoItem}>
+            <Text style={styles.infoBullet}>•</Text>
+            <Text style={styles.infoText}>Climbing types (bouldering, rope, or both)</Text>
+          </View>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }

@@ -5,58 +5,84 @@ export const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
+  header: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#1F2937',
+    textAlign: 'center',
+  },
   content: {
     flex: 1,
-    paddingHorizontal: 32,
-    paddingTop: 60,
   },
-  emoji: {
-    fontSize: 64,
-    marginBottom: 16,
-    textAlign: 'center',
+  contentContainer: {
+    padding: 20,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
+  heroSection: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  heroEmoji: {
+    fontSize: 80,
+    marginBottom: 20,
+  },
+  heroTitle: {
+    fontSize: 24,
+    fontWeight: '700',
     color: '#1F2937',
-    marginBottom: 8,
+    marginBottom: 12,
     textAlign: 'center',
   },
-  subtitle: {
+  heroSubtitle: {
     fontSize: 16,
     color: '#6B7280',
-    marginBottom: 40,
     textAlign: 'center',
+    lineHeight: 24,
+    paddingHorizontal: 20,
   },
-  actionButton: {
-    flexDirection: 'row',
+  registerButton: {
+    backgroundColor: '#FF8C00',
+    paddingVertical: 16,
+    borderRadius: 12,
     alignItems: 'center',
+    marginVertical: 20,
+  },
+  registerButtonText: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  infoSection: {
     backgroundColor: '#F9FAFB',
-    borderRadius: 16,
     padding: 20,
-    marginBottom: 16,
-    borderWidth: 2,
-    borderColor: '#E5E7EB',
+    borderRadius: 12,
+    marginTop: 20,
   },
-  actionIcon: {
-    fontSize: 32,
-    marginRight: 16,
-  },
-  actionContent: {
-    flex: 1,
-  },
-  actionText: {
-    fontSize: 18,
-    fontWeight: '600',
+  infoTitle: {
+    fontSize: 16,
+    fontWeight: '700',
     color: '#1F2937',
-    marginBottom: 4,
+    marginBottom: 16,
   },
-  actionSubtext: {
-    fontSize: 14,
-    color: '#6B7280',
+  infoItem: {
+    flexDirection: 'row',
+    marginBottom: 12,
   },
-  chevron: {
-    fontSize: 28,
-    color: '#D1D5DB',
+  infoBullet: {
+    fontSize: 16,
+    color: '#FF8C00',
+    marginRight: 8,
+    fontWeight: '700',
+  },
+  infoText: {
+    fontSize: 15,
+    color: '#4B5563',
+    flex: 1,
+    lineHeight: 22,
   },
 });

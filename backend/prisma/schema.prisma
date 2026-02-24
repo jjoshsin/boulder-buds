@@ -28,6 +28,11 @@ model User {
   communityPhotos CommunityPhoto[]
   reviewLikes     ReviewLike[]
 
+  videos          Video[]
+  videoLikes      VideoLike[]
+  videoComments   VideoComment[]
+  videoCommentLikes VideoCommentLike[]
+
   @@map("users")
 }
 
@@ -107,5 +112,68 @@ model Gym {
   reviews        Review[]
   communityPhotos CommunityPhoto[]
 
+  videos         Video[]
+
   @@map("gyms")
+}
+
+model Video {
+  id           String   @id @default(uuid())
+  videoUrl     String
+  thumbnailUrl String
+  caption      String?
+  gymId        String
+  gym          Gym      @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  views        Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  likes        VideoLike[]
+  comments     VideoComment[]
+
+  @@map("videos")
+}
+
+model VideoLike {
+  id        String   @id @default(uuid())
+  videoId   String
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([videoId, userId])
+  @@map("video_likes")
+}
+
+model VideoComment {
+  id        String   @id @default(uuid())
+  videoId   String
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  text      String
+  parentId  String?  // For replies
+  parent    VideoComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   VideoComment[] @relation("CommentReplies")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  likes     VideoCommentLike[]
+
+  @@map("video_comments")
+}
+
+model VideoCommentLike {
+  id        String   @id @default(uuid())
+  commentId String
+  comment   VideoComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([commentId, userId])
+  @@map("video_comment_likes")
 }

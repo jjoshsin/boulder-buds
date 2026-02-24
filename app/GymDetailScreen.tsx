@@ -20,6 +20,7 @@ import gymService, { Gym } from '../services/gymService';
 import { getSettingLabel, getDifficultyLabel } from './utils/reviewLabels';
 import * as SecureStore from 'expo-secure-store';
 import PhotoGrid from './components/PhotoGrid';
+import videoService, { Video as VideoType } from '../services/videoService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 type GymDetailScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -34,6 +35,8 @@ export default function GymDetailScreen() {
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
+  
+  const [videos, setVideos] = useState<VideoType[]>([]);
 
   useEffect(() => {
     fetchGymDetails();
@@ -52,21 +55,21 @@ export default function GymDetailScreen() {
     }
   };
 
-  const fetchGymDetails = async () => {
-    try {
-      setIsLoading(true);
-      const gymData = await gymService.getGymById(gymId);
-      console.log('📸 Reviews with photos:', JSON.stringify(
-        gymData.reviews?.map((r: any) => ({ id: r.id, photos: r.photos })),
-        null, 2
-      ));
-      setGym(gymData);
-    } catch (error) {
-      console.error('Error fetching gym details:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+const fetchGymDetails = async () => {
+  try {
+    setIsLoading(true);
+    const [gymData, gymVideos] = await Promise.all([
+      gymService.getGymById(gymId),
+      videoService.getGymVideos(gymId, 'mostRecent', 3),
+    ]);
+    setGym(gymData);
+    setVideos(gymVideos);
+  } catch (error) {
+    console.error('Error fetching gym details:', error);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleDeleteReview = async (reviewId: string) => {
     Alert.alert(
@@ -408,6 +411,63 @@ export default function GymDetailScreen() {
             </View>
           )}
         </View>
+
+        {/* Videos Section */}
+{videos && videos.length > 0 && (
+  <View style={styles.section}>
+    <View style={styles.sectionHeader}>
+      <Text style={styles.sectionTitle}>🎥 Videos ({videos.length})</Text>
+      {videos.length >= 3 && (
+        <TouchableOpacity 
+          onPress={() => navigation.navigate('AllVideos', {
+            gymId: gym.id,
+            gymName: gym.name,
+          })}
+        >
+          <Text style={styles.seeAllButton}>See All</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.videosScroll}>
+      {videos.map((video) => (
+        <TouchableOpacity
+          key={video.id}
+          style={styles.videoThumbnail}
+          onPress={() => navigation.navigate('VideoPlayer', {
+            videoId: video.id,
+            videos: videos,
+          })}
+        >
+          <Image
+            source={{ uri: video.thumbnailUrl }}
+            style={styles.thumbnailImage}
+            resizeMode="cover"
+          />
+          <View style={styles.videoOverlay}>
+            <Text style={styles.playIcon}>▶</Text>
+          </View>
+          <View style={styles.videoInfo}>
+            <Text style={styles.videoStats}>
+              👁 {video.views} • ❤️ {video.likeCount}
+            </Text>
+          </View>
+        </TouchableOpacity>
+      ))}
+    </ScrollView>
+  </View>
+)}
+
+{/* Upload Video Button */}
+<TouchableOpacity 
+  style={styles.uploadVideoButton}
+  onPress={() => navigation.navigate('UploadVideo', { 
+    gymId: gym.id, 
+    gymName: gym.name 
+  })}
+>
+  <Text style={styles.uploadVideoButtonText}>🎥 Upload Video</Text>
+</TouchableOpacity>
 
         <View style={styles.bottomPadding} />
       </ScrollView>

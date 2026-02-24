@@ -14,12 +14,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { styles } from '../styles/RegisterGymScreen.styles';
 import * as SecureStore from 'expo-secure-store';
 import * as ImagePicker from 'expo-image-picker';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../App';
 
-interface RegisterGymScreenProps {
-  onClose: () => void;
-}
+type RegisterGymNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-export default function RegisterGymScreen({ onClose }: RegisterGymScreenProps) {
+export default function RegisterGymScreen() {
+  const navigation = useNavigation<RegisterGymNavigationProp>();
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
   // Replace borough state with city and state
@@ -232,7 +234,7 @@ const validate = () => {
         }
         
         Alert.alert('Success', 'Gym registered successfully!', [
-          { text: 'OK', onPress: onClose },
+          { text: 'OK', onPress: () => navigation.goBack() },
         ]);
       } else {
         const error = await response.json();
@@ -251,7 +253,7 @@ const validate = () => {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={onClose}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
             <Text style={styles.closeButton}>✕</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Register Gym</Text>
