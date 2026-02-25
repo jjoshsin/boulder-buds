@@ -1,11 +1,12 @@
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { UploadService } from '../upload/upload.service';
 
 type SortOption = 'mostLiked' | 'mostRecent' | 'mostViewed' | 'mostCommented';
 
 @Injectable()
 export class VideosService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private uploadService: UploadService) {}
 
   async createVideo(data: {
     userId: string;
@@ -334,26 +335,6 @@ export class VideosService {
     return { success: true };
   }
 
-  async deleteVideo(videoId: string, userId: string) {
-    const video = await this.prisma.video.findUnique({
-      where: { id: videoId },
-    });
-
-    if (!video) {
-      throw new NotFoundException('Video not found');
-    }
-
-    if (video.userId !== userId) {
-      throw new UnauthorizedException('You can only delete your own videos');
-    }
-
-    await this.prisma.video.delete({
-      where: { id: videoId },
-    });
-
-    return { success: true };
-  }
-
   private sortVideos(videos: any[], sortBy: SortOption) {
     switch (sortBy) {
       case 'mostLiked':
@@ -367,5 +348,53 @@ export class VideosService {
       default:
         return videos;
     }
+  }
+
+    async updateCaption(videoId: string, userId: string, caption: string) {
+    const video = await this.prisma.video.findUnique({
+      where: { id: videoId },
+    });
+
+    if (!video) {
+      throw new NotFoundException('Video not found');
+    }
+
+    if (video.userId !== userId) {
+      throw new UnauthorizedException('You can only edit your own videos');
+    }
+
+    return this.prisma.video.update({
+      where: { id: videoId },
+      data: { caption },
+    });
+  }
+
+  async deleteVideo(videoId: string, userId: string) {
+    const video = await this.prisma.video.findUnique({
+      where: { id: videoId },
+    });
+
+    if (!video) {
+      throw new NotFoundException('Video not found');
+    }
+
+    if (video.userId !== userId) {
+      throw new UnauthorizedException('You can only delete your own videos');
+    }
+
+    // Delete video and thumbnail from S3
+    try {
+      await this.uploadService.deleteImages([video.videoUrl, video.thumbnailUrl]);
+    } catch (error) {
+      console.error('Error deleting video files from S3:', error);
+      // Continue with database deletion even if S3 deletion fails
+    }
+
+    // Delete from database (cascade will handle likes and comments)
+    await this.prisma.video.delete({
+      where: { id: videoId },
+    });
+
+    return { success: true };
   }
 }

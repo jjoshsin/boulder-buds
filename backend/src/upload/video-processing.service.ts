@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import * as ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
-import ffmpeg from 'fluent-ffmpeg';  // Changed this line
+import ffmpeg from 'fluent-ffmpeg';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as os from 'os';  // Add this import
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
@@ -12,7 +13,6 @@ export class VideoProcessingService {
   private bucketName: string;
 
   constructor() {
-    // Set ffmpeg path
     ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
     this.s3Client = new S3Client({
@@ -27,14 +27,14 @@ export class VideoProcessingService {
 
   async generateThumbnail(videoPath: string): Promise<string> {
     const thumbnailFilename = `thumbnail-${uuidv4()}.jpg`;
-    const thumbnailPath = path.join('/tmp', thumbnailFilename);
+    const thumbnailPath = path.join(os.tmpdir(), thumbnailFilename);  // Changed this
 
     return new Promise((resolve, reject) => {
       ffmpeg(videoPath)
         .screenshots({
           timestamps: ['00:00:00'],
           filename: thumbnailFilename,
-          folder: '/tmp',
+          folder: os.tmpdir(),  // Changed this
           size: '640x?',
         })
         .on('end', () => {
@@ -65,7 +65,7 @@ export class VideoProcessingService {
     videoFile: Express.Multer.File,
   ): Promise<{ videoUrl: string; thumbnailUrl: string }> {
     const videoFilename = `videos/${uuidv4()}-${videoFile.originalname}`;
-    const tempVideoPath = path.join('/tmp', `video-${uuidv4()}.mp4`);
+    const tempVideoPath = path.join(os.tmpdir(), `video-${uuidv4()}.mp4`);  // Changed this
 
     // Write video to temp file
     fs.writeFileSync(tempVideoPath, videoFile.buffer);

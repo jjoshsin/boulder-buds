@@ -16,6 +16,8 @@ import * as ImagePicker from 'expo-image-picker';
 import { ResizeMode, Video } from 'expo-av';
 import { styles } from '../styles/UploadVideoScreen.styles';
 import videoService from '../services/videoService';
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
+import * as VideoThumbnails from 'expo-video-thumbnails';
 
 type UploadVideoNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -27,87 +29,108 @@ export default function UploadVideoScreen() {
   const [videoUri, setVideoUri] = useState<string | null>(null);
   const [caption, setCaption] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);  // Add this
 
-  const pickVideo = async () => {
-    try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      
-      if (status !== 'granted') {
-        Alert.alert('Permission needed', 'Please allow access to your photos');
-        return;
-      }
-
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['videos'],
-        allowsEditing: true,
-        quality: 1,
-        videoMaxDuration: 60, // 60 seconds max
-      });
-
-      if (!result.canceled) {
-        setVideoUri(result.assets[0].uri);
-      }
-    } catch (error) {
-      console.error('Error picking video:', error);
-      Alert.alert('Error', 'Failed to pick video');
-    }
-  };
-
-  const recordVideo = async () => {
-    try {
-      const { status } = await ImagePicker.requestCameraPermissionsAsync();
-      
-      if (status !== 'granted') {
-        Alert.alert('Permission needed', 'Please allow access to your camera');
-        return;
-      }
-
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ['videos'],
-        allowsEditing: true,
-        quality: 1,
-        videoMaxDuration: 60,
-      });
-
-      if (!result.canceled) {
-        setVideoUri(result.assets[0].uri);
-      }
-    } catch (error) {
-      console.error('Error recording video:', error);
-      Alert.alert('Error', 'Failed to record video');
-    }
-  };
-
-  const handleUpload = async () => {
-    if (!videoUri) {
-      Alert.alert('No video', 'Please select a video first');
+const pickVideo = async () => {
+  try {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (status !== 'granted') {
+      Alert.alert('Permission needed', 'Please allow access to your photos');
       return;
     }
 
-    try {
-      setIsUploading(true);
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['videos'],
+      allowsEditing: true,
+      quality: 0.5,  // Reduce quality to 50%
+      videoMaxDuration: 30, // Limit to 30 seconds
+      videoQuality: 0,  // 0 = low, 1 = medium, 2 = high
+    });
 
-      // Upload video and generate thumbnail
-      const { videoUrl, thumbnailUrl } = await videoService.uploadVideo(videoUri);
-
-      // Create video entry
-      await videoService.createVideo({
-        gymId,
-        videoUrl,
-        thumbnailUrl,
-        caption: caption.trim() || undefined,
-      });
-
-      Alert.alert('Success', 'Video uploaded successfully!', [
-        { text: 'OK', onPress: () => navigation.goBack() }
-      ]);
-    } catch (error) {
-      console.error('Upload error:', error);
-      Alert.alert('Error', 'Failed to upload video. Please try again.');
-    } finally {
-      setIsUploading(false);
+    if (!result.canceled) {
+      setVideoUri(result.assets[0].uri);
     }
-  };
+  } catch (error) {
+    console.error('Error picking video:', error);
+    Alert.alert('Error', 'Failed to pick video');
+  }
+};
+
+const recordVideo = async () => {
+  try {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    
+    if (status !== 'granted') {
+      Alert.alert('Permission needed', 'Please allow access to your camera');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['videos'],
+      allowsEditing: true,
+      quality: 0.5,  // Reduce quality
+      videoMaxDuration: 30,
+      videoQuality: 0,
+    });
+
+    if (!result.canceled) {
+      setVideoUri(result.assets[0].uri);
+    }
+  } catch (error) {
+    console.error('Error recording video:', error);
+    Alert.alert('Error', 'Failed to record video');
+  }
+};
+
+const handleUpload = async () => {
+  if (!videoUri) {
+    Alert.alert('No video', 'Please select a video first');
+    return;
+  }
+
+  try {
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    console.log('📤 Starting video upload...');
+
+    // Simulate progress (since we can't track actual upload progress easily)
+    const progressInterval = setInterval(() => {
+      setUploadProgress(prev => {
+        if (prev >= 90) {
+          clearInterval(progressInterval);
+          return 90;
+        }
+        return prev + 10;
+      });
+    }, 1000);
+
+    // Upload video and generate thumbnail
+    const { videoUrl, thumbnailUrl } = await videoService.uploadVideo(videoUri);
+    
+    clearInterval(progressInterval);
+    setUploadProgress(100);
+
+    // Create video entry
+    await videoService.createVideo({
+      gymId,
+      videoUrl,
+      thumbnailUrl,
+      caption: caption.trim() || undefined,
+    });
+
+    Alert.alert('Success', 'Video uploaded successfully!', [
+      { text: 'OK', onPress: () => navigation.goBack() }
+    ]);
+  } catch (error: any) {
+    console.error('❌ Upload error:', error);
+    Alert.alert('Error', error.message || 'Failed to upload video. Please try again.');
+  } finally {
+    setIsUploading(false);
+    setUploadProgress(0);
+  }
+};
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>

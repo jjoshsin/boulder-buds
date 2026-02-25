@@ -47,34 +47,50 @@ export interface VideoDetail extends Video {
 }
 
 class VideoService {
-  async uploadVideo(videoUri: string): Promise<{ videoUrl: string; thumbnailUrl: string }> {
-    const token = await SecureStore.getItemAsync('authToken');
-    
-    const filename = videoUri.split('/').pop() || 'video.mp4';
-    const match = /\.(\w+)$/.exec(filename);
-    const type = match ? `video/${match[1]}` : 'video/mp4';
+async uploadVideo(videoUri: string): Promise<{ videoUrl: string; thumbnailUrl: string }> {
+  const token = await SecureStore.getItemAsync('authToken');
+  
+  const filename = videoUri.split('/').pop() || 'video.mp4';
+  const match = /\.(\w+)$/.exec(filename);
+  const type = match ? `video/${match[1]}` : 'video/mp4';
 
-    const formData = new FormData();
-    formData.append('video', {
-      uri: videoUri,
-      name: filename,
-      type,
-    } as any);
+  const formData = new FormData();
+  formData.append('video', {
+    uri: videoUri,
+    name: filename,
+    type,
+  } as any);
 
+  // Create an abort controller for timeout
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout
+
+  try {
     const response = await fetch(`${API_URL}/upload/video`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
       },
       body: formData,
+      signal: controller.signal,
     });
 
+    clearTimeout(timeoutId);
+
     if (!response.ok) {
-      throw new Error('Failed to upload video');
+      const errorText = await response.text();
+      throw new Error(`Failed to upload video: ${response.status} - ${errorText}`);
     }
 
-    return response.json();
+    return await response.json();
+  } catch (error: any) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      throw new Error('Upload timed out. Please try a shorter video.');
+    }
+    throw error;
   }
+}
 
   async createVideo(data: {
     gymId: string;
@@ -214,20 +230,37 @@ class VideoService {
     }
   }
 
-  async deleteVideo(videoId: string): Promise<void> {
-    const token = await SecureStore.getItemAsync('authToken');
+async updateCaption(videoId: string, caption: string): Promise<void> {
+  const token = await SecureStore.getItemAsync('authToken');
 
-    const response = await fetch(`${API_URL}/videos/${videoId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
+  const response = await fetch(`${API_URL}/videos/${videoId}/caption`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ caption }),
+  });
 
-    if (!response.ok) {
-      throw new Error('Failed to delete video');
-    }
+  if (!response.ok) {
+    throw new Error('Failed to update caption');
   }
+}
+
+async deleteVideo(videoId: string): Promise<void> {
+  const token = await SecureStore.getItemAsync('authToken');
+
+  const response = await fetch(`${API_URL}/videos/${videoId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to delete video');
+  }
+}
 }
 
 export default new VideoService();

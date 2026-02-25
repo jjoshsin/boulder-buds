@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Delete, Param, Body, Query, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Get, Delete, Param, Body, Query, UseGuards, Request, Patch } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { VideosService } from './videos.service';
 
@@ -80,9 +80,19 @@ export class VideosController {
     return this.videosService.deleteComment(commentId, req.user.userId);
   }
 
-  @Delete(':id')
-  @UseGuards(JwtAuthGuard)
-  async deleteVideo(@Param('id') id: string, @Request() req) {
-    return this.videosService.deleteVideo(id, req.user.userId);
-  }
+@Patch(':id/caption')
+@UseGuards(JwtAuthGuard)
+async updateCaption(
+  @Param('id') id: string,
+  @Request() req,
+  @Body() body: { caption: string },
+) {
+  return this.videosService.updateCaption(id, req.user.userId, body.caption);
+}
+
+@Delete(':id')
+@UseGuards(JwtAuthGuard)
+async deleteVideo(@Param('id') id: string, @Request() req) {
+  return this.videosService.deleteVideo(id, req.user.userId);
+}
 }

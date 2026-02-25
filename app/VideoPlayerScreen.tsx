@@ -19,8 +19,6 @@ import { styles } from '../styles/VideoPlayerScreen.styles';
 import videoService, { VideoDetail, VideoComment } from '../services/videoService';
 import * as SecureStore from 'expo-secure-store';
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-
 type VideoPlayerNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function VideoPlayerScreen() {
@@ -34,12 +32,59 @@ export default function VideoPlayerScreen() {
   const [likeCount, setLikeCount] = useState(0);
   const [commentText, setCommentText] = useState('');
   const [replyingTo, setReplyingTo] = useState<{ id: string; name: string } | null>(null);
+
+  const [isEditingCaption, setIsEditingCaption] = useState(false);
+  const [editedCaption, setEditedCaption] = useState('');
+
   const videoRef = useRef<Video>(null);
 
   useEffect(() => {
     loadVideo();
     loadCurrentUser();
   }, [videoId]);
+
+
+  const handleEditCaption = () => {
+  setEditedCaption(video?.caption || '');
+  setIsEditingCaption(true);
+};
+
+const handleSaveCaption = async () => {
+  try {
+    await videoService.updateCaption(videoId, editedCaption.trim());
+    setIsEditingCaption(false);
+    loadVideo(); // Reload to get updated data
+    Alert.alert('Success', 'Caption updated!');
+  } catch (error) {
+    console.error('Update caption error:', error);
+    Alert.alert('Error', 'Failed to update caption');
+  }
+};
+
+const handleDeleteVideo = () => {
+  Alert.alert(
+    'Delete Video',
+    'Are you sure you want to delete this video? This cannot be undone.',
+    [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await videoService.deleteVideo(videoId);
+            Alert.alert('Deleted', 'Video deleted successfully', [
+              { text: 'OK', onPress: () => navigation.goBack() }
+            ]);
+          } catch (error) {
+            console.error('Delete video error:', error);
+            Alert.alert('Error', 'Failed to delete video');
+          }
+        },
+      },
+    ]
+  );
+};
 
   const loadCurrentUser = async () => {
     try {
@@ -214,29 +259,87 @@ export default function VideoPlayerScreen() {
             shouldPlay
           />
           
-          {/* Close Button */}
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.closeButtonText}>✕</Text>
-          </TouchableOpacity>
+          {/* Close Button & Options */}
+<View style={styles.topBar}>
+  <TouchableOpacity
+    style={styles.closeButton}
+    onPress={() => navigation.goBack()}
+  >
+    <Text style={styles.closeButtonText}>✕</Text>
+  </TouchableOpacity>
+  
+  {currentUserId === video.userId && (
+    <TouchableOpacity
+      style={styles.optionsButton}
+      onPress={() => {
+        Alert.alert(
+          'Video Options',
+          'What would you like to do?',
+          [
+            {
+              text: 'Edit Caption',
+              onPress: handleEditCaption,
+            },
+            {
+              text: 'Delete Video',
+              style: 'destructive',
+              onPress: handleDeleteVideo,
+            },
+            { text: 'Cancel', style: 'cancel' },
+          ]
+        );
+      }}
+    >
+      <Text style={styles.optionsButtonText}>⋯</Text>
+    </TouchableOpacity>
+  )}
+</View>
 
-          {/* Video Info Overlay */}
-          <View style={styles.videoInfoOverlay}>
-            <View style={styles.userInfo}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                  {video.user.displayName.charAt(0).toUpperCase()}
-                </Text>
-              </View>
-              <Text style={styles.userName}>{video.user.displayName}</Text>
-            </View>
-            {video.caption && (
-              <Text style={styles.caption}>{video.caption}</Text>
-            )}
-            <Text style={styles.gymName}>📍 {video.gym.name}</Text>
-          </View>
+{/* Video Info Overlay */}
+<View style={styles.videoInfoOverlay}>
+  <View style={styles.userInfo}>
+    <View style={styles.avatar}>
+      <Text style={styles.avatarText}>
+        {video.user.displayName.charAt(0).toUpperCase()}
+      </Text>
+    </View>
+    <Text style={styles.userName}>{video.user.displayName}</Text>
+  </View>
+  
+  {isEditingCaption ? (
+    <View style={styles.captionEditContainer}>
+      <TextInput
+        style={styles.captionInput}
+        value={editedCaption}
+        onChangeText={setEditedCaption}
+        placeholder="Add a caption..."
+        placeholderTextColor="#9CA3AF"
+        multiline
+        maxLength={200}
+      />
+      <View style={styles.captionEditButtons}>
+        <TouchableOpacity
+          style={styles.captionCancelButton}
+          onPress={() => setIsEditingCaption(false)}
+        >
+          <Text style={styles.captionCancelText}>Cancel</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.captionSaveButton}
+          onPress={handleSaveCaption}
+        >
+          <Text style={styles.captionSaveText}>Save</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  ) : (
+    video.caption && (
+      <Text style={styles.caption}>{video.caption}</Text>
+    )
+  )}
+  
+  <Text style={styles.gymName}>📍 {video.gym.name}</Text>
+</View>
 
           {/* Like/Comment Actions */}
           <View style={styles.actionsBar}>
