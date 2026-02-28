@@ -49,7 +49,7 @@ export class UploadService {
     });
 
     await this.s3Client.send(command);
-    console.log(`✅ Deleted S3 object: ${key}`);
+    console.log(`Deleted S3 object: ${key}`);
   } catch (error) {
     // Don't throw - if S3 delete fails, still delete from DB
     console.error('Failed to delete S3 object:', error);
@@ -68,7 +68,7 @@ async deleteImages(imageUrls: string[]): Promise<void> {
       });
 
       await this.s3Client.send(command);
-      console.log(`✅ Deleted S3 object: ${key}`);
+      console.log(`Deleted S3 object: ${key}`);
     }
   } catch (error) {
     console.error('Failed to delete S3 objects:', error);

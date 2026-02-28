@@ -73,16 +73,16 @@ export class GooglePlacesService {
       const placeId = await this.searchGym(gymName, address);
       
       if (!placeId) {
-        console.log(`❌ Could not find place ID for: ${gymName}`);
+        console.log(`Could not find place ID for: ${gymName}`);
         return [];
       }
 
-      console.log(`✅ Found place ID: ${placeId}`);
+      console.log(`Found place ID: ${placeId}`);
 
       // Step 2: Get photos for this gym
       const photoUrls = await this.getGymPhotos(placeId, 3);
       
-      console.log(`📸 Found ${photoUrls.length} photos for ${gymName}`);
+      console.log(`Found ${photoUrls.length} photos for ${gymName}`);
       
       return photoUrls;
     } catch (error) {

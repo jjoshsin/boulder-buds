@@ -18,7 +18,11 @@
         "backgroundColor": "#121419"
       },
       "package": "com.boulderbuds.app",
-      "permissions": ["CAMERA", "READ_EXTERNAL_STORAGE", "WRITE_EXTERNAL_STORAGE"]
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "plugins": [
       [
@@ -32,7 +36,9 @@
         {
           "photosPermission": "Allow Boulder Buds to access your photos to upload gym images."
         }
-      ]
+      ],
+      "expo-video",
+      "expo-audio"
     ]
   }
 }

@@ -18,6 +18,7 @@ import * as SecureStore from 'expo-secure-store';
 import * as ImagePicker from 'expo-image-picker';
 import SimplePhotoGrid from './components/SimplePhotoGrid';
 import { getSettingLabel, getDifficultyLabel } from './utils/reviewLabels';
+
 type ProfileNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 interface ProfileScreenProps {

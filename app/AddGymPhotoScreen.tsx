@@ -131,7 +131,7 @@ export default function AddGymPhotoScreen({ onClose, preselectedGym }: AddGymPho
       const uploadPromises = selectedImages.map(uri => uploadService.uploadImage(uri));
       const imageUrls = await Promise.all(uploadPromises);
 
-      console.log('✅ Uploaded images:', imageUrls);
+      console.log('Uploaded images:', imageUrls);
 
       // Save as community photos
       const token = await SecureStore.getItemAsync('authToken');

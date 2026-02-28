@@ -133,4 +133,14 @@ export const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF',
   },
+  uploadingContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 12,
+},
+uploadProgressText: {
+  fontSize: 15,
+  fontWeight: '600',
+  color: '#FFFFFF',
+},
 });

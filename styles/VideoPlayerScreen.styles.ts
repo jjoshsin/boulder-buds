@@ -1,4 +1,4 @@
-import { StyleSheet, Dimensions } from 'react-native';
+import { StyleSheet, Dimensions, Platform } from 'react-native';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -14,7 +14,7 @@ export const styles = StyleSheet.create({
     backgroundColor: '#000000',
   },
   videoContainer: {
-    height: SCREEN_HEIGHT * 0.6,
+    height: SCREEN_HEIGHT,
     backgroundColor: '#000000',
     position: 'relative',
   },
@@ -22,19 +22,38 @@ export const styles = StyleSheet.create({
     width: SCREEN_WIDTH,
     height: '100%',
   },
-  closeButton: {
+  topBar: {
     position: 'absolute',
     top: 50,
-    right: 20,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    zIndex: 10,
+  },
+  closeButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 10,
   },
   closeButtonText: {
+    fontSize: 24,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  optionsButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  optionsButtonText: {
     fontSize: 24,
     color: '#FFFFFF',
     fontWeight: '600',
@@ -81,6 +100,48 @@ export const styles = StyleSheet.create({
     color: '#E5E7EB',
     fontWeight: '500',
   },
+  captionEditContainer: {
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  captionInput: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 14,
+    color: '#1F2937',
+    minHeight: 60,
+    marginBottom: 8,
+  },
+  captionEditButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 8,
+  },
+  captionCancelButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 6,
+    backgroundColor: '#6B7280',
+  },
+  captionCancelText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  captionSaveButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 6,
+    backgroundColor: '#FF8C00',
+  },
+  captionSaveText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
   actionsBar: {
     position: 'absolute',
     right: 12,
@@ -100,24 +161,50 @@ export const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFFFFF',
   },
-  commentsSection: {
+  // Modal styles
+  modalContainer: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingTop: 16,
   },
-  commentsTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1F2937',
-    paddingHorizontal: 20,
-    marginBottom: 16,
-  },
-  commentsList: {
+  commentsModalContent: {
     flex: 1,
-    paddingHorizontal: 20,
   },
+  modalOverlay: {
+  flex: 1,
+  justifyContent: 'flex-end',
+},
+modalBackdrop: {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+},
+commentsHeader: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  paddingHorizontal: 20,
+  paddingVertical: 16,
+  borderBottomWidth: 1,
+  borderBottomColor: '#E5E7EB',
+},
+commentsTitle: {
+  fontSize: 18,
+  fontWeight: '700',
+  color: '#1F2937',
+},
+closeCommentsButton: {
+  fontSize: 28,
+  color: '#6B7280',
+  fontWeight: '600',
+},
+commentsList: {
+  flex: 1,
+  paddingHorizontal: 20,
+  paddingTop: 16,
+},
   comment: {
     flexDirection: 'row',
     marginBottom: 16,
@@ -188,10 +275,11 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
     paddingVertical: 40,
   },
-  commentInput: {
+  commentInputContainer: {
     backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
     borderTopColor: '#E5E7EB',
+    paddingBottom: Platform.OS === 'ios' ? 0 : 8,
   },
   replyingToBar: {
     flexDirection: 'row',
@@ -241,69 +329,4 @@ export const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFFFFF',
   },
-  topBar: {
-  position: 'absolute',
-  top: 50,
-  left: 0,
-  right: 0,
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  paddingHorizontal: 20,
-  zIndex: 10,
-},
-optionsButton: {
-  width: 40,
-  height: 40,
-  borderRadius: 20,
-  backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  justifyContent: 'center',
-  alignItems: 'center',
-},
-optionsButtonText: {
-  fontSize: 24,
-  color: '#FFFFFF',
-  fontWeight: '600',
-},
-captionEditContainer: {
-  backgroundColor: 'rgba(0, 0, 0, 0.7)',
-  padding: 12,
-  borderRadius: 12,
-  marginBottom: 8,
-},
-captionInput: {
-  backgroundColor: '#FFFFFF',
-  borderRadius: 8,
-  padding: 10,
-  fontSize: 14,
-  color: '#1F2937',
-  minHeight: 60,
-  marginBottom: 8,
-},
-captionEditButtons: {
-  flexDirection: 'row',
-  justifyContent: 'flex-end',
-  gap: 8,
-},
-captionCancelButton: {
-  paddingHorizontal: 16,
-  paddingVertical: 6,
-  borderRadius: 6,
-  backgroundColor: '#6B7280',
-},
-captionCancelText: {
-  fontSize: 14,
-  fontWeight: '600',
-  color: '#FFFFFF',
-},
-captionSaveButton: {
-  paddingHorizontal: 16,
-  paddingVertical: 6,
-  borderRadius: 6,
-  backgroundColor: '#FF8C00',
-},
-captionSaveText: {
-  fontSize: 14,
-  fontWeight: '600',
-  color: '#FFFFFF',
-},
 });

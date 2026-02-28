@@ -227,11 +227,11 @@ const fetchGymDetails = async () => {
             {gym.climbingTypes.map((type, index) => {
               let displayText = '';
               if (type === 'bouldering') {
-                displayText = '🧗 Bouldering';
+                displayText = 'Bouldering';
               } else if (type === 'rope') {
-                displayText = '🪢 Rope Climbing';
+                displayText = 'Rope Climbing';
               } else {
-                displayText = `🧗 ${type}`;
+                displayText = `${type}`;
               }
               
               return (

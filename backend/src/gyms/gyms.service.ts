@@ -256,7 +256,7 @@ async getGymById(id: string) {
 
   // OPTIONAL: Keep this for backward compatibility, but mark as deprecated
   async addPhotos(gymId: string, photoUrls: string[]) {
-    console.log('⚠️ DEPRECATED: Use addCommunityPhoto instead');
+    console.log('DEPRECATED: Use addCommunityPhoto instead');
     const gym = await this.prisma.gym.findUnique({
       where: { id: gymId },
     });
@@ -291,11 +291,11 @@ async getGymById(id: string) {
 
     // Check if gym already has official photos
     if (gym.officialPhotos && gym.officialPhotos.length > 0) {
-      console.log(`✅ Gym ${gym.name} already has ${gym.officialPhotos.length} official photos`);
+      console.log(`Gym ${gym.name} already has ${gym.officialPhotos.length} official photos`);
       return gym.officialPhotos;
     }
 
-    console.log(`🔍 Fetching official photos for: ${gym.name}`);
+    console.log(`Fetching official photos for: ${gym.name}`);
 
     // Fetch photos from Google Places
     const photoUrls = await this.googlePlacesService.fetchAndSetGymPhotos(
@@ -304,7 +304,7 @@ async getGymById(id: string) {
     );
 
     if (photoUrls.length === 0) {
-      console.log(`❌ No photos found for ${gym.name}`);
+      console.log(`No photos found for ${gym.name}`);
       return [];
     }
 
@@ -316,7 +316,7 @@ async getGymById(id: string) {
       },
     });
 
-    console.log(`✅ Saved ${photoUrls.length} official photos for ${gym.name}`);
+    console.log(`Saved ${photoUrls.length} official photos for ${gym.name}`);
     
     return updatedGym.officialPhotos;
   }
@@ -331,10 +331,10 @@ async fetchAllMissingOfficialPhotos(): Promise<void> {
     gym => !gym.officialPhotos || gym.officialPhotos.length === 0
   );
 
-  console.log(`📸 Found ${gyms.length} gyms without official photos`);
+  console.log(`Found ${gyms.length} gyms without official photos`);
 
   for (const gym of gyms) {
-    console.log(`\n🏋️ Processing: ${gym.name}`);
+    console.log(`\nProcessing: ${gym.name}`);
     
     try {
       await this.fetchOfficialPhotos(gym.id);
@@ -342,11 +342,11 @@ async fetchAllMissingOfficialPhotos(): Promise<void> {
       // Add delay to avoid hitting API rate limits
       await new Promise(resolve => setTimeout(resolve, 500));
     } catch (error) {
-      console.error(`❌ Error processing ${gym.name}:`, error);
+      console.error(`Error processing ${gym.name}:`, error);
     }
   }
 
-  console.log('\n✅ Finished fetching official photos for all gyms');
+  console.log('\nFinished fetching official photos for all gyms');
 }
 
 async getGymsMapData() {
