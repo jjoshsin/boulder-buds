@@ -163,9 +163,11 @@ export const styles = StyleSheet.create({
   },
   // Modal styles
   modalContainer: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
+  height: SCREEN_HEIGHT * 0.65,  // 40% when keyboard is closed
+  backgroundColor: '#FFFFFF',
+  borderTopLeftRadius: 20,
+  borderTopRightRadius: 20,
+},
   commentsModalContent: {
     flex: 1,
   },

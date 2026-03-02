@@ -10,6 +10,8 @@ import {
   Alert,
   Dimensions,
   Modal,
+  Keyboard,
+  Animated
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
@@ -39,6 +41,37 @@ export default function VideoPlayerScreen() {
   const [showComments, setShowComments] = useState(false);
   const [isEditingCaption, setIsEditingCaption] = useState(false);
   const [editedCaption, setEditedCaption] = useState('');
+  const scrollViewRef = useRef<ScrollView>(null);
+  const [keyboardHeight] = useState(new Animated.Value(0));
+
+
+  useEffect(() => {
+  const keyboardWillShow = Keyboard.addListener(
+    Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+    (e) => {
+      Animated.timing(keyboardHeight, {
+        toValue: e.endCoordinates.height,
+        duration: Platform.OS === 'ios' ? 250 : 200,
+        useNativeDriver: false,
+      }).start();
+    }
+  );
+  const keyboardWillHide = Keyboard.addListener(
+    Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+    () => {
+      Animated.timing(keyboardHeight, {
+        toValue: 0,
+        duration: Platform.OS === 'ios' ? 250 : 200,
+        useNativeDriver: false,
+      }).start();
+    }
+  );
+
+  return () => {
+    keyboardWillShow.remove();
+    keyboardWillHide.remove();
+  };
+}, []);
 
   const player = useVideoPlayer(video?.videoUrl || '', (player) => {
     player.loop = true;
@@ -369,65 +402,61 @@ export default function VideoPlayerScreen() {
       activeOpacity={1}
       onPress={() => setShowComments(false)}
     />
-    <View style={styles.modalContainer}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+    <Animated.View style={[
+      styles.modalContainer,
+      { marginBottom: keyboardHeight }
+    ]}>
+      {/* Comments Header */}
+      <View style={styles.commentsHeader}>
+        <Text style={styles.commentsTitle}>Comments ({video.commentCount})</Text>
+        <TouchableOpacity onPress={() => setShowComments(false)}>
+          <Text style={styles.closeCommentsButton}>✕</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Comments List */}
+      <ScrollView 
+        ref={scrollViewRef}
+        style={styles.commentsList}
+        keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.commentsModalContent}>
-          {/* Comments Header */}
-          <View style={styles.commentsHeader}>
-            <Text style={styles.commentsTitle}>Comments ({video.commentCount})</Text>
-            <TouchableOpacity onPress={() => setShowComments(false)}>
-              <Text style={styles.closeCommentsButton}>✕</Text>
+        {video.comments.map(comment => renderComment(comment))}
+        {video.comments.length === 0 && (
+          <Text style={styles.noComments}>No comments yet. Be the first!</Text>
+        )}
+      </ScrollView>
+
+      {/* Comment Input */}
+      <View style={styles.commentInputContainer}>
+        {replyingTo && (
+          <View style={styles.replyingToBar}>
+            <Text style={styles.replyingToText}>
+              Replying to {replyingTo.name}
+            </Text>
+            <TouchableOpacity onPress={() => setReplyingTo(null)}>
+              <Text style={styles.cancelReply}>✕</Text>
             </TouchableOpacity>
           </View>
-
-          {/* Comments List */}
-          <ScrollView 
-            style={styles.commentsList}
-            keyboardShouldPersistTaps="handled"
+        )}
+        <View style={styles.inputRow}>
+          <TextInput
+            style={styles.input}
+            placeholder="Add a comment..."
+            placeholderTextColor="#9CA3AF"
+            value={commentText}
+            onChangeText={setCommentText}
+            multiline
+          />
+          <TouchableOpacity
+            style={[styles.sendButton, !commentText.trim() && styles.sendButtonDisabled]}
+            onPress={handleAddComment}
+            disabled={!commentText.trim()}
           >
-            {video.comments.map(comment => renderComment(comment))}
-            {video.comments.length === 0 && (
-              <Text style={styles.noComments}>No comments yet. Be the first!</Text>
-            )}
-          </ScrollView>
-
-          {/* Comment Input */}
-          <View style={styles.commentInputContainer}>
-            {replyingTo && (
-              <View style={styles.replyingToBar}>
-                <Text style={styles.replyingToText}>
-                  Replying to {replyingTo.name}
-                </Text>
-                <TouchableOpacity onPress={() => setReplyingTo(null)}>
-                  <Text style={styles.cancelReply}>✕</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-            <View style={styles.inputRow}>
-              <TextInput
-                style={styles.input}
-                placeholder="Add a comment..."
-                placeholderTextColor="#9CA3AF"
-                value={commentText}
-                onChangeText={setCommentText}
-                multiline
-              />
-              <TouchableOpacity
-                style={[styles.sendButton, !commentText.trim() && styles.sendButtonDisabled]}
-                onPress={handleAddComment}
-                disabled={!commentText.trim()}
-              >
-                <Text style={styles.sendButtonText}>Send</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+            <Text style={styles.sendButtonText}>Send</Text>
+          </TouchableOpacity>
         </View>
-      </KeyboardAvoidingView>
-    </View>
+      </View>
+    </Animated.View>
   </View>
 </Modal>
     </SafeAreaView>
