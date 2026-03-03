@@ -24,6 +24,8 @@ import RegisterGymScreen from './app/RegisterGymScreen';
 import UploadVideoScreen from './app/UploadVideoScreen';
 import VideoPlayerScreen from './app/VideoPlayerScreen';
 import AllVideosScreen from './app/AllVideosScreen';
+import AllPopularGymsScreen from './app/AllPopularGymsScreen';
+import AllNearbyGymsScreen from './app/AllNearbyGymsScreen';
 
 export type RootStackParamList = {
   Landing: undefined;
@@ -46,6 +48,8 @@ export type RootStackParamList = {
   UploadVideo: { gymId: string; gymName: string };
   VideoPlayer: { videoId: string; videos: any[] };
   AllVideos: { gymId: string; gymName: string };
+  AllPopularGyms: undefined;
+  AllNearbyGyms: undefined;
 };
 
 export type TabParamList = {
@@ -295,6 +299,16 @@ export default function App() {
               <Stack.Screen 
                 name="AllVideos" 
                 component={AllVideosScreen}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen 
+                name="AllPopularGyms" 
+                component={AllPopularGymsScreen}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen 
+                name="AllNearbyGyms" 
+                component={AllNearbyGymsScreen}
                 options={{ headerShown: false }}
               />
             </>

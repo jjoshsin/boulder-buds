@@ -13,25 +13,25 @@ model User {
   password      String
   displayName   String
   profilePhoto  String?
-  age           String?
-  birthday      String?
-  city          String?
-  state         String?
   climbingLevel String?
   climbingType  String?
+  city          String?
+  state         String?
+  birthday      DateTime?
+  age           String?  // Add this back
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  following       Follow[]         @relation("UserFollowing")
-  followers       Follow[]         @relation("UserFollowers")
-  reviews         Review[]
-  communityPhotos CommunityPhoto[]
-  reviewLikes     ReviewLike[]
-
-  videos          Video[]
-  videoLikes      VideoLike[]
-  videoComments   VideoComment[]
+  reviews           Review[]
+  communityPhotos   CommunityPhoto[]
+  followers         Follow[] @relation("UserFollowers")
+  following         Follow[] @relation("UserFollowing")
+  reviewLikes       ReviewLike[]
+  videos            Video[]
+  videoLikes        VideoLike[]
+  videoComments     VideoComment[]
   videoCommentLikes VideoCommentLike[]
+  registeredGyms    Gym[]    @relation("RegisteredGyms")
 
   @@map("users")
 }
@@ -95,24 +95,28 @@ model ReviewLike {
 }
 
 model Gym {
-  id             String   @id @default(uuid())
-  name           String
-  address        String
-  city           String
-  state          String
-  latitude       Float
-  longitude      Float
-  officialPhotos String[]
-  amenities      String[]
-  priceRange     Int
-  climbingTypes  String[]
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id                String   @id @default(uuid())
+  name              String
+  address           String
+  city              String
+  state             String
+  country           String   @default("USA")
+  latitude          Float
+  longitude         Float
+  hasRopeClimbing   Boolean  @default(false)
+  hasBouldering     Boolean  @default(true)
+  amenities         String[] @default([])  // Add this back
+  climbingTypes     String[] @default([])  // Add this back
+  officialPhotos    String[] @default([])  // Add this back
+  priceRange        String?  // Add this back
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  registeredBy      String?
+  registeredByUser  User?    @relation("RegisteredGyms", fields: [registeredBy], references: [id])
 
-  reviews        Review[]
-  communityPhotos CommunityPhoto[]
-
-  videos         Video[]
+  reviews           Review[]
+  communityPhotos   CommunityPhoto[]
+  videos            Video[]
 
   @@map("gyms")
 }

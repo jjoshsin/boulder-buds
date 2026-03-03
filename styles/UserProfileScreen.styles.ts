@@ -1,5 +1,6 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Dimensions } from 'react-native';
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -270,5 +271,52 @@ reviewTagText: {
   fontSize: 13,
   fontWeight: '500',
   color: '#6B7280',
+},
+videosGrid: {
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  paddingHorizontal: 12,
+  gap: 8,
+},
+videoCard: {
+  width: (SCREEN_WIDTH - 40 - 16) / 3,
+  height: ((SCREEN_WIDTH - 40 - 16) / 3) * 1.5,
+  borderRadius: 8,
+  overflow: 'hidden',
+  backgroundColor: '#F3F4F6',
+},
+videoThumbnail: {
+  width: '100%',
+  height: '100%',
+},
+videoOverlay: {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: 'rgba(0, 0, 0, 0.3)',
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+videoPlayIcon: {
+  fontSize: 24,
+  color: '#FFFFFF',
+},
+videoStats: {
+  position: 'absolute',
+  bottom: 4,
+  left: 4,
+  right: 4,
+  flexDirection: 'row',
+  gap: 6,
+},
+videoStat: {
+  fontSize: 10,
+  fontWeight: '600',
+  color: '#FFFFFF',
+  textShadowColor: 'rgba(0, 0, 0, 0.75)',
+  textShadowOffset: { width: 0, height: 1 },
+  textShadowRadius: 2,
 },
 });

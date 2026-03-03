@@ -21,6 +21,7 @@ async createGym(data: {
   amenities?: string[];
   priceRange?: number;
   climbingTypes?: string[];
+  userId: string;  // Added
 }) {
   let latitude = data.latitude;
   let longitude = data.longitude;
@@ -53,8 +54,9 @@ async createGym(data: {
       longitude,
       officialPhotos: [],
       amenities: data.amenities || [],
-      priceRange: data.priceRange || 2,
+      priceRange: data.priceRange?.toString() || '2',
       climbingTypes: data.climbingTypes || ['bouldering'],
+      registeredBy: data.userId,  // Added
     },
   });
 
@@ -156,6 +158,12 @@ async getGymById(id: string) {
   const gym = await this.prisma.gym.findUnique({
     where: { id },
     include: {
+      registeredByUser: {  // Added
+        select: {
+          id: true,
+          displayName: true,
+        },
+      },
       reviews: {
         include: {
           user: {
@@ -216,6 +224,7 @@ async getGymById(id: string) {
     rating: this.calculateAverageRating(gym.reviews),
     reviewCount: gym.reviews.length,
     reviews: reviewsWithLikeCount,
+    registeredByUser: gym.registeredByUser,  // Added
   };
 }
 

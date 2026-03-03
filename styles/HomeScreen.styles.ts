@@ -224,4 +224,27 @@ activityTagText: {
   fontWeight: '500',
   color: '#6B7280',
 },
+sectionHeader: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: 16,
+},
+seeAllText: {
+  fontSize: 15,
+  fontWeight: '600',
+  color: '#FF8C00',
+},
+gymCard: {
+  width: 280,
+  marginRight: 16,
+  backgroundColor: '#FFFFFF',
+  borderRadius: 12,
+  overflow: 'hidden',
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.1,
+  shadowRadius: 4,
+  elevation: 3,
+},
 });

@@ -221,6 +221,29 @@ const fetchGymDetails = async () => {
           </View>
         </View>
 
+        {/* Registered By */}
+{gym.registeredByUser && (
+  <View style={styles.registeredByContainer}>
+    <Text style={styles.registeredByText}>
+      Registered by{' '}
+      <Text 
+        style={styles.registeredByName}
+                onPress={() => {
+          if (gym.registeredByUser) {  // Add this check
+            if (gym.registeredByUser.id === currentUserId) {
+              navigation.navigate('MainTabs');
+            } else {
+              navigation.navigate('UserProfile', { userId: gym.registeredByUser.id });
+            }
+          }
+        }}
+      >
+        {gym.registeredByUser.displayName}
+      </Text>
+    </Text>
+  </View>
+)}
+
         {/* Climbing Types */}
         {gym.climbingTypes && gym.climbingTypes.length > 0 && (
           <View style={styles.climbingTypes}>

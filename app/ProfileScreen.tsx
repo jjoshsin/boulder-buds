@@ -18,6 +18,7 @@ import * as SecureStore from 'expo-secure-store';
 import * as ImagePicker from 'expo-image-picker';
 import SimplePhotoGrid from './components/SimplePhotoGrid';
 import { getSettingLabel, getDifficultyLabel } from './utils/reviewLabels';
+import videoService from '../services/videoService';
 
 type ProfileNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -54,6 +55,21 @@ interface UserReview {
   };
 }
 
+interface UserVideo {
+  id: string;
+  videoUrl: string;
+  thumbnailUrl: string;
+  caption?: string;
+  views: number;
+  likeCount: number;
+  commentCount: number;
+  createdAt: string;
+  gym: {
+    id: string;
+    name: string;
+  };
+}
+
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
@@ -65,6 +81,8 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
   const [followingCount, setFollowingCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [videos, setVideos] = useState<UserVideo[]>([]);
+
 
   useEffect(() => {
     loadProfileData();
@@ -81,7 +99,7 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
 
         const token = await SecureStore.getItemAsync('authToken');
         
-        const [reviewsRes, statsRes, userRes] = await Promise.all([
+        const [reviewsRes, statsRes, userRes, videosData] = await Promise.all([
           fetch(`http://192.168.1.166:3000/users/${userData.id}/reviews`, {
             headers: { 'Authorization': `Bearer ${token}` },
           }),
@@ -91,6 +109,7 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
           fetch(`http://192.168.1.166:3000/users/${userData.id}`, {
             headers: { 'Authorization': `Bearer ${token}` },
           }),
+          videoService.getUserVideos(userData.id),
         ]);
 
         if (userRes.ok) {
@@ -109,6 +128,8 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
           setFollowersCount(statsData.followersCount);
           setFollowingCount(statsData.followingCount);
         }
+
+        setVideos(videosData);
       }
     } catch (error) {
       console.error('Error loading profile:', error);
@@ -399,7 +420,7 @@ const renderReview = (review: UserReview) => (
           <Text style={styles.reviewsTitle}>Reviews ({reviews.length})</Text>
         </View>
 
-        {/* Content */}
+        {/* Reviews Content */}
         <View style={styles.contentContainer}>
           {reviews.length > 0 ? (
             reviews.map(renderReview)
@@ -408,6 +429,47 @@ const renderReview = (review: UserReview) => (
               <Text style={styles.emptyStateEmoji}>✍️</Text>
               <Text style={styles.emptyStateText}>No reviews yet</Text>
               <Text style={styles.emptyStateSubtext}>Start reviewing gyms to see them here</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Videos Section */}
+        <View style={styles.reviewsHeader}>
+          <Text style={styles.reviewsTitle}>🎥 Videos ({videos.length})</Text>
+        </View>
+
+        <View style={styles.contentContainer}>
+          {videos.length > 0 ? (
+            <View style={styles.videosGrid}>
+              {videos.map((video) => (
+                <TouchableOpacity
+                  key={video.id}
+                  style={styles.videoCard}
+                  onPress={() => navigation.navigate('VideoPlayer', {
+                    videoId: video.id,
+                    videos: videos,
+                  })}
+                >
+                  <Image
+                    source={{ uri: video.thumbnailUrl }}
+                    style={styles.videoThumbnail}
+                    resizeMode="cover"
+                  />
+                  <View style={styles.videoOverlay}>
+                    <Text style={styles.videoPlayIcon}>▶</Text>
+                  </View>
+                  <View style={styles.videoStats}>
+                    <Text style={styles.videoStat}>👁 {video.views}</Text>
+                    <Text style={styles.videoStat}>❤️ {video.likeCount}</Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateEmoji}>🎥</Text>
+              <Text style={styles.emptyStateText}>No videos yet</Text>
+              <Text style={styles.emptyStateSubtext}>Upload videos to see them here</Text>
             </View>
           )}
         </View>

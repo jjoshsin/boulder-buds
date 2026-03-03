@@ -22,6 +22,10 @@ export interface Gym {
   tags?: string[];
   reviews?: Review[];
   likeCount?: number;
+  registeredByUser?: {
+    id: string;
+    displayName: string;
+  }
 }
 
 export interface CommunityPhoto {

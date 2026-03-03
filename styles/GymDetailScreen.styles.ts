@@ -428,4 +428,17 @@ export const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFFFFF',
   },
+  registeredByContainer: {
+  marginBottom: 16,
+  marginLeft: 20,
+},
+registeredByText: {
+  fontSize: 13,
+  color: '#6B7280',
+  fontStyle: 'italic',
+},
+registeredByName: {
+  color: '#FF8C00',
+  fontWeight: '600',
+},
 });

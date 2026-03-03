@@ -251,23 +251,37 @@ if (activity.type === 'review') {
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Popular This Week */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🔥 Popular This Week</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.horizontalScroll}
-          >
-            {popularGyms.map(renderPopularGym)}
-          </ScrollView>
-        </View>
+{/* Popular This Week */}
+<View style={styles.section}>
+  <View style={styles.sectionHeader}>
+    <Text style={styles.sectionTitle}>🔥 Popular This Week</Text>
+    {popularGyms.length > 3 && (
+      <TouchableOpacity onPress={() => navigation.navigate('AllPopularGyms')}>
+        <Text style={styles.seeAllText}>See All</Text>
+      </TouchableOpacity>
+    )}
+  </View>
+  <ScrollView 
+    horizontal 
+    showsHorizontalScrollIndicator={false}
+    contentContainerStyle={{ paddingRight: 20 }}
+  >
+    {popularGyms.slice(0, 3).map(renderPopularGym)}
+  </ScrollView>
+</View>
 
-        {/* Near You */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📍 Near You</Text>
-          {nearbyGyms.map(renderNearbyGym)}
-        </View>
+{/* Near You */}
+<View style={styles.section}>
+  <View style={styles.sectionHeader}>
+    <Text style={styles.sectionTitle}>📍 Near You</Text>
+    {nearbyGyms.length > 3 && (
+      <TouchableOpacity onPress={() => navigation.navigate('AllNearbyGyms')}>
+        <Text style={styles.seeAllText}>See All</Text>
+      </TouchableOpacity>
+    )}
+  </View>
+  {nearbyGyms.slice(0, 3).map(renderNearbyGym)}
+</View>
 
         {/* Recent Activity */}
         <View style={styles.section}>
