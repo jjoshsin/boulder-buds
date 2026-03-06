@@ -24,9 +24,9 @@ export default function RegisterGymScreen() {
   const navigation = useNavigation<RegisterGymNavigationProp>();
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
-  // Replace borough state with city and state
   const [city, setCity] = useState('');
-  const [state, setState] = useState('');  const [climbingTypes, setClimbingTypes] = useState<string[]>([]);
+  const [state, setState] = useState('');
+  const [climbingTypes, setClimbingTypes] = useState<string[]>([]);
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,9 +34,9 @@ export default function RegisterGymScreen() {
   // Error states
   const [nameError, setNameError] = useState('');
   const [addressError, setAddressError] = useState('');
-  // Replace borough error with city/state errors
   const [cityError, setCityError] = useState('');
-  const [stateError, setStateError] = useState('');  const [climbingTypesError, setClimbingTypesError] = useState('');
+  const [stateError, setStateError] = useState('');
+  const [climbingTypesError, setClimbingTypesError] = useState('');
 
   // US States array
   const usStates = [
@@ -47,7 +47,7 @@ export default function RegisterGymScreen() {
     'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY',
   ];
 
-  const [showStatePicker, setShowStatePicker] = useState(false);  
+  const [showStatePicker, setShowStatePicker] = useState(false);
   const types = ['bouldering', 'rope', 'both'];
 
   const amenities = [
@@ -64,24 +64,22 @@ export default function RegisterGymScreen() {
   ];
 
   const toggleClimbingType = (type: string) => {
-  setClimbingTypesError('');
-  
-  if (type === 'both') {
-    // If both is already selected, deselect everything
-    if (climbingTypes.includes('bouldering') && climbingTypes.includes('rope')) {
-      setClimbingTypes([]);
+    setClimbingTypesError('');
+    
+    if (type === 'both') {
+      if (climbingTypes.includes('bouldering') && climbingTypes.includes('rope')) {
+        setClimbingTypes([]);
+      } else {
+        setClimbingTypes(['bouldering', 'rope']);
+      }
     } else {
-      // Select both
-      setClimbingTypes(['bouldering', 'rope']);
+      if (climbingTypes.includes(type)) {
+        setClimbingTypes(climbingTypes.filter(t => t !== type));
+      } else {
+        setClimbingTypes([...climbingTypes, type]);
+      }
     }
-  } else {
-    if (climbingTypes.includes(type)) {
-      setClimbingTypes(climbingTypes.filter(t => t !== type));
-    } else {
-      setClimbingTypes([...climbingTypes, type]);
-    }
-  }
-};
+  };
 
   const toggleAmenity = (amenity: string) => {
     if (selectedAmenities.includes(amenity)) {
@@ -162,91 +160,124 @@ export default function RegisterGymScreen() {
     }
   };
 
-const validate = () => {
-  let isValid = true;
+const handleSubmit = async () => {
+  // Clear previous errors
+  setAddressError('');
+  setCityError('');
+  setStateError('');
+  setNameError('');
+  setClimbingTypesError('');
 
+  // Validate required fields
+  let hasError = false;
+
+  // Gym name must be at least 3 characters
   if (!name.trim()) {
     setNameError('Gym name is required');
-    isValid = false;
-  } else {
-    setNameError('');
+    hasError = true;
+  } else if (name.trim().length < 3) {
+    setNameError('Gym name must be at least 3 characters');
+    hasError = true;
   }
 
+  // Address must be at least 5 characters and contain a number
   if (!address.trim()) {
-    setAddressError('Address is required');
-    isValid = false;
-  } else {
-    setAddressError('');
+    setAddressError('Street address is required');
+    hasError = true;
+  } else if (address.trim().length < 5) {
+    setAddressError('Please enter a complete street address');
+    hasError = true;
+  } else if (!/\d/.test(address)) {
+    setAddressError('Street address must include a street number');
+    hasError = true;
   }
 
+  // City must be at least 2 characters
   if (!city.trim()) {
     setCityError('City is required');
-    isValid = false;
-  } else {
-    setCityError('');
+    hasError = true;
+  } else if (city.trim().length < 2) {
+    setCityError('Please enter a valid city name');
+    hasError = true;
   }
 
   if (!state) {
     setStateError('Please select a state');
-    isValid = false;
-  } else {
-    setStateError('');
+    hasError = true;
   }
 
   if (climbingTypes.length === 0) {
     setClimbingTypesError('Please select at least one climbing type');
-    isValid = false;
-  } else {
-    setClimbingTypesError('');
+    hasError = true;
   }
 
-  return isValid;
-};
+  if (hasError) {
+    return;
+  }
 
-  const handleSubmit = async () => {
-    if (!validate()) return;
+  try {
+    setIsSubmitting(true);
 
-    try {
-      setIsSubmitting(true);
-      const token = await SecureStore.getItemAsync('authToken');
+    const token = await SecureStore.getItemAsync('authToken');
+    const response = await fetch('http://192.168.1.166:3000/gyms', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        name: name.trim(),
+        address: address.trim(),
+        city: city.trim(),
+        state,
+        climbingTypes,
+        amenities: selectedAmenities,
+      }),
+    });
 
-      const response = await fetch('http://192.168.1.166:3000/gyms', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-  name: name.trim(),
-  address: address.trim(),
-  city: city.trim(),
-  state,
-  climbingTypes,
-  amenities: selectedAmenities,
-}),
-      });
+    const data = await response.json();
 
-      if (response.ok) {
-        const gym = await response.json();
-        
-        if (selectedImages.length > 0) {
-          await uploadPhotos(selectedImages, gym.id);
+    if (!response.ok) {
+      // Handle validation errors
+      if (response.status === 400 && data.message) {
+        // Check if it's an address validation error
+        if (data.message.includes('Invalid address') || 
+            data.message.includes('Unable to verify') ||
+            data.message.includes('outside the United States')) {
+          setAddressError(data.message);
+          setCityError('Please verify city is correct');
+          setStateError('Please verify state is correct');
+        } else {
+          Alert.alert('Error', data.message);
         }
-        
-        Alert.alert('Success', 'Gym registered successfully!', [
-          { text: 'OK', onPress: () => navigation.goBack() },
-        ]);
       } else {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to register gym');
+        throw new Error(data.message || 'Failed to register gym');
       }
-    } catch (error: any) {
-      console.error('Register gym error:', error);
-      Alert.alert('Error', error.message || 'Failed to register gym');
-    } finally {
-      setIsSubmitting(false);
+      return;
     }
-  };
+
+    // Upload photos if any
+    if (selectedImages.length > 0) {
+      await uploadPhotos(selectedImages, data.id);
+    }
+
+    Alert.alert(
+      'Success!',
+      'Gym registered successfully',
+      [
+        {
+          text: 'OK',
+          onPress: () => navigation.goBack(),
+        },
+      ]
+    );
+  } catch (error: any) {
+    console.error('Registration error:', error);
+    Alert.alert('Error', error.message || 'Failed to register gym');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <SafeAreaView style={styles.container}>
@@ -273,7 +304,7 @@ const validate = () => {
               value={name}
               onChangeText={(text) => {
                 setName(text);
-                if (text.trim()) setNameError('');
+                if (nameError) setNameError('');
               }}
             />
             {nameError ? <Text style={styles.errorText}>{nameError}</Text> : null}
@@ -281,7 +312,7 @@ const validate = () => {
 
           {/* Address */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Address *</Text>
+            <Text style={styles.label}>Street Address *</Text>
             <TextInput
               style={[styles.input, addressError ? styles.inputError : null]}
               placeholder="e.g., 575 Degraw St"
@@ -289,132 +320,132 @@ const validate = () => {
               value={address}
               onChangeText={(text) => {
                 setAddress(text);
-                if (text.trim()) setAddressError('');
+                if (addressError) setAddressError('');
               }}
             />
             {addressError ? <Text style={styles.errorText}>{addressError}</Text> : null}
           </View>
 
           {/* City */}
-<View style={styles.inputGroup}>
-  <Text style={styles.label}>City *</Text>
-  <TextInput
-    style={[styles.input, cityError ? styles.inputError : null]}
-    placeholder="e.g., New York"
-    placeholderTextColor="#9CA3AF"
-    value={city}
-    onChangeText={(text) => {
-      setCity(text);
-      if (text.trim()) setCityError('');
-    }}
-  />
-  {cityError ? <Text style={styles.errorText}>{cityError}</Text> : null}
-</View>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>City *</Text>
+            <TextInput
+              style={[styles.input, cityError ? styles.inputError : null]}
+              placeholder="e.g., New York"
+              placeholderTextColor="#9CA3AF"
+              value={city}
+              onChangeText={(text) => {
+                setCity(text);
+                if (cityError) setCityError('');
+              }}
+            />
+            {cityError ? <Text style={styles.errorText}>{cityError}</Text> : null}
+          </View>
 
-{/* State */}
-<View style={styles.inputGroup}>
-  <Text style={styles.label}>State *</Text>
-  <TouchableOpacity
-    style={[styles.input, styles.stateSelector, stateError ? styles.inputError : null]}
-    onPress={() => setShowStatePicker(true)}
-  >
-    <Text style={state ? styles.stateSelectorText : styles.statePlaceholder}>
-      {state || 'Select a state'}
-    </Text>
-    <Text style={styles.stateChevron}>▼</Text>
-  </TouchableOpacity>
-  {stateError ? <Text style={styles.errorText}>{stateError}</Text> : null}
+          {/* State */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>State *</Text>
+            <TouchableOpacity
+              style={[styles.input, styles.stateSelector, stateError ? styles.inputError : null]}
+              onPress={() => setShowStatePicker(true)}
+            >
+              <Text style={state ? styles.stateSelectorText : styles.statePlaceholder}>
+                {state || 'Select a state'}
+              </Text>
+              <Text style={styles.stateChevron}>▼</Text>
+            </TouchableOpacity>
+            {stateError ? <Text style={styles.errorText}>{stateError}</Text> : null}
 
-  {/* State Picker Modal */}
-  <Modal
-    visible={showStatePicker}
-    animationType="slide"
-    presentationStyle="pageSheet"
-  >
-    <SafeAreaView style={styles.statePickerContainer}>
-      <View style={styles.statePickerHeader}>
-        <TouchableOpacity onPress={() => setShowStatePicker(false)}>
-          <Text style={styles.statePickerClose}>✕</Text>
-        </TouchableOpacity>
-        <Text style={styles.statePickerTitle}>Select State</Text>
-        <View style={{ width: 40 }} />
-      </View>
-      <ScrollView>
-        {usStates.map((s) => (
-          <TouchableOpacity
-            key={s}
-            style={[
-              styles.stateOption,
-              state === s && styles.stateOptionSelected,
-            ]}
-            onPress={() => {
-              setState(s);
-              setStateError('');
-              setShowStatePicker(false);
-            }}
-          >
-            <Text style={[
-              styles.stateOptionText,
-              state === s && styles.stateOptionTextSelected,
-            ]}>
-              {s}
-            </Text>
-            {state === s && <Text style={styles.stateCheckmark}>✓</Text>}
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-    </SafeAreaView>
-  </Modal>
-</View>
+            {/* State Picker Modal */}
+            <Modal
+              visible={showStatePicker}
+              animationType="slide"
+              presentationStyle="pageSheet"
+            >
+              <SafeAreaView style={styles.statePickerContainer}>
+                <View style={styles.statePickerHeader}>
+                  <TouchableOpacity onPress={() => setShowStatePicker(false)}>
+                    <Text style={styles.statePickerClose}>✕</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.statePickerTitle}>Select State</Text>
+                  <View style={{ width: 40 }} />
+                </View>
+                <ScrollView>
+                  {usStates.map((s) => (
+                    <TouchableOpacity
+                      key={s}
+                      style={[
+                        styles.stateOption,
+                        state === s && styles.stateOptionSelected,
+                      ]}
+                      onPress={() => {
+                        setState(s);
+                        if (stateError) setStateError('');
+                        setShowStatePicker(false);
+                      }}
+                    >
+                      <Text style={[
+                        styles.stateOptionText,
+                        state === s && styles.stateOptionTextSelected,
+                      ]}>
+                        {s}
+                      </Text>
+                      {state === s && <Text style={styles.stateCheckmark}>✓</Text>}
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </SafeAreaView>
+            </Modal>
+          </View>
 
-{/* Climbing Types */}
-<View style={styles.inputGroup}>
-  <Text style={styles.label}>Climbing Types *</Text>
-  <View style={styles.chipContainer}>
-    <TouchableOpacity
-      style={[
-        styles.chip,
-        climbingTypes.includes('bouldering') && styles.chipActive,
-        climbingTypesError ? styles.chipErrorBorder : null,
-      ]}
-      onPress={() => toggleClimbingType('bouldering')}
-    >
-      <Text style={[styles.chipText, climbingTypes.includes('bouldering') && styles.chipTextActive]}>
-        Bouldering
-      </Text>
-    </TouchableOpacity>
+          {/* Climbing Types */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Climbing Types *</Text>
+            <View style={styles.chipContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.chip,
+                  climbingTypes.includes('bouldering') && styles.chipActive,
+                  climbingTypesError ? styles.chipErrorBorder : null,
+                ]}
+                onPress={() => toggleClimbingType('bouldering')}
+              >
+                <Text style={[styles.chipText, climbingTypes.includes('bouldering') && styles.chipTextActive]}>
+                  Bouldering
+                </Text>
+              </TouchableOpacity>
 
-    <TouchableOpacity
-      style={[
-        styles.chip,
-        climbingTypes.includes('rope') && styles.chipActive,
-        climbingTypesError ? styles.chipErrorBorder : null,
-      ]}
-      onPress={() => toggleClimbingType('rope')}
-    >
-      <Text style={[styles.chipText, climbingTypes.includes('rope') && styles.chipTextActive]}>
-        Rope
-      </Text>
-    </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.chip,
+                  climbingTypes.includes('rope') && styles.chipActive,
+                  climbingTypesError ? styles.chipErrorBorder : null,
+                ]}
+                onPress={() => toggleClimbingType('rope')}
+              >
+                <Text style={[styles.chipText, climbingTypes.includes('rope') && styles.chipTextActive]}>
+                  Rope
+                </Text>
+              </TouchableOpacity>
 
-    <TouchableOpacity
-      style={[
-        styles.chip,
-        (climbingTypes.includes('bouldering') && climbingTypes.includes('rope')) && styles.chipActive,
-        climbingTypesError ? styles.chipErrorBorder : null,
-      ]}
-      onPress={() => toggleClimbingType('both')}
-    >
-      <Text style={[
-        styles.chipText,
-        (climbingTypes.includes('bouldering') && climbingTypes.includes('rope')) && styles.chipTextActive,
-      ]}>
-        Both
-      </Text>
-    </TouchableOpacity>
-  </View>
-  {climbingTypesError ? <Text style={styles.errorText}>{climbingTypesError}</Text> : null}
-</View>
+              <TouchableOpacity
+                style={[
+                  styles.chip,
+                  (climbingTypes.includes('bouldering') && climbingTypes.includes('rope')) && styles.chipActive,
+                  climbingTypesError ? styles.chipErrorBorder : null,
+                ]}
+                onPress={() => toggleClimbingType('both')}
+              >
+                <Text style={[
+                  styles.chipText,
+                  (climbingTypes.includes('bouldering') && climbingTypes.includes('rope')) && styles.chipTextActive,
+                ]}>
+                  Both
+                </Text>
+              </TouchableOpacity>
+            </View>
+            {climbingTypesError ? <Text style={styles.errorText}>{climbingTypesError}</Text> : null}
+          </View>
 
           {/* Amenities */}
           <View style={styles.inputGroup}>

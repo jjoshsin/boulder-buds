@@ -124,24 +124,9 @@ export const styles = StyleSheet.create({
     color: '#374151',
     fontWeight: '500',
   },
-  tabsContainer: {
-    flexDirection: 'row',
-    borderBottomWidth: 2,
-    borderBottomColor: '#E5E7EB',
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
   tabActive: {
     borderBottomWidth: 2,
     borderBottomColor: '#FF8C00',
-  },
-  tabText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#6B7280',
   },
   tabTextActive: {
     color: '#FF8C00',
@@ -318,5 +303,30 @@ videoStat: {
   textShadowColor: 'rgba(0, 0, 0, 0.75)',
   textShadowOffset: { width: 0, height: 1 },
   textShadowRadius: 2,
+},
+tabsContainer: {
+  flexDirection: 'row',
+  borderBottomWidth: 1,
+  borderBottomColor: '#E5E7EB',
+  marginHorizontal: 0,
+  marginTop: 16,
+},
+tab: {
+  flex: 1,
+  paddingVertical: 12,
+  alignItems: 'center',
+  borderBottomWidth: 2,
+  borderBottomColor: 'transparent',
+},
+activeTab: {
+  borderBottomColor: '#FF8C00',
+},
+tabText: {
+  fontSize: 15,
+  fontWeight: '600',
+  color: '#6B7280',
+},
+activeTabText: {
+  color: '#FF8C00',
 },
 });

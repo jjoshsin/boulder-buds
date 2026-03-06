@@ -82,7 +82,7 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [videos, setVideos] = useState<UserVideo[]>([]);
-
+  const [activeTab, setActiveTab] = useState<'reviews' | 'videos'>('reviews');
 
   useEffect(() => {
     loadProfileData();
@@ -415,69 +415,79 @@ const renderReview = (review: UserReview) => (
           </View>
         )}
 
-        {/* Reviews Section Title */}
-        <View style={styles.reviewsHeader}>
-          <Text style={styles.reviewsTitle}>Reviews ({reviews.length})</Text>
-        </View>
+        {/* Tabs */}
+<View style={styles.tabsContainer}>
+  <TouchableOpacity
+    style={[styles.tab, activeTab === 'reviews' && styles.activeTab]}
+    onPress={() => setActiveTab('reviews')}
+  >
+    <Text style={[styles.tabText, activeTab === 'reviews' && styles.activeTabText]}>
+      Reviews ({reviews.length})
+    </Text>
+  </TouchableOpacity>
+  <TouchableOpacity
+    style={[styles.tab, activeTab === 'videos' && styles.activeTab]}
+    onPress={() => setActiveTab('videos')}
+  >
+    <Text style={[styles.tabText, activeTab === 'videos' && styles.activeTabText]}>
+      Videos ({videos.length})
+    </Text>
+  </TouchableOpacity>
+</View>
 
-        {/* Reviews Content */}
-        <View style={styles.contentContainer}>
-          {reviews.length > 0 ? (
-            reviews.map(renderReview)
-          ) : (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyStateEmoji}>✍️</Text>
-              <Text style={styles.emptyStateText}>No reviews yet</Text>
-              <Text style={styles.emptyStateSubtext}>Start reviewing gyms to see them here</Text>
+{/* Content based on active tab */}
+<View style={styles.contentContainer}>
+  {activeTab === 'reviews' ? (
+    reviews.length > 0 ? (
+      reviews.map(renderReview)
+    ) : (
+      <View style={styles.emptyState}>
+        <Text style={styles.emptyStateEmoji}>✍️</Text>
+        <Text style={styles.emptyStateText}>No reviews yet</Text>
+        <Text style={styles.emptyStateSubtext}>Start reviewing gyms to see them here</Text>
+      </View>
+    )
+  ) : (
+    videos.length > 0 ? (
+      <View style={styles.videosGrid}>
+        {videos.map((video) => (
+          <TouchableOpacity
+            key={video.id}
+            style={styles.videoCard}
+            onPress={() => navigation.navigate('VideoPlayer', {
+              videoId: video.id,
+              videos: videos,
+            })}
+          >
+            <Image
+              source={{ uri: video.thumbnailUrl }}
+              style={styles.videoThumbnail}
+              resizeMode="cover"
+            />
+            <View style={styles.videoOverlay}>
+              <Text style={styles.videoPlayIcon}>▶</Text>
             </View>
-          )}
-        </View>
-
-        {/* Videos Section */}
-        <View style={styles.reviewsHeader}>
-          <Text style={styles.reviewsTitle}>🎥 Videos ({videos.length})</Text>
-        </View>
-
-        <View style={styles.contentContainer}>
-          {videos.length > 0 ? (
-            <View style={styles.videosGrid}>
-              {videos.map((video) => (
-                <TouchableOpacity
-                  key={video.id}
-                  style={styles.videoCard}
-                  onPress={() => navigation.navigate('VideoPlayer', {
-                    videoId: video.id,
-                    videos: videos,
-                  })}
-                >
-                  <Image
-                    source={{ uri: video.thumbnailUrl }}
-                    style={styles.videoThumbnail}
-                    resizeMode="cover"
-                  />
-                  <View style={styles.videoOverlay}>
-                    <Text style={styles.videoPlayIcon}>▶</Text>
-                  </View>
-                  <View style={styles.videoStats}>
-                    <Text style={styles.videoStat}>👁 {video.views}</Text>
-                    <Text style={styles.videoStat}>❤️ {video.likeCount}</Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
+            <View style={styles.videoStats}>
+              <Text style={styles.videoStat}>👁 {video.views}</Text>
+              <Text style={styles.videoStat}>❤️ {video.likeCount}</Text>
             </View>
-          ) : (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyStateEmoji}>🎥</Text>
-              <Text style={styles.emptyStateText}>No videos yet</Text>
-              <Text style={styles.emptyStateSubtext}>Upload videos to see them here</Text>
-            </View>
-          )}
-        </View>
+          </TouchableOpacity>
+        ))}
+      </View>
+    ) : (
+      <View style={styles.emptyState}>
+        <Text style={styles.emptyStateEmoji}>🎥</Text>
+        <Text style={styles.emptyStateText}>No videos yet</Text>
+        <Text style={styles.emptyStateSubtext}>Upload videos to see them here</Text>
+      </View>
+    )
+  )}
+</View>
 
-        {/* Logout Button */}
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutButtonText}>Logout</Text>
-        </TouchableOpacity>
+{/* Logout Button */}
+<TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+  <Text style={styles.logoutButtonText}>Logout</Text>
+</TouchableOpacity>
 
         <View style={styles.bottomPadding} />
       </ScrollView>

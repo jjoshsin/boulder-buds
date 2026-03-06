@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { GooglePlacesService } from './google-places.service';
 import { GeocodingService } from './geocoding.service'; 
@@ -21,34 +21,56 @@ async createGym(data: {
   amenities?: string[];
   priceRange?: number;
   climbingTypes?: string[];
-  userId: string;  // Added
+  userId: string;
 }) {
+  // Validate input lengths
+  if (data.name.trim().length < 3) {
+    throw new BadRequestException('Gym name must be at least 3 characters');
+  }
+
+  if (data.address.trim().length < 5) {
+    throw new BadRequestException('Street address must be at least 5 characters');
+  }
+
+  // Address must contain at least one number (street number)
+  if (!/\d/.test(data.address)) {
+    throw new BadRequestException('Street address must include a street number');
+  }
+
+  if (data.city.trim().length < 2) {
+    throw new BadRequestException('City name must be at least 2 characters');
+  }
+
   let latitude = data.latitude;
   let longitude = data.longitude;
 
   if (!latitude || !longitude) {
-    console.log(`🗺️ Geocoding address...`);
-    const coords = await this.geocodingService.geocodeAddress(
+    console.log(`🗺️ Geocoding full address: ${data.address}, ${data.city}, ${data.state}`);
+    
+    // Geocode the full address
+    const geocodeResult = await this.geocodingService.geocodeAddressWithValidation(
       data.address,
       data.city,
       data.state,
     );
 
-    if (coords) {
-      latitude = coords.lat;
-      longitude = coords.lng;
-    } else {
-      console.warn(`⚠️ Geocoding failed, using default coordinates`);
-      latitude = 39.8283; // USA center
-      longitude = -98.5795;
+    if (!geocodeResult) {
+      throw new BadRequestException(
+        'Unable to verify this address. Please ensure the street address, city, and state are valid and match an existing location.',
+      );
     }
+
+    latitude = geocodeResult.lat;
+    longitude = geocodeResult.lng;
+
+    console.log(`✅ Validated address: (${latitude}, ${longitude})`);
   }
 
   const gym = await this.prisma.gym.create({
     data: {
-      name: data.name,
-      address: data.address,
-      city: data.city,
+      name: data.name.trim(),
+      address: data.address.trim(),
+      city: data.city.trim(),
       state: data.state,
       latitude,
       longitude,
@@ -56,7 +78,7 @@ async createGym(data: {
       amenities: data.amenities || [],
       priceRange: data.priceRange?.toString() || '2',
       climbingTypes: data.climbingTypes || ['bouldering'],
-      registeredBy: data.userId,  // Added
+      registeredBy: data.userId,
     },
   });
 
@@ -409,5 +431,26 @@ async getGymsMapData() {
   });
 
   return updatedGym;
+}
+async deleteGym(gymId: string, userId: string) {
+  const gym = await this.prisma.gym.findUnique({
+    where: { id: gymId },
+  });
+
+  if (!gym) {
+    throw new NotFoundException('Gym not found');
+  }
+
+  // Only allow the user who registered the gym to delete it
+  if (gym.registeredBy !== userId) {
+    throw new UnauthorizedException('You can only delete gyms you registered');
+  }
+
+  // Delete the gym (cascade will handle reviews, photos, videos, etc.)
+  await this.prisma.gym.delete({
+    where: { id: gymId },
+  });
+
+  return { success: true, message: 'Gym deleted successfully' };
 }
 }

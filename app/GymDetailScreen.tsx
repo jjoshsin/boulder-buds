@@ -38,10 +38,27 @@ export default function GymDetailScreen() {
   
   const [videos, setVideos] = useState<VideoType[]>([]);
 
-  useEffect(() => {
-    fetchGymDetails();
-    loadCurrentUser();
-  }, [gymId]);
+useEffect(() => {
+  fetchGymDetails();
+  loadCurrentUser();
+}, [gymId]);
+
+const fetchGymDetails = async () => {
+  try {
+    setIsLoading(true);
+    const [gymData, gymVideos] = await Promise.all([
+      gymService.getGymById(gymId),
+      videoService.getGymVideos(gymId, 'mostRecent', 3),
+    ]);
+    console.log('GYM DATA:', JSON.stringify(gymData, null, 2)); // Add this
+    setGym(gymData);
+    setVideos(gymVideos);
+  } catch (error) {
+    console.error('Error fetching gym details:', error);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const loadCurrentUser = async () => {
     try {
@@ -55,21 +72,6 @@ export default function GymDetailScreen() {
     }
   };
 
-const fetchGymDetails = async () => {
-  try {
-    setIsLoading(true);
-    const [gymData, gymVideos] = await Promise.all([
-      gymService.getGymById(gymId),
-      videoService.getGymVideos(gymId, 'mostRecent', 3),
-    ]);
-    setGym(gymData);
-    setVideos(gymVideos);
-  } catch (error) {
-    console.error('Error fetching gym details:', error);
-  } finally {
-    setIsLoading(false);
-  }
-};
 
   const handleDeleteReview = async (reviewId: string) => {
     Alert.alert(
@@ -105,6 +107,43 @@ const fetchGymDetails = async () => {
       ]
     );
   };
+
+  const handleDeleteGym = async () => {
+  Alert.alert(
+    'Delete Gym',
+    'Are you sure you want to delete this gym? This will permanently remove all reviews, photos, and videos associated with it.',
+    [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const token = await SecureStore.getItemAsync('authToken');
+            const response = await fetch(`http://192.168.1.166:3000/gyms/${gymId}`, {
+              method: 'DELETE',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+              },
+            });
+
+            if (!response.ok) {
+              const error = await response.json();
+              throw new Error(error.message || 'Failed to delete gym');
+            }
+
+            Alert.alert('Deleted', 'Gym deleted successfully', [
+              { text: 'OK', onPress: () => navigation.navigate('MainTabs') }
+            ]);
+          } catch (error: any) {
+            console.error('Delete gym error:', error);
+            Alert.alert('Error', error.message || 'Failed to delete gym');
+          }
+        },
+      },
+    ]
+  );
+};
 
   const renderAmenityIcon = (amenity: string) => {
     const amenityIcons: { [key: string]: string } = {
@@ -221,15 +260,15 @@ const fetchGymDetails = async () => {
           </View>
         </View>
 
-        {/* Registered By */}
+{/* Registered By */}
 {gym.registeredByUser && (
   <View style={styles.registeredByContainer}>
     <Text style={styles.registeredByText}>
       Registered by{' '}
       <Text 
         style={styles.registeredByName}
-                onPress={() => {
-          if (gym.registeredByUser) {  // Add this check
+        onPress={() => {
+          if (gym.registeredByUser) {
             if (gym.registeredByUser.id === currentUserId) {
               navigation.navigate('MainTabs');
             } else {
@@ -242,6 +281,15 @@ const fetchGymDetails = async () => {
       </Text>
     </Text>
   </View>
+)}
+
+{/* Temporary Delete Button - Only show if current user registered the gym */}
+{gym.registeredByUser && gym.registeredByUser.id === currentUserId && (
+  <TouchableOpacity
+    onPress={handleDeleteGym}
+  >
+    <Text>🗑️ Delete This Gym</Text>
+  </TouchableOpacity>
 )}
 
         {/* Climbing Types */}

@@ -141,16 +141,8 @@ removeImageText: {
   fontSize: 16,
   fontWeight: 'bold',
 },
-inputError: {
-  borderColor: '#EF4444',
-},
 chipErrorBorder: {
   borderColor: '#EF4444',
-},
-errorText: {
-  fontSize: 13,
-  color: '#EF4444',
-  marginTop: 6,
 },
 stateSelector: {
   flexDirection: 'row',
@@ -215,5 +207,15 @@ stateOptionTextSelected: {
 stateCheckmark: {
   fontSize: 18,
   color: '#FF8C00',
+},
+inputError: {
+  borderColor: '#EF4444',
+  borderWidth: 1.5,
+},
+errorText: {
+  fontSize: 13,
+  color: '#EF4444',
+  marginTop: 4,
+  marginLeft: 4,
 },
 });

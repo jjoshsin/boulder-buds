@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Patch, UseGuards, Body, Request, Query } from '@nestjs/common';
+import { Controller, Get, Param, Post, Patch, UseGuards, Body, Request, Query, Delete, } from '@nestjs/common';
 import { GymsService } from './gyms.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -74,21 +74,27 @@ async getNearbyGyms(@Query('climbingType') climbingType?: string) {
     };
   }  
 
-  @UseGuards(JwtAuthGuard)
-  @Post()
-  async createGym(@Body() body: {
+@UseGuards(JwtAuthGuard)
+@Post()
+async createGym(
+  @Request() req,
+  @Body() body: {
     name: string;
     address: string;
     city: string;
     state: string;
-    latitude?: number;  // Optional now
-    longitude?: number; // Optional now
+    latitude?: number;
+    longitude?: number;
     amenities?: string[];
     priceRange?: number;
     climbingTypes?: string[];
-  }) {
-    return this.gymsService.createGym(body);
   }
+) {
+  return this.gymsService.createGym({
+    ...body,
+    userId: req.user.userId,
+  });
+}
 
   @Get('map-data')
   async getGymsMapData() {
@@ -103,4 +109,9 @@ async getNearbyGyms(@Query('climbingType') climbingType?: string) {
   ) {
     return this.gymsService.updateAmenities(id, body.amenities);
   }
+@Delete(':id')
+@UseGuards(JwtAuthGuard)
+async deleteGym(@Param('id') id: string, @Request() req) {
+  return this.gymsService.deleteGym(id, req.user.userId);
+}
 }
