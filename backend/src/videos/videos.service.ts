@@ -1,12 +1,17 @@
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UploadService } from '../upload/upload.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 type SortOption = 'mostLiked' | 'mostRecent' | 'mostViewed' | 'mostCommented';
 
 @Injectable()
 export class VideosService {
-  constructor(private prisma: PrismaService, private uploadService: UploadService) {}
+  constructor(
+    private prisma: PrismaService, 
+    private uploadService: UploadService,
+    private notificationsService: NotificationsService,
+  ) {}
 
   async createVideo(data: {
     userId: string;
@@ -230,6 +235,10 @@ export class VideosService {
           userId,
         },
       });
+
+      // Create notification when liking (not when unliking)
+      await this.notificationsService.notifyVideoLike(videoId, userId);
+
       return { liked: true };
     }
   }
@@ -250,7 +259,7 @@ export class VideosService {
       }
     }
 
-    return this.prisma.videoComment.create({
+    const comment = await this.prisma.videoComment.create({
       data: {
         videoId,
         userId,
@@ -272,6 +281,17 @@ export class VideosService {
         },
       },
     });
+
+    // Create notifications
+    if (parentId) {
+      // Notify parent comment owner about reply
+      await this.notificationsService.notifyCommentReply(parentId, userId, text);
+    } else {
+      // Notify video owner about comment
+      await this.notificationsService.notifyVideoComment(videoId, userId, text);
+    }
+
+    return comment;
   }
 
   async toggleCommentLike(commentId: string, userId: string) {
@@ -350,7 +370,7 @@ export class VideosService {
     }
   }
 
-    async updateCaption(videoId: string, userId: string, caption: string) {
+  async updateCaption(videoId: string, userId: string, caption: string) {
     const video = await this.prisma.video.findUnique({
       where: { id: videoId },
     });

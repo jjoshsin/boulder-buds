@@ -1,10 +1,11 @@
 import { Injectable, ConflictException, NotFoundException, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UploadService } from '../upload/upload.service';
+import { NotificationsService } from 'src/notifications/notifications.service';
 
 @Injectable()
 export class ReviewsService {
-  constructor(private prisma: PrismaService, private uploadService: UploadService) {}
+  constructor(private prisma: PrismaService, private uploadService: UploadService, private notificationsService: NotificationsService) {}
 
 async createReview(data: {
   userId: string;
@@ -34,6 +35,9 @@ async createReview(data: {
       },
     },
   });
+
+  await this.notificationsService.notifyNewReview(data.gymId, data.userId);
+
 
   return review;
 }
@@ -129,6 +133,9 @@ async toggleLike(reviewId: string, userId: string) {
     await this.prisma.reviewLike.create({
       data: { reviewId, userId },
     });
+
+    // Only notify when liking, not when unliking
+    await this.notificationsService.notifyReviewLike(reviewId, userId);
   }
 
   const likeCount = await this.prisma.reviewLike.count({

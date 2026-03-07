@@ -1,9 +1,14 @@
 import { Injectable, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
+
 
 @Injectable()
 export class FollowsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService, 
+    private notificationsService: NotificationsService
+  ) {}
 
   async followUser(followerId: string, followingId: string) {
     // Can't follow yourself
@@ -41,6 +46,9 @@ export class FollowsService {
         followingId,
       },
     });
+
+    // Create notification
+    await this.notificationsService.notifyFollow(followingId, followerId);
 
     return { success: true, message: 'User followed successfully' };
   }
@@ -98,80 +106,80 @@ export class FollowsService {
     }
 
     // Get recent reviews from followed users
-const reviews = await this.prisma.review.findMany({
-  where: {
-    userId: { in: followingIds },
-  },
-  include: {
-    user: {
-      select: {
-        displayName: true,
+    const reviews = await this.prisma.review.findMany({
+      where: {
+        userId: { in: followingIds },
       },
-    },
-    gym: {
-      select: {
-        id: true, 
-        name: true,
+      include: {
+        user: {
+          select: {
+            displayName: true,
+          },
+        },
+        gym: {
+          select: {
+            id: true, 
+            name: true,
+          },
+        },
       },
-    },
-  },
-  orderBy: {
-    createdAt: 'desc',
-  },
-  take: limit,
-});
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: limit,
+    });
 
-// Get recent community photos from followed users
-const photos = await this.prisma.communityPhoto.findMany({
-  where: {
-    userId: { in: followingIds },
-  },
-  include: {
-    user: {
-      select: {
-        displayName: true,
+    // Get recent community photos from followed users
+    const photos = await this.prisma.communityPhoto.findMany({
+      where: {
+        userId: { in: followingIds },
       },
-    },
-    gym: {
-      select: {
-        id: true,  
-        name: true,
+      include: {
+        user: {
+          select: {
+            displayName: true,
+          },
+        },
+        gym: {
+          select: {
+            id: true,  
+            name: true,
+          },
+        },
       },
-    },
-  },
-  orderBy: {
-    createdAt: 'desc',
-  },
-  take: limit,
-});
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: limit,
+    });
 
-// Combine and sort by date
-const activities = [
-  ...reviews.map(review => ({
-    type: 'review' as const,
-    id: review.id,
-    user: review.user.displayName,
-    gym: review.gym.name,
-    gymId: review.gymId,
-    rating: review.overallRating,
-    text: review.reviewText,
-    setting: review.setting,
-    difficulty: review.difficulty,
-    photos: review.photos || [],
-    createdAt: review.createdAt.toISOString(),  // Convert to string
-  })),
-  ...photos.map(photo => ({
-    type: 'photo' as const,
-    id: photo.id,
-    user: photo.user.displayName,
-    gym: photo.gym.name,
-    gymId: photo.gymId,
-    photoUrl: photo.url,
-    createdAt: photo.createdAt.toISOString(),  // Convert to string
-  })),
-].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
- .slice(0, limit);
+    // Combine and sort by date
+    const activities = [
+      ...reviews.map(review => ({
+        type: 'review' as const,
+        id: review.id,
+        user: review.user.displayName,
+        gym: review.gym.name,
+        gymId: review.gymId,
+        rating: review.overallRating,
+        text: review.reviewText,
+        setting: review.setting,
+        difficulty: review.difficulty,
+        photos: review.photos || [],
+        createdAt: review.createdAt.toISOString(),
+      })),
+      ...photos.map(photo => ({
+        type: 'photo' as const,
+        id: photo.id,
+        user: photo.user.displayName,
+        gym: photo.gym.name,
+        gymId: photo.gymId,
+        photoUrl: photo.url,
+        createdAt: photo.createdAt.toISOString(),
+      })),
+    ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+     .slice(0, limit);
 
-return activities;
+    return activities;
   }
 }
