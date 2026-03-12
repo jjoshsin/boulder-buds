@@ -329,4 +329,49 @@ tabText: {
 activeTabText: {
   color: '#FF8C00',
 },
+optionsButton: {
+  width: 40,
+  height: 40,
+  justifyContent: 'center',
+  alignItems: 'center',
+  backgroundColor: '#F3F4F6',
+  borderRadius: 20,
+},
+optionsButtonText: {
+  fontSize: 24,
+  color: '#1F2937',
+},
+optionsMenu: {
+  position: 'absolute',
+  top: 60,
+  right: 20,
+  backgroundColor: '#FFFFFF',
+  borderRadius: 12,
+  borderWidth: 1,
+  borderColor: '#E5E7EB',
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.1,
+  shadowRadius: 8,
+  elevation: 4,
+  minWidth: 180,
+  zIndex: 1000,
+},
+optionsMenuItem: {
+  paddingVertical: 14,
+  paddingHorizontal: 16,
+  borderBottomWidth: 1,
+  borderBottomColor: '#F3F4F6',
+},
+optionsMenuItemLast: {
+  borderBottomWidth: 0,
+},
+optionsMenuText: {
+  fontSize: 15,
+  color: '#1F2937',
+  fontWeight: '500',
+},
+optionsMenuTextDanger: {
+  color: '#EF4444',
+},
 });

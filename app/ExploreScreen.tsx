@@ -28,7 +28,7 @@ export default function ExploreScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const [isMapView, setIsMapView] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
 
   // Filter states
   const [selectedState, setSelectedState] = useState<string | null>(null);
@@ -299,14 +299,39 @@ export default function ExploreScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Explore Gyms</Text>
-        <TouchableOpacity
-          style={styles.mapToggleButton}
-          onPress={() => setIsMapView(!isMapView)}
-        >
-          <Text style={styles.mapToggleText}>
-            {isMapView ? '📋 List' : '🗺️ Map'}
-          </Text>
-        </TouchableOpacity>
+        
+        {/* Toggle Buttons */}
+        <View style={styles.toggleContainer}>
+          <TouchableOpacity
+            style={[
+              styles.toggleButton,
+              viewMode === 'list' && styles.toggleButtonActive,
+            ]}
+            onPress={() => setViewMode('list')}
+          >
+            <Text style={[
+              styles.toggleButtonText,
+              viewMode === 'list' && styles.toggleButtonTextActive,
+            ]}>
+              List
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.toggleButton,
+              viewMode === 'map' && styles.toggleButtonActive,
+            ]}
+            onPress={() => setViewMode('map')}
+          >
+            <Text style={[
+              styles.toggleButtonText,
+              viewMode === 'map' && styles.toggleButtonTextActive,
+            ]}>
+              Map
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Search Bar */}
@@ -329,7 +354,7 @@ export default function ExploreScreen() {
       </View>
 
       {/* Map View */}
-      {isMapView ? (
+      {viewMode === 'map' ? (
         renderMapView()
       ) : (
         <>

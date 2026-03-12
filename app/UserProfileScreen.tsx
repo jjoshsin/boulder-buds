@@ -18,7 +18,8 @@ import * as SecureStore from 'expo-secure-store';
 import SimplePhotoGrid from './components/SimplePhotoGrid';
 import { getSettingLabel, getDifficultyLabel } from './utils/reviewLabels';
 import videoService from '../services/videoService';
-
+import blockingService from '../services/blockingService';
+import ReportModal from './components/ReportModal';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -79,10 +80,23 @@ export default function UserProfileScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [videos, setVideos] = useState<UserVideo[]>([]);
   const [activeTab, setActiveTab] = useState<'reviews' | 'videos'>('reviews');
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [showOptionsMenu, setShowOptionsMenu] = useState(false);
 
   useEffect(() => {
     loadUserProfile();
+    checkIfBlocked();
   }, [userId]);
+
+  const checkIfBlocked = async () => {
+    try {
+      const blocked = await blockingService.isBlocked(userId);
+      setIsBlocked(blocked);
+    } catch (error) {
+      console.error('Error checking block status:', error);
+    }
+  };
 
   const loadUserProfile = async () => {
     try {
@@ -159,51 +173,82 @@ export default function UserProfileScreen() {
     }
   };
 
-const renderReview = (review: UserReview) => (
-  <View key={review.id} style={styles.reviewCard}>
-    <TouchableOpacity onPress={() => navigation.navigate('GymDetail', { gymId: review.gym.id })}>
-      <View style={styles.reviewHeader}>
-        <View style={styles.reviewGymInfo}>
-          <Text style={styles.reviewGymName}>{review.gym.name}</Text>
-          <Text style={styles.reviewGymBorough}>
-            {review.gym.city}{review.gym.state ? `, ${review.gym.state}` : ''}
-          </Text>
-        </View>
-        <Text style={styles.reviewRating}>⭐ {review.overallRating.toFixed(1)}</Text>
-      </View>
-    </TouchableOpacity>
+  const handleBlockToggle = async () => {
+    try {
+      if (isBlocked) {
+        await blockingService.unblockUser(userId);
+        setIsBlocked(false);
+        Alert.alert('Success', 'User unblocked');
+      } else {
+        Alert.alert(
+          'Block User',
+          `Are you sure you want to block ${user?.displayName}? You will no longer see their content and they cannot interact with you.`,
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Block',
+              style: 'destructive',
+              onPress: async () => {
+                await blockingService.blockUser(userId);
+                setIsBlocked(true);
+                Alert.alert('Blocked', 'User has been blocked');
+              },
+            },
+          ]
+        );
+      }
+      setShowOptionsMenu(false);
+    } catch (error) {
+      console.error('Error toggling block:', error);
+      Alert.alert('Error', 'Failed to update block status');
+    }
+  };
 
-    {/* Setting & Difficulty Tags */}
-    {review.setting && review.difficulty && (
-      <View style={styles.reviewTagsRow}>
-        <View style={styles.reviewTag}>
-          <Text style={styles.reviewTagText}>{getSettingLabel(review.setting)}</Text>
+  const renderReview = (review: UserReview) => (
+    <View key={review.id} style={styles.reviewCard}>
+      <TouchableOpacity onPress={() => navigation.navigate('GymDetail', { gymId: review.gym.id })}>
+        <View style={styles.reviewHeader}>
+          <View style={styles.reviewGymInfo}>
+            <Text style={styles.reviewGymName}>{review.gym.name}</Text>
+            <Text style={styles.reviewGymBorough}>
+              {review.gym.city}{review.gym.state ? `, ${review.gym.state}` : ''}
+            </Text>
+          </View>
+          <Text style={styles.reviewRating}>⭐ {review.overallRating.toFixed(1)}</Text>
         </View>
-        <View style={styles.reviewTag}>
-          <Text style={styles.reviewTagText}>{getDifficultyLabel(review.difficulty)}</Text>
-        </View>
-      </View>
-    )}
+      </TouchableOpacity>
 
-    {review.reviewText && (
-      <Text style={styles.reviewText} numberOfLines={3}>
-        {review.reviewText}
+      {/* Setting & Difficulty Tags */}
+      {review.setting && review.difficulty && (
+        <View style={styles.reviewTagsRow}>
+          <View style={styles.reviewTag}>
+            <Text style={styles.reviewTagText}>{getSettingLabel(review.setting)}</Text>
+          </View>
+          <View style={styles.reviewTag}>
+            <Text style={styles.reviewTagText}>{getDifficultyLabel(review.difficulty)}</Text>
+          </View>
+        </View>
+      )}
+
+      {review.reviewText && (
+        <Text style={styles.reviewText} numberOfLines={3}>
+          {review.reviewText}
+        </Text>
+      )}
+
+      {/* Photo Grid */}
+      {review.photos && review.photos.length > 0 && (
+        <SimplePhotoGrid 
+          photos={review.photos} 
+          containerWidth={SCREEN_WIDTH - 40 - 32}
+        />
+      )}
+
+      <Text style={styles.reviewDate}>
+        {new Date(review.createdAt).toLocaleDateString()}
       </Text>
-    )}
-
-    {/* Photo Grid */}
-    {review.photos && review.photos.length > 0 && (
-      <SimplePhotoGrid 
-        photos={review.photos} 
-        containerWidth={SCREEN_WIDTH - 40 - 32}
-      />
-    )}
-
-    <Text style={styles.reviewDate}>
-      {new Date(review.createdAt).toLocaleDateString()}
-    </Text>
-  </View>
-);
+    </View>
+  );
 
   if (isLoading) {
     return (
@@ -229,8 +274,38 @@ const renderReview = (review: UserReview) => (
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Text style={styles.backButton}>←</Text>
           </TouchableOpacity>
-          <View style={{ width: 40 }} />
+          <TouchableOpacity
+            style={styles.optionsButton}
+            onPress={() => setShowOptionsMenu(!showOptionsMenu)}
+          >
+            <Text style={styles.optionsButtonText}>⋯</Text>
+          </TouchableOpacity>
         </View>
+
+        {/* Options Menu */}
+        {showOptionsMenu && (
+          <View style={styles.optionsMenu}>
+            <TouchableOpacity
+              style={styles.optionsMenuItem}
+              onPress={handleBlockToggle}
+            >
+              <Text style={styles.optionsMenuText}>
+                {isBlocked ? '🔓 Unblock User' : '🚫 Block User'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.optionsMenuItem, styles.optionsMenuItemLast]}
+              onPress={() => {
+                setShowOptionsMenu(false);
+                setShowReportModal(true);
+              }}
+            >
+              <Text style={[styles.optionsMenuText, styles.optionsMenuTextDanger]}>
+                🚩 Report User
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* User Info */}
         <View style={styles.userSection}>
@@ -304,75 +379,84 @@ const renderReview = (review: UserReview) => (
           </View>
         )}
 
-{/* Tabs */}
-<View style={styles.tabsContainer}>
-  <TouchableOpacity
-    style={[styles.tab, activeTab === 'reviews' && styles.activeTab]}
-    onPress={() => setActiveTab('reviews')}
-  >
-    <Text style={[styles.tabText, activeTab === 'reviews' && styles.activeTabText]}>
-      Reviews ({reviews.length})
-    </Text>
-  </TouchableOpacity>
-  <TouchableOpacity
-    style={[styles.tab, activeTab === 'videos' && styles.activeTab]}
-    onPress={() => setActiveTab('videos')}
-  >
-    <Text style={[styles.tabText, activeTab === 'videos' && styles.activeTabText]}>
-      Videos ({videos.length})
-    </Text>
-  </TouchableOpacity>
-</View>
-
-{/* Content based on active tab */}
-<View style={styles.contentContainer}>
-  {activeTab === 'reviews' ? (
-    reviews.length > 0 ? (
-      reviews.map(renderReview)
-    ) : (
-      <View style={styles.emptyState}>
-        <Text style={styles.emptyStateEmoji}>✍️</Text>
-        <Text style={styles.emptyStateText}>No reviews yet</Text>
-      </View>
-    )
-  ) : (
-    videos.length > 0 ? (
-      <View style={styles.videosGrid}>
-        {videos.map((video) => (
+        {/* Tabs */}
+        <View style={styles.tabsContainer}>
           <TouchableOpacity
-            key={video.id}
-            style={styles.videoCard}
-            onPress={() => navigation.navigate('VideoPlayer', {
-              videoId: video.id,
-              videos: videos,
-            })}
+            style={[styles.tab, activeTab === 'reviews' && styles.activeTab]}
+            onPress={() => setActiveTab('reviews')}
           >
-            <Image
-              source={{ uri: video.thumbnailUrl }}
-              style={styles.videoThumbnail}
-              resizeMode="cover"
-            />
-            <View style={styles.videoOverlay}>
-              <Text style={styles.videoPlayIcon}>▶</Text>
-            </View>
-            <View style={styles.videoStats}>
-              <Text style={styles.videoStat}>👁 {video.views}</Text>
-              <Text style={styles.videoStat}>❤️ {video.likeCount}</Text>
-            </View>
+            <Text style={[styles.tabText, activeTab === 'reviews' && styles.activeTabText]}>
+              Reviews ({reviews.length})
+            </Text>
           </TouchableOpacity>
-        ))}
-      </View>
-    ) : (
-      <View style={styles.emptyState}>
-        <Text style={styles.emptyStateEmoji}>🎥</Text>
-        <Text style={styles.emptyStateText}>No videos yet</Text>
-      </View>
-    )
-  )}
-</View>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'videos' && styles.activeTab]}
+            onPress={() => setActiveTab('videos')}
+          >
+            <Text style={[styles.tabText, activeTab === 'videos' && styles.activeTabText]}>
+              Videos ({videos.length})
+            </Text>
+          </TouchableOpacity>
+        </View>
 
-<View style={styles.bottomPadding} />
+        {/* Content based on active tab */}
+        <View style={styles.contentContainer}>
+          {activeTab === 'reviews' ? (
+            reviews.length > 0 ? (
+              reviews.map(renderReview)
+            ) : (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyStateEmoji}>✍️</Text>
+                <Text style={styles.emptyStateText}>No reviews yet</Text>
+              </View>
+            )
+          ) : (
+            videos.length > 0 ? (
+              <View style={styles.videosGrid}>
+                {videos.map((video) => (
+                  <TouchableOpacity
+                    key={video.id}
+                    style={styles.videoCard}
+                    onPress={() => navigation.navigate('VideoPlayer', {
+                      videoId: video.id,
+                      videos: videos,
+                    })}
+                  >
+                    <Image
+                      source={{ uri: video.thumbnailUrl }}
+                      style={styles.videoThumbnail}
+                      resizeMode="cover"
+                    />
+                    <View style={styles.videoOverlay}>
+                      <Text style={styles.videoPlayIcon}>▶</Text>
+                    </View>
+                    <View style={styles.videoStats}>
+                      <Text style={styles.videoStat}>👁 {video.views}</Text>
+                      <Text style={styles.videoStat}>❤️ {video.likeCount}</Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            ) : (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyStateEmoji}>🎥</Text>
+                <Text style={styles.emptyStateText}>No videos yet</Text>
+              </View>
+            )
+          )}
+        </View>
+
+        <View style={styles.bottomPadding} />
       </ScrollView>
+
+      {/* Report Modal */}
+      <ReportModal
+        visible={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        contentType="user"
+        reportedUserId={userId}
+        reportedUserName={user?.displayName}
+      />
     </SafeAreaView>
   );
 }

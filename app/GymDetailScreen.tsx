@@ -21,6 +21,8 @@ import { getSettingLabel, getDifficultyLabel } from './utils/reviewLabels';
 import * as SecureStore from 'expo-secure-store';
 import PhotoGrid from './components/PhotoGrid';
 import videoService, { Video as VideoType } from '../services/videoService';
+import FavoritesModal from './components/FavoritesModal';
+import favoritesService, { FavoriteStatus } from '../services/favoritesService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 type GymDetailScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -38,9 +40,16 @@ export default function GymDetailScreen() {
   
   const [videos, setVideos] = useState<VideoType[]>([]);
 
+  const [showFavoritesModal, setShowFavoritesModal] = useState(false);
+  const [favoriteStatus, setFavoriteStatus] = useState<FavoriteStatus>({
+    favorites: false,
+    want_to_visit: false,
+    bucket_list: false,
+  });
 useEffect(() => {
   fetchGymDetails();
   loadCurrentUser();
+  loadFavoriteStatus();
 }, [gymId]);
 
 const fetchGymDetails = async () => {
@@ -164,6 +173,15 @@ const fetchGymDetails = async () => {
   const getPriceRangeText = (priceRange: number) => {
     return '$'.repeat(priceRange);
   };
+
+  const loadFavoriteStatus = async () => {
+  try {
+    const status = await favoritesService.getFavoriteStatus(gymId);
+    setFavoriteStatus(status);
+  } catch (error) {
+    console.error('Error loading favorite status:', error);
+  }
+};
 
   if (isLoading) {
     return (
@@ -367,6 +385,28 @@ const fetchGymDetails = async () => {
             </TouchableOpacity>
           </View>
         )}
+
+        {/* Favorite Button */}
+<TouchableOpacity
+  style={styles.favoriteButton}
+  onPress={() => setShowFavoritesModal(true)}
+>
+  <Text style={styles.favoriteButtonIcon}>
+    {favoriteStatus.favorites || favoriteStatus.want_to_visit || favoriteStatus.bucket_list ? '❤️' : '🤍'}
+  </Text>
+  <Text style={styles.favoriteButtonText}>Save</Text>
+</TouchableOpacity>
+
+{/* Favorites Modal */}
+<FavoritesModal
+  visible={showFavoritesModal}
+  onClose={() => {
+    setShowFavoritesModal(false);
+    loadFavoriteStatus(); // Refresh status when modal closes
+  }}
+  gymId={gymId}
+  gymName={gym?.name || ''}
+/>
 
         {/* Reviews Section */}
         <View style={styles.section}>

@@ -11,11 +11,13 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { styles } from '../styles/HomeScreen.styles';
 import gymService, { Gym } from '../services/gymService';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
 import * as SecureStore from 'expo-secure-store';
 import { getSettingLabel, getDifficultyLabel } from './utils/reviewLabels';
+import notificationService from '../services/notificationService';
+
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -41,10 +43,27 @@ export default function HomeScreen() {
   const [nearbyGyms, setNearbyGyms] = useState<Gym[]>([]);
   const [recentActivity, setRecentActivity] = useState<Activity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     fetchHomeData();
+    loadUnreadCount();
   }, []);
+
+    useFocusEffect(
+    React.useCallback(() => {
+      loadUnreadCount();
+    }, [])
+  );
+
+  const loadUnreadCount = async () => {
+    try {
+      const count = await notificationService.getUnreadCount();
+      setUnreadCount(count);
+    } catch (error) {
+      console.error('Error loading unread count:', error);
+    }
+  };
 
 const fetchHomeData = async () => {
   try {
@@ -245,10 +264,26 @@ if (activity.type === 'review') {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Boulder Buds</Text>
+{/* Header */}
+<View style={styles.header}>
+  <Text style={styles.headerTitle}>Discover</Text>
+  <TouchableOpacity 
+    style={styles.notificationButton}
+    onPress={() => {
+      navigation.navigate('Notifications');
+      loadUnreadCount(); // Refresh count when opening
+    }}
+  >
+    <Text style={styles.notificationIcon}>🔔</Text>
+    {unreadCount > 0 && (
+      <View style={styles.notificationBadge}>
+        <Text style={styles.notificationBadgeText}>
+          {unreadCount > 9 ? '9+' : unreadCount}
+        </Text>
       </View>
+    )}
+  </TouchableOpacity>
+</View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
 {/* Popular This Week */}

@@ -12,18 +12,40 @@ export const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   header: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  paddingHorizontal: 20,
-  paddingVertical: 16,
-  borderBottomWidth: 1,
-  borderBottomColor: '#F3F4F6',
-},
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#1F2937',
+  },
+  toggleContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#F3F4F6',
+    borderRadius: 20,
+    padding: 2,
+  },
+  toggleButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 18,
+  },
+  toggleButtonActive: {
+    backgroundColor: '#FF8C00',
+  },
+  toggleButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  toggleButtonTextActive: {
+    color: '#FFFFFF',
   },
   searchContainer: {
     paddingHorizontal: 20,
@@ -263,43 +285,32 @@ export const styles = StyleSheet.create({
   bottomPadding: {
     height: 40,
   },
-mapToggleButton: {
-  backgroundColor: '#FF8C00',
-  paddingHorizontal: 14,
-  paddingVertical: 8,
-  borderRadius: 20,
-},
-mapToggleText: {
-  fontSize: 14,
-  fontWeight: '600',
-  color: '#FFFFFF',
-},
-map: {
-  flex: 1,
-},
-callout: {
-  width: 200,
-  padding: 12,
-},
-calloutName: {
-  fontSize: 15,
-  fontWeight: '700',
-  color: '#1F2937',
-  marginBottom: 4,
-},
-calloutLocation: {
-  fontSize: 13,
-  color: '#6B7280',
-  marginBottom: 4,
-},
-calloutRating: {
-  fontSize: 13,
-  color: '#374151',
-  marginBottom: 6,
-},
-calloutTap: {
-  fontSize: 13,
-  color: '#FF8C00',
-  fontWeight: '600',
-},
+  map: {
+    flex: 1,
+  },
+  callout: {
+    width: 200,
+    padding: 12,
+  },
+  calloutName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  calloutLocation: {
+    fontSize: 13,
+    color: '#6B7280',
+    marginBottom: 4,
+  },
+  calloutRating: {
+    fontSize: 13,
+    color: '#374151',
+    marginBottom: 6,
+  },
+  calloutTap: {
+    fontSize: 13,
+    color: '#FF8C00',
+    fontWeight: '600',
+  },
 });

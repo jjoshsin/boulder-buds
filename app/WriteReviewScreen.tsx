@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   Image,
   Alert,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
@@ -44,6 +46,9 @@ export default function WriteReviewScreen() {
   };
 
   const isEditing = !!reviewId;
+  const scrollViewRef = useRef<ScrollView>(null);
+  const reviewTextInputRef = useRef<TextInput>(null);
+
 
   const [overallRating, setOverallRating] = useState(existingReview?.overallRating || 0);
   const [setting, setSetting] = useState(existingReview?.setting || '');
@@ -222,9 +227,18 @@ export default function WriteReviewScreen() {
   };
 
   return (
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{ flex: 1 }}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
     <SafeAreaView style={styles.container} edges={['top','bottom']}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header */}
+<ScrollView 
+  ref={scrollViewRef}
+  showsVerticalScrollIndicator={false}
+  keyboardShouldPersistTaps="handled"
+>        
+{/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Text style={styles.closeButton}>✕</Text>
@@ -296,17 +310,28 @@ export default function WriteReviewScreen() {
           {/* Review Text */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Your Review</Text>
-            <TextInput
-              style={styles.textInput}
-              placeholder="Share your experience at this gym..."
-              placeholderTextColor="#9CA3AF"
-              multiline
-              numberOfLines={6}
-              textAlignVertical="top"
-              value={reviewText}
-              onChangeText={setReviewText}
-              maxLength={500}
-            />
+<TextInput
+  ref={reviewTextInputRef}
+  style={styles.textInput}
+  placeholder="Share your experience at this gym..."
+  placeholderTextColor="#9CA3AF"
+  multiline
+  numberOfLines={6}
+  textAlignVertical="top"
+  value={reviewText}
+  onChangeText={setReviewText}
+  maxLength={500}
+  onFocus={() => {
+    setTimeout(() => {
+      reviewTextInputRef.current?.measure((x, y, width, height, pageX, pageY) => {
+        scrollViewRef.current?.scrollTo({
+          y: pageY - 100,
+          animated: true,
+        });
+      });
+    }, 100);
+  }}
+/>
             <Text style={styles.charCount}>{reviewText.length}/500</Text>
           </View>
 
@@ -354,6 +379,7 @@ export default function WriteReviewScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }

@@ -441,4 +441,24 @@ registeredByName: {
   color: '#FF8C00',
   fontWeight: '600',
 },
+favoriteButton: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'center',
+  backgroundColor: '#F3F4F6',
+  paddingVertical: 12,
+  paddingHorizontal: 20,
+  borderRadius: 24,
+  marginHorizontal: 20,
+  marginBottom: 16,
+},
+favoriteButtonIcon: {
+  fontSize: 20,
+  marginRight: 8,
+},
+favoriteButtonText: {
+  fontSize: 16,
+  fontWeight: '600',
+  color: '#1F2937',
+},
 });

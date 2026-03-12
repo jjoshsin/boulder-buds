@@ -154,15 +154,25 @@ export default function NotificationsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Notifications</Text>
-        {notifications.some(n => !n.read) && (
-          <TouchableOpacity onPress={handleMarkAllRead}>
-            <Text style={styles.markAllRead}>Mark all read</Text>
-          </TouchableOpacity>
-        )}
-      </View>
+{/* Header */}
+<View style={styles.header}>
+  <TouchableOpacity 
+    style={styles.backButton}
+    onPress={() => navigation.goBack()}
+  >
+    <Text style={styles.backButtonText}>←</Text>
+  </TouchableOpacity>
+  <Text style={styles.headerTitle}>Notifications</Text>
+  <View style={styles.rightAction}>
+    {notifications.some(n => !n.read) ? (
+      <TouchableOpacity onPress={handleMarkAllRead}>
+        <Text style={styles.markAllRead}>Mark all read</Text>
+      </TouchableOpacity>
+    ) : (
+      <View style={{ width: 40 }} />
+    )}
+  </View>
+</View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}

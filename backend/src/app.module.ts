@@ -9,6 +9,9 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { FollowsModule } from './follows/follows.module';
 import { VideosModule } from './videos/videos.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { ReportingModule } from './reporting/reporting.module';
+import { BlockingModule } from './blocking/blocking.module';
+import { FavoritesModule } from './favorites/favorites.module';
 
 @Module({
   imports: [
@@ -22,7 +25,10 @@ import { NotificationsModule } from './notifications/notifications.module';
     UsersModule,
     FollowsModule,
     VideosModule,
-    NotificationsModule
+    NotificationsModule,
+    BlockingModule,
+    ReportingModule,
+    FavoritesModule,
   ],
 })
 export class AppModule {}
