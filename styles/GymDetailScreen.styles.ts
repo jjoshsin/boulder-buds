@@ -50,7 +50,7 @@ export const styles = StyleSheet.create({
     fontSize: 24,
     color: '#1F2937',
   },
-  shareButton: {
+  bookmarkButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -62,10 +62,6 @@ export const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-  },
-  shareButtonText: {
-    fontSize: 24,
-    color: '#1F2937',
   },
 
   // Photo Gallery
@@ -153,6 +149,34 @@ export const styles = StyleSheet.create({
   borough: {
     fontSize: 14,
     color: '#6B7280',
+  },
+
+  // Registered By
+  registeredByContainer: {
+    marginBottom: 16,
+    marginLeft: 20,
+  },
+  registeredByText: {
+    fontSize: 13,
+    color: '#6B7280',
+    fontStyle: 'italic',
+  },
+  registeredByName: {
+    color: '#FF8C00',
+    fontWeight: '600',
+  },
+  deleteGymButton: {
+    backgroundColor: '#EF4444',
+    marginHorizontal: 20,
+    marginBottom: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  deleteGymButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 
   // Climbing Types
@@ -412,53 +436,4 @@ export const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
   },
-
-  // Avatar (used in multiple places)
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#FF8C00',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  avatarText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  registeredByContainer: {
-  marginBottom: 16,
-  marginLeft: 20,
-},
-registeredByText: {
-  fontSize: 13,
-  color: '#6B7280',
-  fontStyle: 'italic',
-},
-registeredByName: {
-  color: '#FF8C00',
-  fontWeight: '600',
-},
-favoriteButton: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'center',
-  backgroundColor: '#F3F4F6',
-  paddingVertical: 12,
-  paddingHorizontal: 20,
-  borderRadius: 24,
-  marginHorizontal: 20,
-  marginBottom: 16,
-},
-favoriteButtonIcon: {
-  fontSize: 20,
-  marginRight: 8,
-},
-favoriteButtonText: {
-  fontSize: 16,
-  fontWeight: '600',
-  color: '#1F2937',
-},
 });

@@ -19,6 +19,9 @@ import * as ImagePicker from 'expo-image-picker';
 import SimplePhotoGrid from './components/SimplePhotoGrid';
 import { getSettingLabel, getDifficultyLabel } from './utils/reviewLabels';
 import videoService from '../services/videoService';
+import { FontAwesome } from '@expo/vector-icons';
+import favoritesService, { SavedGym } from '../services/favoritesService';
+
 
 type ProfileNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -82,61 +85,138 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [videos, setVideos] = useState<UserVideo[]>([]);
-  const [activeTab, setActiveTab] = useState<'reviews' | 'videos'>('reviews');
+  const [activeTab, setActiveTab] = useState<'reviews' | 'videos' | 'saved'>('reviews');
+  const [savedGyms, setSavedGyms] = useState<SavedGym[]>([]);
+
 
   useEffect(() => {
     loadProfileData();
   }, []);
 
-  const loadProfileData = async () => {
-    try {
-      setIsLoading(true);
+const loadProfileData = async () => {
+  try {
+    setIsLoading(true);
 
-      const userStr = await SecureStore.getItemAsync('user');
-      if (userStr) {
-        const userData = JSON.parse(userStr);
-        setUser(userData);
+    const userStr = await SecureStore.getItemAsync('user');
+    if (userStr) {
+      const userData = JSON.parse(userStr);
+      setUser(userData);
 
-        const token = await SecureStore.getItemAsync('authToken');
-        
-        const [reviewsRes, statsRes, userRes, videosData] = await Promise.all([
-          fetch(`http://192.168.1.166:3000/users/${userData.id}/reviews`, {
-            headers: { 'Authorization': `Bearer ${token}` },
-          }),
-          fetch(`http://192.168.1.166:3000/users/${userData.id}/follow-stats`, {
-            headers: { 'Authorization': `Bearer ${token}` },
-          }),
-          fetch(`http://192.168.1.166:3000/users/${userData.id}`, {
-            headers: { 'Authorization': `Bearer ${token}` },
-          }),
-          videoService.getUserVideos(userData.id),
-        ]);
+      const token = await SecureStore.getItemAsync('authToken');
+      
+      const [reviewsRes, statsRes, userRes, videosData, savedGymsData] = await Promise.all([
+        fetch(`http://192.168.1.166:3000/users/${userData.id}/reviews`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        }),
+        fetch(`http://192.168.1.166:3000/users/${userData.id}/follow-stats`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        }),
+        fetch(`http://192.168.1.166:3000/users/${userData.id}`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        }),
+        videoService.getUserVideos(userData.id),
+        favoritesService.getSavedGyms(),
+      ]);
 
-        if (userRes.ok) {
-          const freshUserData = await userRes.json();
-          setUser(freshUserData);
-          await SecureStore.setItemAsync('user', JSON.stringify(freshUserData));
-        }
-
-        if (reviewsRes.ok) {
-          const reviewsData = await reviewsRes.json();
-          setReviews(reviewsData);
-        }
-
-        if (statsRes.ok) {
-          const statsData = await statsRes.json();
-          setFollowersCount(statsData.followersCount);
-          setFollowingCount(statsData.followingCount);
-        }
-
-        setVideos(videosData);
+      if (userRes.ok) {
+        const freshUserData = await userRes.json();
+        setUser(freshUserData);
+        await SecureStore.setItemAsync('user', JSON.stringify(freshUserData));
       }
-    } catch (error) {
-      console.error('Error loading profile:', error);
-    } finally {
-      setIsLoading(false);
+
+      if (reviewsRes.ok) {
+        const reviewsData = await reviewsRes.json();
+        setReviews(reviewsData);
+      }
+
+      if (statsRes.ok) {
+        const statsData = await statsRes.json();
+        setFollowersCount(statsData.followersCount);
+        setFollowingCount(statsData.followingCount);
+      }
+
+      setVideos(videosData);
+      setSavedGyms(savedGymsData);
     }
-  };
+  } catch (error) {
+    console.error('Error loading profile:', error);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+const handleUnsave = async (gymId: string) => {
+  Alert.alert(
+    'Remove from saved',
+    'Are you sure you want to remove this gym from your saved list?',
+    [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await favoritesService.unsaveGym(gymId);
+            loadProfileData(); // Reload data
+          } catch (error) {
+            console.error('Error removing saved gym:', error);
+            Alert.alert('Error', 'Failed to remove gym');
+          }
+        },
+      },
+    ]
+  );
+};
+
+const renderSavedGym = (savedGym: SavedGym) => (
+  <TouchableOpacity
+    key={savedGym.id}
+    style={styles.savedGymCard}
+    onPress={() => navigation.navigate('GymDetail', { gymId: savedGym.gym.id })}
+  >
+    {savedGym.gym.officialPhotos && savedGym.gym.officialPhotos.length > 0 ? (
+      <Image
+        source={{ uri: savedGym.gym.officialPhotos[0] }}
+        style={styles.savedGymImage}
+        resizeMode="cover"
+      />
+    ) : (
+      <View style={styles.savedGymPlaceholder}>
+        <Text style={styles.savedGymPlaceholderText}>🏔️</Text>
+      </View>
+    )}
+
+    <View style={styles.savedGymInfo}>
+      <View style={styles.savedGymHeader}>
+        <Text style={styles.savedGymName} numberOfLines={1}>
+          {savedGym.gym.name}
+        </Text>
+        <TouchableOpacity
+          onPress={(e) => {
+            e.stopPropagation();
+            handleUnsave(savedGym.gym.id);
+          }}
+        >
+          <Text style={styles.savedGymRemove}>✕</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.savedGymMeta}>
+        <Text style={styles.savedGymRating}>
+          ⭐ {savedGym.gym.rating ? savedGym.gym.rating.toFixed(1) : 'New'}
+        </Text>
+        <Text style={styles.savedGymSeparator}>•</Text>
+        <Text style={styles.savedGymReviews}>
+          {savedGym.gym.reviewCount || 0} {savedGym.gym.reviewCount === 1 ? 'review' : 'reviews'}
+        </Text>
+      </View>
+
+      <Text style={styles.savedGymLocation}>
+        {savedGym.gym.city}{savedGym.gym.state ? `, ${savedGym.gym.state}` : ''}
+      </Text>
+    </View>
+  </TouchableOpacity>
+);
 
   const handleUploadProfilePhoto = async () => {
     try {
@@ -248,69 +328,69 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
     );
   };
 
-const renderReview = (review: UserReview) => (
-  <View key={review.id} style={styles.reviewCard}>
-    <TouchableOpacity onPress={() => navigation.navigate('GymDetail', { gymId: review.gym.id })}>
-      <View style={styles.reviewHeader}>
-        <View style={styles.reviewGymInfo}>
-          <Text style={styles.reviewGymName}>{review.gym.name}</Text>
-          <Text style={styles.reviewGymBorough}>
-            {review.gym.city}{review.gym.state ? `, ${review.gym.state}` : ''}
-          </Text>
+  const renderReview = (review: UserReview) => (
+    <View key={review.id} style={styles.reviewCard}>
+      <TouchableOpacity onPress={() => navigation.navigate('GymDetail', { gymId: review.gym.id })}>
+        <View style={styles.reviewHeader}>
+          <View style={styles.reviewGymInfo}>
+            <Text style={styles.reviewGymName}>{review.gym.name}</Text>
+            <Text style={styles.reviewGymBorough}>
+              {review.gym.city}{review.gym.state ? `, ${review.gym.state}` : ''}
+            </Text>
+          </View>
+          <Text style={styles.reviewRating}>⭐ {review.overallRating.toFixed(1)}</Text>
         </View>
-        <Text style={styles.reviewRating}>⭐ {review.overallRating.toFixed(1)}</Text>
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
 
-    {/* Setting & Difficulty Tags */}
-    {review.setting && review.difficulty && (
-      <View style={styles.reviewTagsRow}>
-        <View style={styles.reviewTag}>
-          <Text style={styles.reviewTagText}>{getSettingLabel(review.setting)}</Text>
+      {/* Setting & Difficulty Tags */}
+      {review.setting && review.difficulty && (
+        <View style={styles.reviewTagsRow}>
+          <View style={styles.reviewTag}>
+            <Text style={styles.reviewTagText}>{getSettingLabel(review.setting)}</Text>
+          </View>
+          <View style={styles.reviewTag}>
+            <Text style={styles.reviewTagText}>{getDifficultyLabel(review.difficulty)}</Text>
+          </View>
         </View>
-        <View style={styles.reviewTag}>
-          <Text style={styles.reviewTagText}>{getDifficultyLabel(review.difficulty)}</Text>
+      )}
+
+      {review.reviewText && (
+        <Text style={styles.reviewText} numberOfLines={3}>
+          {review.reviewText}
+        </Text>
+      )}
+
+      {/* Photo Grid */}
+      {review.photos && review.photos.length > 0 && (
+        <SimplePhotoGrid 
+          photos={review.photos} 
+          containerWidth={SCREEN_WIDTH - 40 - 32}
+        />
+      )}
+
+      <View style={styles.reviewFooter}>
+        <Text style={styles.reviewDate}>
+          {new Date(review.createdAt).toLocaleDateString()}
+        </Text>
+        <View style={styles.reviewActions}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('WriteReview', {
+              gymId: review.gym.id,
+              gymName: review.gym.name,
+              reviewId: review.id,
+              existingReview: review,
+            } as any)}
+          >
+            <Text style={styles.reviewActionText}>Edit</Text>
+          </TouchableOpacity>
+          <Text style={styles.reviewActionSeparator}>•</Text>
+          <TouchableOpacity onPress={() => handleDeleteReview(review.id)}>
+            <Text style={[styles.reviewActionText, styles.reviewActionDelete]}>Delete</Text>
+          </TouchableOpacity>
         </View>
-      </View>
-    )}
-
-    {review.reviewText && (
-      <Text style={styles.reviewText} numberOfLines={3}>
-        {review.reviewText}
-      </Text>
-    )}
-
-    {/* Photo Grid */}
-    {review.photos && review.photos.length > 0 && (
-      <SimplePhotoGrid 
-        photos={review.photos} 
-        containerWidth={SCREEN_WIDTH - 40 - 32}
-      />
-    )}
-
-    <View style={styles.reviewFooter}>
-      <Text style={styles.reviewDate}>
-        {new Date(review.createdAt).toLocaleDateString()}
-      </Text>
-      <View style={styles.reviewActions}>
-        <TouchableOpacity
-          onPress={() => navigation.navigate('WriteReview', {
-            gymId: review.gym.id,
-            gymName: review.gym.name,
-            reviewId: review.id,
-            existingReview: review,
-          } as any)}
-        >
-          <Text style={styles.reviewActionText}>Edit</Text>
-        </TouchableOpacity>
-        <Text style={styles.reviewActionSeparator}>•</Text>
-        <TouchableOpacity onPress={() => handleDeleteReview(review.id)}>
-          <Text style={[styles.reviewActionText, styles.reviewActionDelete]}>Delete</Text>
-        </TouchableOpacity>
       </View>
     </View>
-  </View>
-);
+  );
 
   if (isLoading) {
     return (
@@ -415,7 +495,7 @@ const renderReview = (review: UserReview) => (
           </View>
         )}
 
-        {/* Tabs */}
+{/* Tabs */}
 <View style={styles.tabsContainer}>
   <TouchableOpacity
     style={[styles.tab, activeTab === 'reviews' && styles.activeTab]}
@@ -433,6 +513,14 @@ const renderReview = (review: UserReview) => (
       Videos ({videos.length})
     </Text>
   </TouchableOpacity>
+  <TouchableOpacity
+    style={[styles.tab, activeTab === 'saved' && styles.activeTab]}
+    onPress={() => setActiveTab('saved')}
+  >
+    <Text style={[styles.tabText, activeTab === 'saved' && styles.activeTabText]}>
+      Saved ({savedGyms.length})
+    </Text>
+  </TouchableOpacity>
 </View>
 
 {/* Content based on active tab */}
@@ -447,7 +535,7 @@ const renderReview = (review: UserReview) => (
         <Text style={styles.emptyStateSubtext}>Start reviewing gyms to see them here</Text>
       </View>
     )
-  ) : (
+  ) : activeTab === 'videos' ? (
     videos.length > 0 ? (
       <View style={styles.videosGrid}>
         {videos.map((video) => (
@@ -481,13 +569,23 @@ const renderReview = (review: UserReview) => (
         <Text style={styles.emptyStateSubtext}>Upload videos to see them here</Text>
       </View>
     )
+  ) : (
+    savedGyms.length > 0 ? (
+      savedGyms.map(renderSavedGym)
+    ) : (
+      <View style={styles.emptyState}>
+        <Text style={styles.emptyStateEmoji}>🏔️</Text>
+        <Text style={styles.emptyStateText}>No saved gyms yet</Text>
+        <Text style={styles.emptyStateSubtext}>Start saving gyms to see them here</Text>
+      </View>
+    )
   )}
 </View>
 
-{/* Logout Button */}
-<TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-  <Text style={styles.logoutButtonText}>Logout</Text>
-</TouchableOpacity>
+        {/* Logout Button */}
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <Text style={styles.logoutButtonText}>Logout</Text>
+        </TouchableOpacity>
 
         <View style={styles.bottomPadding} />
       </ScrollView>

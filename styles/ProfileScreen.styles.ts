@@ -390,4 +390,72 @@ tabText: {
 activeTabText: {
   color: '#FF8C00',
 },
+// Saved Gyms
+savedGymCard: {
+  flexDirection: 'row',
+  backgroundColor: '#FFFFFF',
+  marginHorizontal: 20,
+  marginBottom: 16,
+  borderRadius: 12,
+  borderWidth: 1,
+  borderColor: '#E5E7EB',
+  overflow: 'hidden',
+},
+savedGymImage: {
+  width: 100,
+  height: 120,
+},
+savedGymPlaceholder: {
+  width: 100,
+  height: 120,
+  backgroundColor: '#F3F4F6',
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+savedGymPlaceholderText: {
+  fontSize: 32,
+},
+savedGymInfo: {
+  flex: 1,
+  padding: 12,
+},
+savedGymHeader: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'flex-start',
+  marginBottom: 6,
+},
+savedGymName: {
+  fontSize: 16,
+  fontWeight: '600',
+  color: '#1F2937',
+  flex: 1,
+},
+savedGymRemove: {
+  fontSize: 20,
+  color: '#9CA3AF',
+  paddingLeft: 8,
+},
+savedGymMeta: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginBottom: 4,
+},
+savedGymRating: {
+  fontSize: 14,
+  color: '#374151',
+},
+savedGymSeparator: {
+  fontSize: 14,
+  color: '#D1D5DB',
+  marginHorizontal: 6,
+},
+savedGymReviews: {
+  fontSize: 14,
+  color: '#6B7280',
+},
+savedGymLocation: {
+  fontSize: 13,
+  color: '#9CA3AF',
+},
 });

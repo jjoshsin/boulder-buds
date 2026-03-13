@@ -1,60 +1,36 @@
-import { Controller, Post, Delete, Get, Patch, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Delete, Get, Param, UseGuards, Request } from '@nestjs/common';
 import { FavoritesService } from './favorites.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
-@Controller('favorites')
+@Controller('saved-gyms')
 @UseGuards(JwtAuthGuard)
 export class FavoritesController {
   constructor(private favoritesService: FavoritesService) {}
 
-  @Post()
-  async addFavorite(
-    @Body() body: {
-      gymId: string;
-      listType: string;
-      notes?: string;
-    },
-    @Request() req,
-  ) {
-    return this.favoritesService.addFavorite(
-      req.user.userId,
-      body.gymId,
-      body.listType,
-      body.notes,
-    );
+  @Post(':gymId')
+  async saveGym(@Param('gymId') gymId: string, @Request() req) {
+    return this.favoritesService.saveGym(req.user.userId, gymId);
   }
 
-  @Delete(':gymId/:listType')
-  async removeFavorite(
-    @Param('gymId') gymId: string,
-    @Param('listType') listType: string,
-    @Request() req,
-  ) {
-    return this.favoritesService.removeFavorite(req.user.userId, gymId, listType);
+  @Delete(':gymId')
+  async unsaveGym(@Param('gymId') gymId: string, @Request() req) {
+    return this.favoritesService.unsaveGym(req.user.userId, gymId);
   }
 
   @Get()
-  async getUserFavorites(@Query('listType') listType: string, @Request() req) {
-    return this.favoritesService.getUserFavorites(req.user.userId, listType);
+  async getSavedGyms(@Request() req) {
+    return this.favoritesService.getSavedGyms(req.user.userId);
   }
 
-  @Get('status/:gymId')
-  async getFavoriteStatus(@Param('gymId') gymId: string, @Request() req) {
-    return this.favoritesService.getFavoriteStatus(req.user.userId, gymId);
+  @Get('check/:gymId')
+  async isSaved(@Param('gymId') gymId: string, @Request() req) {
+    const saved = await this.favoritesService.isSaved(req.user.userId, gymId);
+    return { saved };
   }
 
-  @Get('counts')
-  async getFavoriteCounts(@Request() req) {
-    return this.favoritesService.getFavoriteCounts(req.user.userId);
-  }
-
-  @Patch(':gymId/:listType/notes')
-  async updateNotes(
-    @Param('gymId') gymId: string,
-    @Param('listType') listType: string,
-    @Body('notes') notes: string,
-    @Request() req,
-  ) {
-    return this.favoritesService.updateNotes(req.user.userId, gymId, listType, notes);
+  @Get('count')
+  async getSavedCount(@Request() req) {
+    const count = await this.favoritesService.getSavedCount(req.user.userId);
+    return { count };
   }
 }

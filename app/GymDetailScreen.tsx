@@ -21,8 +21,9 @@ import { getSettingLabel, getDifficultyLabel } from './utils/reviewLabels';
 import * as SecureStore from 'expo-secure-store';
 import PhotoGrid from './components/PhotoGrid';
 import videoService, { Video as VideoType } from '../services/videoService';
-import FavoritesModal from './components/FavoritesModal';
-import favoritesService, { FavoriteStatus } from '../services/favoritesService';
+import favoritesService from '../services/favoritesService';
+import { FontAwesome } from '@expo/vector-icons';
+
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 type GymDetailScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -37,37 +38,30 @@ export default function GymDetailScreen() {
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
-  
   const [videos, setVideos] = useState<VideoType[]>([]);
+  const [isSaved, setIsSaved] = useState(false);
 
-  const [showFavoritesModal, setShowFavoritesModal] = useState(false);
-  const [favoriteStatus, setFavoriteStatus] = useState<FavoriteStatus>({
-    favorites: false,
-    want_to_visit: false,
-    bucket_list: false,
-  });
-useEffect(() => {
-  fetchGymDetails();
-  loadCurrentUser();
-  loadFavoriteStatus();
-}, [gymId]);
+  useEffect(() => {
+    fetchGymDetails();
+    loadCurrentUser();
+    checkIfSaved();
+  }, [gymId]);
 
-const fetchGymDetails = async () => {
-  try {
-    setIsLoading(true);
-    const [gymData, gymVideos] = await Promise.all([
-      gymService.getGymById(gymId),
-      videoService.getGymVideos(gymId, 'mostRecent', 3),
-    ]);
-    console.log('GYM DATA:', JSON.stringify(gymData, null, 2)); // Add this
-    setGym(gymData);
-    setVideos(gymVideos);
-  } catch (error) {
-    console.error('Error fetching gym details:', error);
-  } finally {
-    setIsLoading(false);
-  }
-};
+  const fetchGymDetails = async () => {
+    try {
+      setIsLoading(true);
+      const [gymData, gymVideos] = await Promise.all([
+        gymService.getGymById(gymId),
+        videoService.getGymVideos(gymId, 'mostRecent', 3),
+      ]);
+      setGym(gymData);
+      setVideos(gymVideos);
+    } catch (error) {
+      console.error('Error fetching gym details:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const loadCurrentUser = async () => {
     try {
@@ -81,6 +75,29 @@ const fetchGymDetails = async () => {
     }
   };
 
+  const checkIfSaved = async () => {
+    try {
+      const saved = await favoritesService.isSaved(gymId);
+      setIsSaved(saved);
+    } catch (error) {
+      console.error('Error checking saved status:', error);
+    }
+  };
+
+  const handleToggleSave = async () => {
+    try {
+      if (isSaved) {
+        await favoritesService.unsaveGym(gymId);
+        setIsSaved(false);
+      } else {
+        await favoritesService.saveGym(gymId);
+        setIsSaved(true);
+      }
+    } catch (error) {
+      console.error('Error toggling save:', error);
+      Alert.alert('Error', 'Failed to update saved status');
+    }
+  };
 
   const handleDeleteReview = async (reviewId: string) => {
     Alert.alert(
@@ -118,41 +135,41 @@ const fetchGymDetails = async () => {
   };
 
   const handleDeleteGym = async () => {
-  Alert.alert(
-    'Delete Gym',
-    'Are you sure you want to delete this gym? This will permanently remove all reviews, photos, and videos associated with it.',
-    [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            const token = await SecureStore.getItemAsync('authToken');
-            const response = await fetch(`http://192.168.1.166:3000/gyms/${gymId}`, {
-              method: 'DELETE',
-              headers: {
-                'Authorization': `Bearer ${token}`,
-              },
-            });
+    Alert.alert(
+      'Delete Gym',
+      'Are you sure you want to delete this gym? This will permanently remove all reviews, photos, and videos associated with it.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const token = await SecureStore.getItemAsync('authToken');
+              const response = await fetch(`http://192.168.1.166:3000/gyms/${gymId}`, {
+                method: 'DELETE',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                },
+              });
 
-            if (!response.ok) {
-              const error = await response.json();
-              throw new Error(error.message || 'Failed to delete gym');
+              if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Failed to delete gym');
+              }
+
+              Alert.alert('Deleted', 'Gym deleted successfully', [
+                { text: 'OK', onPress: () => navigation.navigate('MainTabs') }
+              ]);
+            } catch (error: any) {
+              console.error('Delete gym error:', error);
+              Alert.alert('Error', error.message || 'Failed to delete gym');
             }
-
-            Alert.alert('Deleted', 'Gym deleted successfully', [
-              { text: 'OK', onPress: () => navigation.navigate('MainTabs') }
-            ]);
-          } catch (error: any) {
-            console.error('Delete gym error:', error);
-            Alert.alert('Error', error.message || 'Failed to delete gym');
-          }
+          },
         },
-      },
-    ]
-  );
-};
+      ]
+    );
+  };
 
   const renderAmenityIcon = (amenity: string) => {
     const amenityIcons: { [key: string]: string } = {
@@ -174,15 +191,6 @@ const fetchGymDetails = async () => {
     return '$'.repeat(priceRange);
   };
 
-  const loadFavoriteStatus = async () => {
-  try {
-    const status = await favoritesService.getFavoriteStatus(gymId);
-    setFavoriteStatus(status);
-  } catch (error) {
-    console.error('Error loading favorite status:', error);
-  }
-};
-
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -202,18 +210,25 @@ const fetchGymDetails = async () => {
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header with Back Button */}
-        <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.backButtonText}>←</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.shareButton}>
-            <Text style={styles.shareButtonText}>⋯</Text>
-          </TouchableOpacity>
-        </View>
+{/* Header with Back Button and Bookmark */}
+<View style={styles.header}>
+  <TouchableOpacity 
+    style={styles.backButton}
+    onPress={() => navigation.goBack()}
+  >
+    <Text style={styles.backButtonText}>←</Text>
+  </TouchableOpacity>
+  <TouchableOpacity
+    style={styles.bookmarkButton}
+    onPress={handleToggleSave}
+  >
+    <FontAwesome 
+      name={isSaved ? "bookmark" : "bookmark-o"} 
+      size={22} 
+      color="#1F2937" 
+    />
+  </TouchableOpacity>
+</View>
 
         {/* Photo Gallery */}
         {gym.officialPhotos && gym.officialPhotos.length > 0 && (
@@ -278,37 +293,38 @@ const fetchGymDetails = async () => {
           </View>
         </View>
 
-{/* Registered By */}
-{gym.registeredByUser && (
-  <View style={styles.registeredByContainer}>
-    <Text style={styles.registeredByText}>
-      Registered by{' '}
-      <Text 
-        style={styles.registeredByName}
-        onPress={() => {
-          if (gym.registeredByUser) {
-            if (gym.registeredByUser.id === currentUserId) {
-              navigation.navigate('MainTabs');
-            } else {
-              navigation.navigate('UserProfile', { userId: gym.registeredByUser.id });
-            }
-          }
-        }}
-      >
-        {gym.registeredByUser.displayName}
-      </Text>
-    </Text>
-  </View>
-)}
+        {/* Registered By */}
+        {gym.registeredByUser && (
+          <View style={styles.registeredByContainer}>
+            <Text style={styles.registeredByText}>
+              Registered by{' '}
+              <Text 
+                style={styles.registeredByName}
+                onPress={() => {
+                  if (gym.registeredByUser) {
+                    if (gym.registeredByUser.id === currentUserId) {
+                      navigation.navigate('MainTabs');
+                    } else {
+                      navigation.navigate('UserProfile', { userId: gym.registeredByUser.id });
+                    }
+                  }
+                }}
+              >
+                {gym.registeredByUser.displayName}
+              </Text>
+            </Text>
+          </View>
+        )}
 
-{/* Temporary Delete Button - Only show if current user registered the gym */}
-{gym.registeredByUser && gym.registeredByUser.id === currentUserId && (
-  <TouchableOpacity
-    onPress={handleDeleteGym}
-  >
-    <Text>🗑️ Delete This Gym</Text>
-  </TouchableOpacity>
-)}
+        {/* Temporary Delete Button - Only show if current user registered the gym */}
+        {gym.registeredByUser && gym.registeredByUser.id === currentUserId && (
+          <TouchableOpacity
+            style={styles.deleteGymButton}
+            onPress={handleDeleteGym}
+          >
+            <Text style={styles.deleteGymButtonText}>🗑️ Delete This Gym</Text>
+          </TouchableOpacity>
+        )}
 
         {/* Climbing Types */}
         {gym.climbingTypes && gym.climbingTypes.length > 0 && (
@@ -386,45 +402,23 @@ const fetchGymDetails = async () => {
           </View>
         )}
 
-        {/* Favorite Button */}
-<TouchableOpacity
-  style={styles.favoriteButton}
-  onPress={() => setShowFavoritesModal(true)}
->
-  <Text style={styles.favoriteButtonIcon}>
-    {favoriteStatus.favorites || favoriteStatus.want_to_visit || favoriteStatus.bucket_list ? '❤️' : '🤍'}
-  </Text>
-  <Text style={styles.favoriteButtonText}>Save</Text>
-</TouchableOpacity>
-
-{/* Favorites Modal */}
-<FavoritesModal
-  visible={showFavoritesModal}
-  onClose={() => {
-    setShowFavoritesModal(false);
-    loadFavoriteStatus(); // Refresh status when modal closes
-  }}
-  gymId={gymId}
-  gymName={gym?.name || ''}
-/>
-
         {/* Reviews Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>
               ⭐ Reviews ({gym.reviewCount})
             </Text>
-{gym.reviews && gym.reviews.length > 3 && (
-  <TouchableOpacity 
-    onPress={() => navigation.navigate('AllReviews', {
-      reviews: gym.reviews || [],
-      currentUserId: currentUserId || '',
-      gymName: gym.name,
-    })}
-  >
-    <Text style={styles.seeAllButton}>See All</Text>
-  </TouchableOpacity>
-)}
+            {gym.reviews && gym.reviews.length > 3 && (
+              <TouchableOpacity 
+                onPress={() => navigation.navigate('AllReviews', {
+                  reviews: gym.reviews || [],
+                  currentUserId: currentUserId || '',
+                  gymName: gym.name,
+                })}
+              >
+                <Text style={styles.seeAllButton}>See All</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           {gym.reviews && gym.reviews.length > 0 ? (
@@ -524,61 +518,61 @@ const fetchGymDetails = async () => {
         </View>
 
         {/* Videos Section */}
-{videos && videos.length > 0 && (
-  <View style={styles.section}>
-    <View style={styles.sectionHeader}>
-      <Text style={styles.sectionTitle}>🎥 Videos ({videos.length})</Text>
-      {videos.length >= 3 && (
+        {videos && videos.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>🎥 Videos ({videos.length})</Text>
+              {videos.length >= 3 && (
+                <TouchableOpacity 
+                  onPress={() => navigation.navigate('AllVideos', {
+                    gymId: gym.id,
+                    gymName: gym.name,
+                  })}
+                >
+                  <Text style={styles.seeAllButton}>See All</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.videosScroll}>
+              {videos.map((video) => (
+                <TouchableOpacity
+                  key={video.id}
+                  style={styles.videoThumbnail}
+                  onPress={() => navigation.navigate('VideoPlayer', {
+                    videoId: video.id,
+                    videos: videos,
+                  })}
+                >
+                  <Image
+                    source={{ uri: video.thumbnailUrl }}
+                    style={styles.thumbnailImage}
+                    resizeMode="cover"
+                  />
+                  <View style={styles.videoOverlay}>
+                    <Text style={styles.playIcon}>▶</Text>
+                  </View>
+                  <View style={styles.videoInfo}>
+                    <Text style={styles.videoStats}>
+                      👁 {video.views} • ❤️ {video.likeCount}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* Upload Video Button */}
         <TouchableOpacity 
-          onPress={() => navigation.navigate('AllVideos', {
-            gymId: gym.id,
-            gymName: gym.name,
+          style={styles.uploadVideoButton}
+          onPress={() => navigation.navigate('UploadVideo', { 
+            gymId: gym.id, 
+            gymName: gym.name 
           })}
         >
-          <Text style={styles.seeAllButton}>See All</Text>
+          <Text style={styles.uploadVideoButtonText}>🎥 Upload Video</Text>
         </TouchableOpacity>
-      )}
-    </View>
-
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.videosScroll}>
-      {videos.map((video) => (
-        <TouchableOpacity
-          key={video.id}
-          style={styles.videoThumbnail}
-          onPress={() => navigation.navigate('VideoPlayer', {
-            videoId: video.id,
-            videos: videos,
-          })}
-        >
-          <Image
-            source={{ uri: video.thumbnailUrl }}
-            style={styles.thumbnailImage}
-            resizeMode="cover"
-          />
-          <View style={styles.videoOverlay}>
-            <Text style={styles.playIcon}>▶</Text>
-          </View>
-          <View style={styles.videoInfo}>
-            <Text style={styles.videoStats}>
-              👁 {video.views} • ❤️ {video.likeCount}
-            </Text>
-          </View>
-        </TouchableOpacity>
-      ))}
-    </ScrollView>
-  </View>
-)}
-
-{/* Upload Video Button */}
-<TouchableOpacity 
-  style={styles.uploadVideoButton}
-  onPress={() => navigation.navigate('UploadVideo', { 
-    gymId: gym.id, 
-    gymName: gym.name 
-  })}
->
-  <Text style={styles.uploadVideoButtonText}>🎥 Upload Video</Text>
-</TouchableOpacity>
 
         <View style={styles.bottomPadding} />
       </ScrollView>

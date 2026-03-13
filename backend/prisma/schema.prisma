@@ -42,7 +42,7 @@ model User {
   reportsAgainst   Report[]    @relation("ReportsAgainstUser")
   reviewedReports  Report[]    @relation("ReportsReviewedBy")
 
-  favoriteGyms     FavoriteGym[]
+  savedGyms     SavedGym[]
 
   @@map("users")
 }
@@ -129,7 +129,7 @@ model Gym {
   communityPhotos   CommunityPhoto[]
   videos            Video[]
 
-  favoriteGyms     FavoriteGym[]
+  savedGyms     SavedGym[]
 
   @@map("gyms")
 }
@@ -252,20 +252,17 @@ model Report {
   @@map("reports")
 }
 
-model FavoriteGym {
+model SavedGym {
   id        String   @id @default(uuid())
   userId    String
   gymId     String
-  listType  String   @default("favorites") // 'favorites', 'want_to_visit', 'bucket_list'
-  notes     String?  // Optional personal notes
   createdAt DateTime @default(now())
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   gym       Gym      @relation(fields: [gymId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, gymId, listType])
+  @@unique([userId, gymId])
   @@index([userId])
   @@index([gymId])
-  @@index([listType])
-  @@map("favorite_gyms")
+  @@map("saved_gyms")
 }

@@ -2,10 +2,8 @@ import * as SecureStore from 'expo-secure-store';
 
 const API_URL = 'http://192.168.1.166:3000';
 
-export interface FavoriteGym {
+export interface SavedGym {
   id: string;
-  listType: string;
-  notes?: string;
   createdAt: string;
   gym: {
     id: string;
@@ -23,42 +21,27 @@ export interface FavoriteGym {
   };
 }
 
-export interface FavoriteStatus {
-  favorites: boolean;
-  want_to_visit: boolean;
-  bucket_list: boolean;
-}
-
-export interface FavoriteCounts {
-  favorites: number;
-  want_to_visit: number;
-  bucket_list: number;
-  total: number;
-}
-
 class FavoritesService {
-  async addFavorite(gymId: string, listType: string, notes?: string): Promise<void> {
+  async saveGym(gymId: string): Promise<void> {
     const token = await SecureStore.getItemAsync('authToken');
 
-    const response = await fetch(`${API_URL}/favorites`, {
+    const response = await fetch(`${API_URL}/saved-gyms/${gymId}`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
-      body: JSON.stringify({ gymId, listType, notes }),
     });
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || 'Failed to add favorite');
+      throw new Error(error.message || 'Failed to save gym');
     }
   }
 
-  async removeFavorite(gymId: string, listType: string): Promise<void> {
+  async unsaveGym(gymId: string): Promise<void> {
     const token = await SecureStore.getItemAsync('authToken');
 
-    const response = await fetch(`${API_URL}/favorites/${gymId}/${listType}`, {
+    const response = await fetch(`${API_URL}/saved-gyms/${gymId}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -66,78 +49,58 @@ class FavoritesService {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to remove favorite');
+      throw new Error('Failed to unsave gym');
     }
   }
 
-  async getUserFavorites(listType?: string): Promise<FavoriteGym[]> {
+  async isSaved(gymId: string): Promise<boolean> {
     const token = await SecureStore.getItemAsync('authToken');
-    const queryParam = listType ? `?listType=${listType}` : '';
 
-    const response = await fetch(`${API_URL}/favorites${queryParam}`, {
+    const response = await fetch(`${API_URL}/saved-gyms/check/${gymId}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
       },
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch favorites');
+      return false;
+    }
+
+    const data = await response.json();
+    return data.saved;
+  }
+
+  async getSavedGyms(): Promise<SavedGym[]> {
+    const token = await SecureStore.getItemAsync('authToken');
+
+    const response = await fetch(`${API_URL}/saved-gyms`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch saved gyms');
     }
 
     return response.json();
   }
 
-  async getFavoriteStatus(gymId: string): Promise<FavoriteStatus> {
+  async getSavedCount(): Promise<number> {
     const token = await SecureStore.getItemAsync('authToken');
 
-    const response = await fetch(`${API_URL}/favorites/status/${gymId}`, {
+    const response = await fetch(`${API_URL}/saved-gyms/count`, {
       headers: {
         'Authorization': `Bearer ${token}`,
       },
     });
 
     if (!response.ok) {
-      return {
-        favorites: false,
-        want_to_visit: false,
-        bucket_list: false,
-      };
+      throw new Error('Failed to fetch saved count');
     }
 
-    return response.json();
-  }
-
-  async getFavoriteCounts(): Promise<FavoriteCounts> {
-    const token = await SecureStore.getItemAsync('authToken');
-
-    const response = await fetch(`${API_URL}/favorites/counts`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch favorite counts');
-    }
-
-    return response.json();
-  }
-
-  async updateNotes(gymId: string, listType: string, notes: string): Promise<void> {
-    const token = await SecureStore.getItemAsync('authToken');
-
-    const response = await fetch(`${API_URL}/favorites/${gymId}/${listType}/notes`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify({ notes }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to update notes');
-    }
+    const data = await response.json();
+    return data.count;
   }
 }
 

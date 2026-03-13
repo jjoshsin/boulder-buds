@@ -27,6 +27,7 @@ import AllVideosScreen from './app/AllVideosScreen';
 import AllPopularGymsScreen from './app/AllPopularGymsScreen';
 import AllNearbyGymsScreen from './app/AllNearbyGymsScreen';
 import NotificationsScreen from './app/NotificationsScreen';
+import SavedGymsScreen from './app/SavedGymsScreen';
 
 export type RootStackParamList = {
   Landing: undefined;
@@ -52,6 +53,7 @@ export type RootStackParamList = {
   AllPopularGyms: undefined;
   AllNearbyGyms: undefined;
   Notifications: undefined;
+  SavedGyms: undefined;
 };
 
 export type TabParamList = {
@@ -316,6 +318,11 @@ export default function App() {
               <Stack.Screen 
                 name="Notifications" 
                 component={NotificationsScreen}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen 
+                name="SavedGyms" 
+                component={SavedGymsScreen}
                 options={{ headerShown: false }}
               />
             </>
