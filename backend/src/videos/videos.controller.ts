@@ -46,11 +46,11 @@ export class VideosController {
     return this.videosService.getVideoById(id);
   }
 
-  @Post(':id/view')
-  async incrementViews(@Param('id') id: string) {
-    await this.videosService.incrementViews(id);
-    return { success: true };
-  }
+@Post(':id/view')
+@UseGuards(JwtAuthGuard)
+async incrementViews(@Param('id') id: string, @Request() req) {
+  return this.videosService.incrementViews(id, req.user.userId);
+}
 
   @Post(':id/like')
   @UseGuards(JwtAuthGuard)

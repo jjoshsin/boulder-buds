@@ -286,7 +286,6 @@ export default function VideoPlayerScreen() {
         <VideoView
           style={styles.video}
           player={player}
-          allowsFullscreen
           allowsPictureInPicture
           nativeControls
         />

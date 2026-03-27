@@ -18,7 +18,7 @@ export interface Gym {
   climbingTypes?: string[];
   rating?: number;
   reviewCount?: number;
-  distance?: string;
+  distance?: number | string;
   tags?: string[];
   reviews?: Review[];
   likeCount?: number;
@@ -160,6 +160,26 @@ async getNearbyGyms(climbingType?: string | null): Promise<Gym[]> {
       throw error;
     }
   }
+
+async getGymsNearLocation(latitude: number, longitude: number, radiusMiles: number = 15): Promise<Gym[]> {
+  const token = await SecureStore.getItemAsync('authToken');
+  const url = `${API_URL}/gyms/nearby?latitude=${latitude}&longitude=${longitude}&radius=${radiusMiles}`;
+  
+  const response = await fetch(url, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Error response:', errorText);
+    throw new Error(`Failed to fetch nearby gyms: ${response.status} - ${errorText}`);
+  }
+
+  return response.json();
 }
+}
+
 
 export default new GymService();

@@ -250,6 +250,55 @@ async getGymById(id: string) {
   };
 }
 
+async getGymsNearLocation(latitude: number, longitude: number, radiusMiles: number = 15) {
+  const allGyms = await this.prisma.gym.findMany({
+    include: {
+      reviews: {
+        select: {
+          overallRating: true,
+        },
+      },
+    },
+  });
+
+  // Calculate distance for each gym
+  const gymsWithDistance = allGyms.map(gym => {
+    const distance = this.calculateDistance(latitude, longitude, gym.latitude, gym.longitude);
+    return {
+      ...gym,
+      distance,
+    };
+  });
+
+  // Filter gyms within the radius
+  const nearbyGyms = gymsWithDistance.filter(gym => gym.distance <= radiusMiles);
+
+  // Sort by distance (closest first)
+  nearbyGyms.sort((a, b) => a.distance - b.distance);
+
+  // Calculate ratings and format response
+  return nearbyGyms.map(gym => {
+    const reviewCount = gym.reviews.length;
+    const rating = this.calculateAverageRating(gym.reviews);
+
+    return {
+      id: gym.id,
+      name: gym.name,
+      address: gym.address,
+      city: gym.city,
+      state: gym.state,
+      latitude: gym.latitude,
+      longitude: gym.longitude,
+      rating,
+      reviewCount,
+      officialPhotos: gym.officialPhotos,
+      amenities: gym.amenities,
+      climbingTypes: gym.climbingTypes,
+      distance: Math.round(gym.distance * 10) / 10, // Round to 1 decimal
+    };
+  });
+}
+
   private calculateAverageRating(reviews: { overallRating: number }[]): number {
     if (reviews.length === 0) return 0;
     const sum = reviews.reduce((acc, review) => acc + review.overallRating, 0);
@@ -452,5 +501,27 @@ async deleteGym(gymId: string, userId: string) {
   });
 
   return { success: true, message: 'Gym deleted successfully' };
+}
+
+private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 3959; // Earth's radius in miles
+  const dLat = this.toRad(lat2 - lat1);
+  const dLon = this.toRad(lon2 - lon1);
+  
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(this.toRad(lat1)) *
+      Math.cos(this.toRad(lat2)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const distance = R * c;
+  
+  return distance;
+}
+
+private toRad(degrees: number): number {
+  return degrees * (Math.PI / 180);
 }
 }

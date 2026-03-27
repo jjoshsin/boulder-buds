@@ -43,6 +43,7 @@ model User {
   reviewedReports  Report[]    @relation("ReportsReviewedBy")
 
   savedGyms     SavedGym[]
+  videoViews    VideoView[]  
 
   @@map("users")
 }
@@ -149,6 +150,7 @@ model Video {
 
   likes        VideoLike[]
   comments     VideoComment[]
+  videoViews   VideoView[]
 
   @@map("videos")
 }
@@ -193,6 +195,21 @@ model VideoCommentLike {
 
   @@unique([commentId, userId])
   @@map("video_comment_likes")
+}
+
+model VideoView {
+  id        String   @id @default(uuid())
+  userId    String
+  videoId   String
+  viewedAt  DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, videoId])
+  @@index([videoId])
+  @@index([userId])
+  @@map("video_views")
 }
 
 model Notification {

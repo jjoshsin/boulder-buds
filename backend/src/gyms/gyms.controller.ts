@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Patch, UseGuards, Body, Request, Query, Delete, } from '@nestjs/common';
+import { Controller, Get, Param, Post, Patch, UseGuards, Body, Request, Query, Delete, BadRequestException, } from '@nestjs/common';
 import { GymsService } from './gyms.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -113,5 +113,22 @@ async createGym(
 @UseGuards(JwtAuthGuard)
 async deleteGym(@Param('id') id: string, @Request() req) {
   return this.gymsService.deleteGym(id, req.user.userId);
+}
+
+@Get('nearby')
+async getGymsNearLocation(
+  @Query('latitude') latitude: string,
+  @Query('longitude') longitude: string,
+  @Query('radius') radius?: string,
+) {
+  const lat = parseFloat(latitude);
+  const lng = parseFloat(longitude);
+  const radiusMiles = radius ? parseFloat(radius) : 15;
+
+  if (isNaN(lat) || isNaN(lng)) {
+    throw new BadRequestException('Invalid coordinates');
+  }
+
+  return this.gymsService.getGymsNearLocation(lat, lng, radiusMiles);
 }
 }

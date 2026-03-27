@@ -156,11 +156,21 @@ async uploadVideo(videoUri: string): Promise<{ videoUrl: string; thumbnailUrl: s
     return response.json();
   }
 
-  async incrementViews(videoId: string): Promise<void> {
-    await fetch(`${API_URL}/videos/${videoId}/view`, {
-      method: 'POST',
-    });
+async incrementViews(videoId: string): Promise<void> {
+  const token = await SecureStore.getItemAsync('authToken');
+  
+  const response = await fetch(`${API_URL}/videos/${videoId}/view`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    // Don't throw error - just log it. View tracking shouldn't break the app
+    console.error('Failed to increment view');
   }
+}
 
   async toggleLike(videoId: string): Promise<{ liked: boolean }> {
     const token = await SecureStore.getItemAsync('authToken');

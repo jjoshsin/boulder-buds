@@ -165,12 +165,12 @@ export default function SavedGymsScreen() {
             <Text style={styles.emptyStateSubtext}>
               Start saving your favorite gyms to see them here
             </Text>
-            <TouchableOpacity
-              style={styles.exploreButton}
-              onPress={() => navigation.navigate('MainTabs', { screen: 'Explore' })}
-            >
-              <Text style={styles.exploreButtonText}>Explore Gyms</Text>
-            </TouchableOpacity>
+<TouchableOpacity
+  style={styles.exploreButton}
+  onPress={() => navigation.navigate('MainTabs')}
+>
+  <Text style={styles.exploreButtonText}>Explore Gyms</Text>
+</TouchableOpacity>
           </View>
         )}
       </ScrollView>

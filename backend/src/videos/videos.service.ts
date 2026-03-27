@@ -197,7 +197,27 @@ export class VideosService {
     };
   }
 
-  async incrementViews(videoId: string) {
+async incrementViews(videoId: string, userId: string) {
+  // Check if user has already viewed this video
+  const existingView = await this.prisma.videoView.findUnique({
+    where: {
+      userId_videoId: {
+        userId,
+        videoId,
+      },
+    },
+  });
+
+  // If user hasn't viewed this video yet, create a view record
+  if (!existingView) {
+    await this.prisma.videoView.create({
+      data: {
+        userId,
+        videoId,
+      },
+    });
+
+    // Increment the view count
     await this.prisma.video.update({
       where: { id: videoId },
       data: {
@@ -208,8 +228,68 @@ export class VideosService {
     });
   }
 
-  async toggleLike(videoId: string, userId: string) {
-    const existing = await this.prisma.videoLike.findUnique({
+  // Return the video (whether view was incremented or not)
+  return this.prisma.video.findUnique({
+    where: { id: videoId },
+    include: {
+      user: {
+        select: {
+          id: true,
+          displayName: true,
+          profilePhoto: true,
+        },
+      },
+      gym: {
+        select: {
+          id: true,
+          name: true,
+          city: true,
+          state: true,
+        },
+      },
+      likes: true,
+      comments: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              displayName: true,
+              profilePhoto: true,
+            },
+          },
+          replies: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  displayName: true,
+                  profilePhoto: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      },
+    },
+  });
+}
+
+async toggleLike(videoId: string, userId: string) {
+  const existingLike = await this.prisma.videoLike.findUnique({
+    where: {
+      videoId_userId: {
+        videoId,
+        userId,
+      },
+    },
+  });
+
+  if (existingLike) {
+    // Unlike - remove the like (NO notification)
+    await this.prisma.videoLike.delete({
       where: {
         videoId_userId: {
           videoId,
@@ -218,30 +298,43 @@ export class VideosService {
       },
     });
 
-    if (existing) {
-      await this.prisma.videoLike.delete({
+    return { liked: false };
+  } else {
+    // Like - add the like
+    await this.prisma.videoLike.create({
+      data: {
+        videoId,
+        userId,
+      },
+    });
+
+    // Check if this is the FIRST TIME this user has ever liked this video
+    // by checking if a notification already exists for this exact action
+    const video = await this.prisma.video.findUnique({
+      where: { id: videoId },
+      select: { userId: true },
+    });
+
+    if (video && video.userId !== userId) {
+      // Check if we've already sent a notification for this user liking this video
+      const existingNotification = await this.prisma.notification.findFirst({
         where: {
-          videoId_userId: {
-            videoId,
-            userId,
-          },
-        },
-      });
-      return { liked: false };
-    } else {
-      await this.prisma.videoLike.create({
-        data: {
-          videoId,
-          userId,
+          userId: video.userId,
+          actorId: userId,
+          entityId: videoId,
+          type: 'video_like',
         },
       });
 
-      // Create notification when liking (not when unliking)
-      await this.notificationsService.notifyVideoLike(videoId, userId);
-
-      return { liked: true };
+      // Only send notification if this is the first time ever
+      if (!existingNotification) {
+        await this.notificationsService.notifyVideoLike(videoId, userId);
+      }
     }
+
+    return { liked: true };
   }
+}
 
   async addComment(videoId: string, userId: string, text: string, parentId?: string) {
     // If replying, verify parent comment exists and belongs to same video
