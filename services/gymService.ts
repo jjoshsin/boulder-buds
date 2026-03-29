@@ -103,11 +103,15 @@ async getNearbyGyms(climbingType?: string | null): Promise<Gym[]> {
         return gym;
       });
 
-      return gymsWithDistance.sort((a, b) => {
-        const distA = parseFloat(a.distance?.replace(' mi', '') || '999');
-        const distB = parseFloat(b.distance?.replace(' mi', '') || '999');
-        return distA - distB;
-      });
+return gymsWithDistance.sort((a, b) => {
+  const distA = typeof a.distance === 'string' 
+    ? parseFloat(a.distance.replace(' mi', '')) 
+    : (a.distance || 999);
+  const distB = typeof b.distance === 'string' 
+    ? parseFloat(b.distance.replace(' mi', '')) 
+    : (b.distance || 999);
+  return distA - distB;
+});
     }
 
     return gyms;

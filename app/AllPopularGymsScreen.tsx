@@ -42,6 +42,59 @@ export default function AllPopularGymsScreen() {
     }
   };
 
+  const renderGymCard = (gym: Gym) => (
+    <TouchableOpacity
+      key={gym.id}
+      style={styles.gymCard}
+      onPress={() => navigation.navigate('GymDetail', { gymId: gym.id })}
+    >
+      {gym.officialPhotos && gym.officialPhotos.length > 0 ? (
+        <Image
+          source={{ uri: gym.officialPhotos[0] }}
+          style={styles.gymImage}
+          resizeMode="cover"
+        />
+      ) : (
+        <View style={styles.placeholderImage}>
+          <Text style={styles.placeholderText}>🏔️</Text>
+        </View>
+      )}
+
+      <View style={styles.gymInfo}>
+        <Text style={styles.gymName}>{gym.name}</Text>
+        
+        <View style={styles.gymMeta}>
+          <Text style={styles.gymRating}>
+            ⭐ {gym.rating ? gym.rating.toFixed(1) : 'New'}
+          </Text>
+          <Text style={styles.gymSeparator}>•</Text>
+          <Text style={styles.gymReviews}>
+            {gym.reviewCount || 0} {gym.reviewCount === 1 ? 'review' : 'reviews'}
+          </Text>
+        </View>
+
+        <Text style={styles.gymLocation}>
+          {gym.city}{gym.state ? `, ${gym.state}` : ''}
+        </Text>
+
+        {gym.amenities && gym.amenities.length > 0 && (
+          <View style={styles.amenitiesRow}>
+            {gym.amenities.slice(0, 3).map((amenity, index) => (
+              <View key={index} style={styles.amenityBadge}>
+                <Text style={styles.amenityBadgeText}>
+                  {amenity.replace(/_/g, ' ')}
+                </Text>
+              </View>
+            ))}
+            {gym.amenities.length > 3 && (
+              <Text style={styles.moreAmenities}>+{gym.amenities.length - 3}</Text>
+            )}
+          </View>
+        )}
+      </View>
+    </TouchableOpacity>
+  );
+
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -60,44 +113,24 @@ export default function AllPopularGymsScreen() {
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView style={styles.scrollView}>
-        {gyms.map((gym) => (
-          <TouchableOpacity
-            key={gym.id}
-            style={styles.gymCard}
-            onPress={() => navigation.navigate('GymDetail', { gymId: gym.id })}
-          >
-            <View style={styles.gymImage}>
-              {gym.officialPhotos && gym.officialPhotos.length > 0 ? (
-                <Image
-                  source={{ uri: gym.officialPhotos[0] }}
-                  style={styles.image}
-                  resizeMode="cover"
-                />
-              ) : (
-                <View style={styles.placeholder}>
-                  <Text style={styles.placeholderText}>🏔️</Text>
-                </View>
-              )}
-            </View>
-            <View style={styles.gymInfo}>
-              <Text style={styles.gymName}>{gym.name}</Text>
-              <Text style={styles.gymLocation}>
-                {gym.city}{gym.state ? `, ${gym.state}` : ''}
-              </Text>
-              <View style={styles.ratingRow}>
-                {gym.rating && gym.rating > 0 ? (
-                  <>
-                    <Text style={styles.rating}>⭐ {gym.rating}</Text>
-                    <Text style={styles.reviewCount}>({gym.reviewCount} reviews)</Text>
-                  </>
-                ) : (
-                  <Text style={styles.reviewCount}>No reviews yet</Text>
-                )}
-              </View>
-            </View>
-          </TouchableOpacity>
-        ))}
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {gyms.length > 0 ? (
+          <>
+            <Text style={styles.resultsCount}>
+              {gyms.length} {gyms.length === 1 ? 'gym' : 'gyms'}
+            </Text>
+            {gyms.map(renderGymCard)}
+            <View style={styles.bottomPadding} />
+          </>
+        ) : (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateEmoji}>🏔️</Text>
+            <Text style={styles.emptyStateText}>No popular gyms found</Text>
+            <Text style={styles.emptyStateSubtext}>
+              Check back later for trending gyms
+            </Text>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

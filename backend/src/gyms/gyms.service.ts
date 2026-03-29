@@ -251,6 +251,10 @@ async getGymById(id: string) {
 }
 
 async getGymsNearLocation(latitude: number, longitude: number, radiusMiles: number = 15) {
+  console.log('=== GET GYMS NEAR LOCATION ===');
+  console.log('User location:', latitude, longitude);
+  console.log('Radius:', radiusMiles);
+
   const allGyms = await this.prisma.gym.findMany({
     include: {
       reviews: {
@@ -261,9 +265,12 @@ async getGymsNearLocation(latitude: number, longitude: number, radiusMiles: numb
     },
   });
 
+  console.log('Total gyms in database:', allGyms.length);
+
   // Calculate distance for each gym
   const gymsWithDistance = allGyms.map(gym => {
     const distance = this.calculateDistance(latitude, longitude, gym.latitude, gym.longitude);
+    console.log(`${gym.name}: (${gym.latitude}, ${gym.longitude}) = ${distance} miles`);
     return {
       ...gym,
       distance,
@@ -273,11 +280,13 @@ async getGymsNearLocation(latitude: number, longitude: number, radiusMiles: numb
   // Filter gyms within the radius
   const nearbyGyms = gymsWithDistance.filter(gym => gym.distance <= radiusMiles);
 
+  console.log('Gyms within radius:', nearbyGyms.length);
+
   // Sort by distance (closest first)
   nearbyGyms.sort((a, b) => a.distance - b.distance);
 
   // Calculate ratings and format response
-  return nearbyGyms.map(gym => {
+  const result = nearbyGyms.map(gym => {
     const reviewCount = gym.reviews.length;
     const rating = this.calculateAverageRating(gym.reviews);
 
@@ -297,6 +306,11 @@ async getGymsNearLocation(latitude: number, longitude: number, radiusMiles: numb
       distance: Math.round(gym.distance * 10) / 10, // Round to 1 decimal
     };
   });
+
+  console.log('Returning gyms with distances:', result.map(g => `${g.name}: ${g.distance}mi`));
+  console.log('=== END ===');
+
+  return result;
 }
 
   private calculateAverageRating(reviews: { overallRating: number }[]): number {

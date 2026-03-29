@@ -28,6 +28,8 @@ export default function AllNearbyGymsScreen() {
   }, []);
 
 
+ 
+  
   
 const loadNearbyGyms = async () => {
   try {
