@@ -7,6 +7,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { styles } from '../styles/LandingScreen.styles';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 interface LandingScreenProps {
   onGetStarted: () => void;
@@ -62,9 +63,10 @@ export default function LandingScreen({ onGetStarted, onLogin }: LandingScreenPr
           </View>
 
           {/* Footer */}
-          <Text style={styles.footer}>
-            NYC's climbing community starts here 🧗‍♀️
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={styles.footer}>NYC's climbing community starts here </Text>
+            <MaterialCommunityIcons name="hiking" size={16} color="#9CA3AF" />
+          </View>
         </View>
       </SafeAreaView>
     </LinearGradient>

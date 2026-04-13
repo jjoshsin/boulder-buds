@@ -17,6 +17,7 @@ import { RootStackParamList } from '../App';
 import * as SecureStore from 'expo-secure-store';
 import { getSettingLabel, getDifficultyLabel } from './utils/reviewLabels';
 import notificationService from '../services/notificationService';
+import { Ionicons, MaterialCommunityIcons, FontAwesome } from '@expo/vector-icons';
 
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -126,7 +127,7 @@ const renderPopularGym = (gym: Gym) => (
         />
       ) : (
         <View style={styles.placeholder}>
-          <Text style={styles.placeholderText}>🏔️</Text>
+          <Ionicons name="image-outline" size={32} color="#9CA3AF" />
           <Text style={styles.placeholderSubtext}>No photos yet</Text>
         </View>
       )}
@@ -138,7 +139,10 @@ const renderPopularGym = (gym: Gym) => (
       <View style={styles.ratingRow}>
         {gym.rating && gym.rating > 0 ? (
           <>
-            <Text style={styles.rating}>⭐ {gym.rating}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <FontAwesome name="star" size={12} color="#FF8C00" />
+              <Text style={[styles.rating, { marginLeft: 3 }]}>{gym.rating}</Text>
+            </View>
             <Text style={styles.reviewCount}>({gym.reviewCount})</Text>
           </>
         ) : (
@@ -167,7 +171,10 @@ const renderNearbyGym = (gym: Gym) => (
         <Text style={styles.distance}>{gym.distance}</Text>
       </View>
       <View style={styles.nearbyMeta}>
-        <Text style={styles.rating}>⭐ {gym.rating}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <FontAwesome name="star" size={12} color="#FF8C00" />
+          <Text style={[styles.rating, { marginLeft: 3 }]}>{gym.rating}</Text>
+        </View>
         <Text style={styles.metaSeparator}>•</Text>
         <Text style={styles.tags}>
           {gym.city}{gym.state ? `, ${gym.state}` : ''}
@@ -190,9 +197,11 @@ if (activity.type === 'review') {
         <Text style={styles.activityGym}>{activity.gym}</Text>
       </Text>
       {activity.rating && (
-        <Text style={styles.activityRating}>
-          {'⭐'.repeat(Math.round(activity.rating))}
-        </Text>
+        <View style={{ flexDirection: 'row', marginTop: 2 }}>
+          {[1,2,3,4,5].map(n => (
+            <FontAwesome key={n} name={n <= Math.round(activity.rating!) ? 'star' : 'star-o'} size={12} color="#FF8C00" />
+          ))}
+        </View>
       )}
       
       {/* Add tags if available */}
@@ -245,7 +254,7 @@ if (activity.type === 'review') {
         )}
         {activity.photoUrl && activity.photoUrl.toLowerCase().endsWith('.heic') && (
           <View style={[styles.activityPhoto, { backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' }]}>
-            <Text style={{ fontSize: 32 }}>📸</Text>
+            <Ionicons name="camera-outline" size={32} color="#9CA3AF" />
           </View>
         )}
         <Text style={styles.activityTime}>{getTimeAgo(activity.createdAt)}</Text>
@@ -274,7 +283,7 @@ if (activity.type === 'review') {
       loadUnreadCount(); // Refresh count when opening
     }}
   >
-    <Text style={styles.notificationIcon}>🔔</Text>
+    <Ionicons name={unreadCount > 0 ? 'notifications' : 'notifications-outline'} size={24} color="#1F2937" />
     {unreadCount > 0 && (
       <View style={styles.notificationBadge}>
         <Text style={styles.notificationBadgeText}>
@@ -289,7 +298,10 @@ if (activity.type === 'review') {
 {/* Popular This Week */}
 <View style={styles.section}>
   <View style={styles.sectionHeader}>
-    <Text style={styles.sectionTitle}>🔥 Popular This Week</Text>
+    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+      <MaterialCommunityIcons name="fire" size={18} color="#FF8C00" />
+      <Text style={[styles.sectionTitle, { marginLeft: 6 }]}>Popular This Week</Text>
+    </View>
     {popularGyms.length > 3 && (
       <TouchableOpacity onPress={() => navigation.navigate('AllPopularGyms')}>
         <Text style={styles.seeAllText}>See All</Text>
@@ -308,7 +320,10 @@ if (activity.type === 'review') {
 {/* Near You */}
 <View style={styles.section}>
   <View style={styles.sectionHeader}>
-    <Text style={styles.sectionTitle}>📍 Near You</Text>
+    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+      <Ionicons name="location-outline" size={18} color="#FF8C00" />
+      <Text style={[styles.sectionTitle, { marginLeft: 6 }]}>Near You</Text>
+    </View>
     {nearbyGyms.length > 3 && (
       <TouchableOpacity onPress={() => navigation.navigate('AllNearbyGyms')}>
         <Text style={styles.seeAllText}>See All</Text>
@@ -320,12 +335,15 @@ if (activity.type === 'review') {
 
         {/* Recent Activity */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>👥 Recent Activity</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Ionicons name="people-outline" size={18} color="#FF8C00" />
+            <Text style={[styles.sectionTitle, { marginLeft: 6 }]}>Recent Activity</Text>
+          </View>
           {recentActivity.length > 0 ? (
             recentActivity.map(renderActivity)
           ) : (
             <View style={styles.emptyActivityContainer}>
-              <Text style={styles.emptyActivityEmoji}>👥</Text>
+              <Ionicons name="people-outline" size={48} color="#9CA3AF" />
               <Text style={styles.emptyActivityText}>No recent activity</Text>
               <Text style={styles.emptyActivitySubtext}>
                 Follow other climbers to see their activity here

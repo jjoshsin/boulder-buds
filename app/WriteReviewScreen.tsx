@@ -19,6 +19,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { styles } from '../styles/WriteReviewScreen.styles';
 import * as SecureStore from 'expo-secure-store';
+import { Ionicons, FontAwesome } from '@expo/vector-icons';
 
 type WriteReviewNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -66,9 +67,11 @@ export default function WriteReviewScreen() {
             onPress={() => onPress(star)}
             style={styles.starButton}
           >
-            <Text style={styles.starText}>
-              {star <= rating ? '⭐' : '☆'}
-            </Text>
+            <FontAwesome
+              name={star <= rating ? 'star' : 'star-o'}
+              size={32}
+              color="#FF8C00"
+            />
           </TouchableOpacity>
         ))}
       </View>
@@ -241,7 +244,7 @@ export default function WriteReviewScreen() {
 {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text style={styles.closeButton}>✕</Text>
+            <Ionicons name="close" size={22} color="#1F2937" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>
             {isEditing ? 'Edit Review' : 'Write Review'}
@@ -339,7 +342,7 @@ export default function WriteReviewScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Add Photos</Text>
             <TouchableOpacity style={styles.addPhotoButton} onPress={pickImages}>
-              <Text style={styles.addPhotoIcon}>📸</Text>
+              <Ionicons name="camera-outline" size={24} color="#FF8C00" />
               <Text style={styles.addPhotoText}>Add Photos</Text>
             </TouchableOpacity>
 
@@ -352,7 +355,7 @@ export default function WriteReviewScreen() {
                       style={styles.removeImageButton}
                       onPress={() => removeImage(index)}
                     >
-                      <Text style={styles.removeImageText}>✕</Text>
+                      <Ionicons name="close" size={16} color="#FFFFFF" />
                     </TouchableOpacity>
                   </View>
                 ))}

@@ -18,6 +18,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { styles } from '../styles/UploadVideoScreen.styles';
 import videoService from '../services/videoService';
+import { Ionicons } from '@expo/vector-icons';
 
 type UploadVideoNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -145,7 +146,7 @@ export default function UploadVideoScreen() {
           {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Text style={styles.closeButton}>✕</Text>
+              <Ionicons name="close" size={22} color="#1F2937" />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Upload Video</Text>
             <View style={{ width: 40 }} />
@@ -172,15 +173,15 @@ export default function UploadVideoScreen() {
               </View>
             ) : (
               <View style={styles.videoPlaceholder}>
-                <Text style={styles.placeholderEmoji}>🎥</Text>
+                <Ionicons name="videocam-outline" size={48} color="#9CA3AF" />
                 <Text style={styles.placeholderText}>No video selected</Text>
                 <View style={styles.actionButtons}>
                   <TouchableOpacity style={styles.actionButton} onPress={pickVideo}>
-                    <Text style={styles.actionButtonIcon}>📷</Text>
+                    <Ionicons name="images-outline" size={28} color="#FF8C00" />
                     <Text style={styles.actionButtonText}>Choose Video</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.actionButton} onPress={recordVideo}>
-                    <Text style={styles.actionButtonIcon}>📹</Text>
+                    <Ionicons name="camera-outline" size={28} color="#FF8C00" />
                     <Text style={styles.actionButtonText}>Record Video</Text>
                   </TouchableOpacity>
                 </View>

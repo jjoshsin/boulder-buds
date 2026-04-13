@@ -15,6 +15,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
 import { styles } from '../styles/PeopleScreen.styles';
 import * as SecureStore from 'expo-secure-store';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 type PeopleNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -127,12 +128,18 @@ export default function PeopleScreen() {
           <Text style={styles.userName}>{user.displayName}</Text>
           <View style={styles.userMeta}>
             {user.climbingLevel && (
-              <Text style={styles.userMetaText}>🧗 {user.climbingLevel}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <MaterialCommunityIcons name="hiking" size={14} color="#6B7280" />
+                <Text style={[styles.userMetaText, { marginLeft: 3 }]}>{user.climbingLevel}</Text>
+              </View>
             )}
             {user.borough && (
               <>
                 {user.climbingLevel && <Text style={styles.userMetaSeparator}>•</Text>}
-                <Text style={styles.userMetaText}>📍 {user.borough}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="location-outline" size={14} color="#6B7280" />
+                  <Text style={[styles.userMetaText, { marginLeft: 3 }]}>{user.borough}</Text>
+                </View>
               </>
             )}
           </View>
@@ -160,7 +167,7 @@ export default function PeopleScreen() {
       {/* Search Bar */}
       <View style={styles.searchContainer}>
         <View style={styles.searchBar}>
-          <Text style={styles.searchIcon}>🔍</Text>
+          <Ionicons name="search-outline" size={18} color="#9CA3AF" />
           <TextInput
             style={styles.searchInput}
             placeholder="Search by name or email..."
@@ -177,7 +184,7 @@ export default function PeopleScreen() {
               setSearchQuery('');
               setUsers([]);
             }}>
-              <Text style={styles.clearIcon}>✕</Text>
+              <Ionicons name="close-circle" size={18} color="#9CA3AF" />
             </TouchableOpacity>
           )}
         </View>
@@ -198,13 +205,13 @@ export default function PeopleScreen() {
           </>
         ) : searchQuery.trim().length >= 2 ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyStateEmoji}>🤷</Text>
+            <MaterialCommunityIcons name="emoticon-confused-outline" size={48} color="#9CA3AF" />
             <Text style={styles.emptyStateText}>No users found</Text>
             <Text style={styles.emptyStateSubtext}>Try searching with a different name</Text>
           </View>
         ) : (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyStateEmoji}>👋</Text>
+            <Ionicons name="people-outline" size={48} color="#9CA3AF" />
             <Text style={styles.emptyStateText}>Find Your Climbing Friends</Text>
             <Text style={styles.emptyStateSubtext}>
               Search for other climbers by name or email

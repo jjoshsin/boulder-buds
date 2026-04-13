@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { styles } from '../styles/EditAmenitiesScreen.styles';
 import * as SecureStore from 'expo-secure-store';
+import { Ionicons } from '@expo/vector-icons';
 
 interface EditAmenitiesScreenProps {
   gymId: string;
@@ -97,7 +98,7 @@ export default function EditAmenitiesScreen({
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={onClose}>
-            <Text style={styles.closeButton}>✕</Text>
+            <Ionicons name="close" size={22} color="#1F2937" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Edit Amenities</Text>
           <View style={{ width: 40 }} />
@@ -144,9 +145,12 @@ export default function EditAmenitiesScreen({
             )}
           </TouchableOpacity>
 
-          <Text style={styles.footerNote}>
-            💡 Changes are visible to all users immediately
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+            <Ionicons name="information-circle-outline" size={16} color="#9CA3AF" />
+            <Text style={[styles.footerNote, { marginLeft: 4 }]}>
+              Changes are visible to all users immediately
+            </Text>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>

@@ -14,6 +14,7 @@ import { RootStackParamList } from '../App';
 import { styles } from '../styles/NotificationsScreen.styles';
 import * as SecureStore from 'expo-secure-store';
 import notificationService, { Notification } from '../services/notificationService';
+import { Ionicons, FontAwesome, MaterialCommunityIcons } from '@expo/vector-icons';
 
 type NotificationsNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -134,13 +135,13 @@ export default function NotificationsScreen() {
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
-      case 'follow': return '👤';
-      case 'review_like': return '❤️';
-      case 'video_like': return '❤️';
-      case 'video_comment': return '💬';
-      case 'comment_reply': return '↩️';
-      case 'new_review': return '⭐';
-      default: return '🔔';
+      case 'follow':        return <Ionicons name="person" size={20} color="#FF8C00" />;
+      case 'review_like':   return <Ionicons name="heart" size={20} color="#EF4444" />;
+      case 'video_like':    return <Ionicons name="heart" size={20} color="#EF4444" />;
+      case 'video_comment': return <Ionicons name="chatbubble" size={20} color="#3B82F6" />;
+      case 'comment_reply': return <MaterialCommunityIcons name="reply" size={20} color="#6B7280" />;
+      case 'new_review':    return <FontAwesome name="star" size={18} color="#FF8C00" />;
+      default:              return <Ionicons name="notifications" size={20} color="#FF8C00" />;
     }
   };
 
@@ -160,7 +161,7 @@ export default function NotificationsScreen() {
     style={styles.backButton}
     onPress={() => navigation.goBack()}
   >
-    <Text style={styles.backButtonText}>←</Text>
+    <Ionicons name="arrow-back" size={22} color="#1F2937" />
   </TouchableOpacity>
   <Text style={styles.headerTitle}>Notifications</Text>
   <View style={styles.rightAction}>
@@ -191,9 +192,7 @@ export default function NotificationsScreen() {
               onPress={() => handleNotificationPress(notification)}
             >
               <View style={styles.notificationIcon}>
-                <Text style={styles.iconText}>
-                  {getNotificationIcon(notification.type)}
-                </Text>
+                {getNotificationIcon(notification.type)}
               </View>
               
               <View style={styles.notificationContent}>
@@ -212,13 +211,13 @@ export default function NotificationsScreen() {
                   handleDeleteNotification(notification.id);
                 }}
               >
-                <Text style={styles.deleteButtonText}>✕</Text>
+                <Ionicons name="close" size={18} color="#9CA3AF" />
               </TouchableOpacity>
             </TouchableOpacity>
           ))
         ) : (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyStateEmoji}>🔔</Text>
+            <Ionicons name="notifications-outline" size={48} color="#9CA3AF" />
             <Text style={styles.emptyStateText}>No notifications yet</Text>
             <Text style={styles.emptyStateSubtext}>
               You'll see notifications here when people interact with your content

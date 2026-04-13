@@ -10,6 +10,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
 import { styles } from '../styles/PostScreen.styles';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 type PostNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -24,7 +25,7 @@ export default function PostScreen() {
 
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
         <View style={styles.heroSection}>
-          <Text style={styles.heroEmoji}>🏢</Text>
+          <MaterialCommunityIcons name="office-building-outline" size={48} color="#FF8C00" />
           <Text style={styles.heroTitle}>Can't find your gym?</Text>
           <Text style={styles.heroSubtitle}>
             Help grow our community by adding a climbing gym to Boulder Buds

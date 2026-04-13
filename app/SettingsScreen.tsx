@@ -16,6 +16,7 @@ import type { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../App';
 import { styles } from '../styles/SettingsScreen.styles';
 import * as SecureStore from 'expo-secure-store';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 type SettingsNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type SettingsRouteProp = RouteProp<RootStackParamList, 'Settings'>;
@@ -60,10 +61,10 @@ export default function SettingsScreen() {
   const [showStatePicker, setShowStatePicker] = useState(false);
   const [isSavingPreferences, setIsSavingPreferences] = useState(false);
 
-  const climbingTypes = [
-    { value: 'bouldering', label: '🧗 Bouldering' },
-    { value: 'rope', label: '🪢 Rope' },
-    { value: 'both', label: '🏔️ Both' },
+  const climbingTypes: { value: string; label: string; icon: string }[] = [
+    { value: 'bouldering', label: 'Bouldering', icon: 'hiking' },
+    { value: 'rope', label: 'Rope', icon: 'rope' },
+    { value: 'both', label: 'Both', icon: 'terrain' },
   ];
 
   useEffect(() => {
@@ -224,7 +225,7 @@ const handleDeleteAccount = () => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backButton}>←</Text>
+          <Ionicons name="arrow-back" size={22} color="#1F2937" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Settings</Text>
         <View style={{ width: 40 }} />
@@ -246,7 +247,7 @@ const handleDeleteAccount = () => {
                 <Text style={styles.settingLabel}>Display Name</Text>
                 <Text style={styles.settingValue}>{user?.displayName}</Text>
               </View>
-              <Text style={styles.chevron}>{isEditingName ? '▲' : '▼'}</Text>
+              <Ionicons name={isEditingName ? 'chevron-up' : 'chevron-down'} size={18} color="#6B7280" />
             </TouchableOpacity>
 
             {isEditingName && (
@@ -316,9 +317,7 @@ const handleDeleteAccount = () => {
                     : 'Not set'}
                 </Text>
               </View>
-              <Text style={styles.chevron}>
-                {isEditingPreferences ? '▲' : '▼'}
-              </Text>
+              <Ionicons name={isEditingPreferences ? 'chevron-up' : 'chevron-down'} size={18} color="#6B7280" />
             </TouchableOpacity>
 
             {!isEditingPreferences && (
@@ -348,12 +347,20 @@ const handleDeleteAccount = () => {
                       ]}
                       onPress={() => setSelectedClimbingType(type.value)}
                     >
-                      <Text style={[
-                        styles.chipText,
-                        selectedClimbingType === type.value && styles.chipTextActive,
-                      ]}>
-                        {type.label}
-                      </Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <MaterialCommunityIcons
+                          name={type.icon as any}
+                          size={14}
+                          color={selectedClimbingType === type.value ? '#FFFFFF' : '#374151'}
+                        />
+                        <Text style={[
+                          styles.chipText,
+                          selectedClimbingType === type.value && styles.chipTextActive,
+                          { marginLeft: 4 },
+                        ]}>
+                          {type.label}
+                        </Text>
+                      </View>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -378,7 +385,7 @@ const handleDeleteAccount = () => {
                   <Text style={selectedState ? styles.stateSelectorText : styles.statePlaceholder}>
                     {selectedState || 'Select a state'}
                   </Text>
-                  <Text style={styles.stateChevron}>▼</Text>
+                  <Ionicons name="chevron-down" size={16} color="#9CA3AF" />
                 </TouchableOpacity>
 
                 <View style={styles.editActions}>
@@ -426,7 +433,7 @@ const handleDeleteAccount = () => {
               >
                 <Text style={styles.settingLabel}>Terms of Service</Text>
               </TouchableOpacity>
-              <Text style={styles.chevron}>›</Text>
+              <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
             </View>
             <View style={[styles.settingRow, styles.settingRowBorder]}>
               <TouchableOpacity
@@ -435,7 +442,7 @@ const handleDeleteAccount = () => {
               >
                 <Text style={styles.settingLabel}>Privacy Policy</Text>
               </TouchableOpacity>
-              <Text style={styles.chevron}>›</Text>
+              <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
             </View>
           </View>
         </View>
@@ -452,7 +459,7 @@ const handleDeleteAccount = () => {
         <SafeAreaView style={styles.statePickerContainer}>
           <View style={styles.statePickerHeader}>
             <TouchableOpacity onPress={() => setShowStatePicker(false)}>
-              <Text style={styles.statePickerClose}>✕</Text>
+              <Ionicons name="close" size={22} color="#1F2937" />
             </TouchableOpacity>
             <Text style={styles.statePickerTitle}>Select State</Text>
             <View style={{ width: 40 }} />
@@ -477,7 +484,7 @@ const handleDeleteAccount = () => {
                   {s}
                 </Text>
                 {selectedState === s && (
-                  <Text style={styles.stateCheckmark}>✓</Text>
+                  <Ionicons name="checkmark" size={20} color="#FF8C00" />
                 )}
               </TouchableOpacity>
             ))}

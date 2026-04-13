@@ -19,7 +19,7 @@ import * as ImagePicker from 'expo-image-picker';
 import SimplePhotoGrid from './components/SimplePhotoGrid';
 import { getSettingLabel, getDifficultyLabel } from './utils/reviewLabels';
 import videoService from '../services/videoService';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import favoritesService, { SavedGym } from '../services/favoritesService';
 
 
@@ -182,7 +182,7 @@ const renderSavedGym = (savedGym: SavedGym) => (
       />
     ) : (
       <View style={styles.savedGymPlaceholder}>
-        <Text style={styles.savedGymPlaceholderText}>🏔️</Text>
+        <Ionicons name="image-outline" size={28} color="#9CA3AF" />
       </View>
     )}
 
@@ -197,14 +197,17 @@ const renderSavedGym = (savedGym: SavedGym) => (
             handleUnsave(savedGym.gym.id);
           }}
         >
-          <Text style={styles.savedGymRemove}>✕</Text>
+          <Ionicons name="close" size={18} color="#9CA3AF" />
         </TouchableOpacity>
       </View>
 
       <View style={styles.savedGymMeta}>
-        <Text style={styles.savedGymRating}>
-          ⭐ {savedGym.gym.rating ? savedGym.gym.rating.toFixed(1) : 'New'}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <FontAwesome name="star" size={12} color="#FF8C00" />
+          <Text style={[styles.savedGymRating, { marginLeft: 3 }]}>
+            {savedGym.gym.rating ? savedGym.gym.rating.toFixed(1) : 'New'}
+          </Text>
+        </View>
         <Text style={styles.savedGymSeparator}>•</Text>
         <Text style={styles.savedGymReviews}>
           {savedGym.gym.reviewCount || 0} {savedGym.gym.reviewCount === 1 ? 'review' : 'reviews'}
@@ -338,7 +341,10 @@ const renderSavedGym = (savedGym: SavedGym) => (
               {review.gym.city}{review.gym.state ? `, ${review.gym.state}` : ''}
             </Text>
           </View>
-          <Text style={styles.reviewRating}>⭐ {review.overallRating.toFixed(1)}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <FontAwesome name="star" size={12} color="#FF8C00" />
+            <Text style={[styles.reviewRating, { marginLeft: 3 }]}>{review.overallRating.toFixed(1)}</Text>
+          </View>
         </View>
       </TouchableOpacity>
 
@@ -445,7 +451,7 @@ const renderSavedGym = (savedGym: SavedGym) => (
             style={styles.settingsButton}
             onPress={() => navigation.navigate('Settings', { onLogout: onLogout })}
           >
-            <Text style={styles.settingsButtonText}>⚙️</Text>
+            <Ionicons name="settings-outline" size={22} color="#1F2937" />
           </TouchableOpacity>
         </View>
 
@@ -484,12 +490,18 @@ const renderSavedGym = (savedGym: SavedGym) => (
           <View style={styles.detailsContainer}>
             {user.climbingType && (
               <View style={styles.detailChip}>
-                <Text style={styles.detailChipText}>🧗 {user.climbingType}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <MaterialCommunityIcons name="hiking" size={14} color="#6B7280" />
+                <Text style={[styles.detailChipText, { marginLeft: 4 }]}>{user.climbingType}</Text>
+              </View>
               </View>
             )}
             {user.city && user.state && (
               <View style={styles.detailChip}>
-                <Text style={styles.detailChipText}>📍 {user.city}, {user.state}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Ionicons name="location-outline" size={14} color="#6B7280" />
+                <Text style={[styles.detailChipText, { marginLeft: 4 }]}>{user.city}, {user.state}</Text>
+              </View>
               </View>
             )}
           </View>
@@ -530,7 +542,7 @@ const renderSavedGym = (savedGym: SavedGym) => (
       reviews.map(renderReview)
     ) : (
       <View style={styles.emptyState}>
-        <Text style={styles.emptyStateEmoji}>✍️</Text>
+        <Ionicons name="create-outline" size={48} color="#9CA3AF" />
         <Text style={styles.emptyStateText}>No reviews yet</Text>
         <Text style={styles.emptyStateSubtext}>Start reviewing gyms to see them here</Text>
       </View>
@@ -556,15 +568,21 @@ const renderSavedGym = (savedGym: SavedGym) => (
               <Text style={styles.videoPlayIcon}>▶</Text>
             </View>
             <View style={styles.videoStats}>
-              <Text style={styles.videoStat}>👁 {video.views}</Text>
-              <Text style={styles.videoStat}>❤️ {video.likeCount}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Ionicons name="eye-outline" size={12} color="#FFFFFF" />
+                <Text style={[styles.videoStat, { marginLeft: 2 }]}>{video.views}</Text>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 6 }}>
+                <Ionicons name="heart-outline" size={12} color="#FFFFFF" />
+                <Text style={[styles.videoStat, { marginLeft: 2 }]}>{video.likeCount}</Text>
+              </View>
             </View>
           </TouchableOpacity>
         ))}
       </View>
     ) : (
       <View style={styles.emptyState}>
-        <Text style={styles.emptyStateEmoji}>🎥</Text>
+        <Ionicons name="videocam-outline" size={48} color="#9CA3AF" />
         <Text style={styles.emptyStateText}>No videos yet</Text>
         <Text style={styles.emptyStateSubtext}>Upload videos to see them here</Text>
       </View>
@@ -574,7 +592,7 @@ const renderSavedGym = (savedGym: SavedGym) => (
       savedGyms.map(renderSavedGym)
     ) : (
       <View style={styles.emptyState}>
-        <Text style={styles.emptyStateEmoji}>🏔️</Text>
+        <Ionicons name="bookmark-outline" size={48} color="#9CA3AF" />
         <Text style={styles.emptyStateText}>No saved gyms yet</Text>
         <Text style={styles.emptyStateSubtext}>Start saving gyms to see them here</Text>
       </View>

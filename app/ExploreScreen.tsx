@@ -16,6 +16,7 @@ import { RootStackParamList } from '../App';
 import { styles } from '../styles/ExploreScreen.styles';
 import gymService, { Gym } from '../services/gymService';
 import MapView, { Marker, Callout } from 'react-native-maps';
+import { Ionicons, MaterialCommunityIcons, FontAwesome } from '@expo/vector-icons';
 
 type ExploreNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -199,7 +200,7 @@ export default function ExploreScreen() {
         />
       ) : (
         <View style={styles.placeholderImage}>
-          <Text style={styles.placeholderText}>🏔️</Text>
+          <Ionicons name="image-outline" size={32} color="#9CA3AF" />
         </View>
       )}
 
@@ -209,9 +210,12 @@ export default function ExploreScreen() {
         </Text>
 
         <View style={styles.gymMeta}>
-          <Text style={styles.gymRating}>
-            ⭐ {gym.rating ? gym.rating.toFixed(1) : 'New'}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <FontAwesome name="star" size={12} color="#FF8C00" />
+            <Text style={[styles.gymRating, { marginLeft: 3 }]}>
+              {gym.rating ? gym.rating.toFixed(1) : 'New'}
+            </Text>
+          </View>
           <Text style={styles.gymSeparator}>•</Text>
           <Text style={styles.gymReviews}>
             {gym.reviewCount || 0} {gym.reviewCount === 1 ? 'review' : 'reviews'}
@@ -274,11 +278,16 @@ export default function ExploreScreen() {
                 <Text style={styles.calloutLocation}>
                   {gym.city}{gym.state ? `, ${gym.state}` : ''}
                 </Text>
-                <Text style={styles.calloutRating}>
-                  ⭐ {gym.rating ? gym.rating.toFixed(1) : 'New'} •{' '}
-                  {gym.reviewCount || 0} reviews
-                </Text>
-                <Text style={styles.calloutTap}>Tap to view →</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <FontAwesome name="star" size={12} color="#FF8C00" />
+                  <Text style={[styles.calloutRating, { marginLeft: 3 }]}>
+                    {gym.rating ? gym.rating.toFixed(1) : 'New'} • {gym.reviewCount || 0} reviews
+                  </Text>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+                  <Text style={styles.calloutTap}>Tap to view </Text>
+                  <Ionicons name="arrow-forward" size={12} color="#FF8C00" />
+                </View>
               </View>
             </Callout>
           </Marker>
@@ -337,7 +346,7 @@ export default function ExploreScreen() {
       {/* Search Bar */}
       <View style={styles.searchContainer}>
         <View style={styles.searchBar}>
-          <Text style={styles.searchIcon}>🔍</Text>
+          <Ionicons name="search-outline" size={18} color="#9CA3AF" />
           <TextInput
             style={styles.searchInput}
             placeholder="Search gyms, cities, states..."
@@ -347,7 +356,7 @@ export default function ExploreScreen() {
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Text style={styles.clearIcon}>✕</Text>
+              <Ionicons name="close-circle" size={18} color="#9CA3AF" />
             </TouchableOpacity>
           )}
         </View>
@@ -364,9 +373,12 @@ export default function ExploreScreen() {
               style={styles.filterButton}
               onPress={() => setShowFilters(!showFilters)}
             >
-              <Text style={styles.filterButtonText}>
-                🎛️ Filters {getActiveFilterCount() > 0 && `(${getActiveFilterCount()})`}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <MaterialCommunityIcons name="tune" size={16} color="#374151" />
+                <Text style={[styles.filterButtonText, { marginLeft: 4 }]}>
+                  Filters {getActiveFilterCount() > 0 && `(${getActiveFilterCount()})`}
+                </Text>
+              </View>
             </TouchableOpacity>
 
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sortButtons}>
@@ -374,27 +386,36 @@ export default function ExploreScreen() {
                 style={[styles.sortButton, sortBy === 'nearest' && styles.sortButtonActive]}
                 onPress={() => setSortBy('nearest')}
               >
-                <Text style={[styles.sortButtonText, sortBy === 'nearest' && styles.sortButtonTextActive]}>
-                  📍 Nearest
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="location-outline" size={14} color={sortBy === 'nearest' ? '#FFFFFF' : '#374151'} />
+                  <Text style={[styles.sortButtonText, sortBy === 'nearest' && styles.sortButtonTextActive, { marginLeft: 3 }]}>
+                    Nearest
+                  </Text>
+                </View>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[styles.sortButton, sortBy === 'rating' && styles.sortButtonActive]}
                 onPress={() => setSortBy('rating')}
               >
-                <Text style={[styles.sortButtonText, sortBy === 'rating' && styles.sortButtonTextActive]}>
-                  ⭐ Rating
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <FontAwesome name="star" size={12} color={sortBy === 'rating' ? '#FFFFFF' : '#374151'} />
+                  <Text style={[styles.sortButtonText, sortBy === 'rating' && styles.sortButtonTextActive, { marginLeft: 3 }]}>
+                    Rating
+                  </Text>
+                </View>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[styles.sortButton, sortBy === 'reviews' && styles.sortButtonActive]}
                 onPress={() => setSortBy('reviews')}
               >
-                <Text style={[styles.sortButtonText, sortBy === 'reviews' && styles.sortButtonTextActive]}>
-                  💬 Reviews
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="chatbubble-outline" size={13} color={sortBy === 'reviews' ? '#FFFFFF' : '#374151'} />
+                  <Text style={[styles.sortButtonText, sortBy === 'reviews' && styles.sortButtonTextActive, { marginLeft: 3 }]}>
+                    Reviews
+                  </Text>
+                </View>
               </TouchableOpacity>
             </ScrollView>
           </View>
@@ -500,7 +521,7 @@ export default function ExploreScreen() {
               filteredGyms.map(renderGymCard)
             ) : (
               <View style={styles.noResults}>
-                <Text style={styles.noResultsEmoji}>🤷</Text>
+                <MaterialCommunityIcons name="emoticon-confused-outline" size={48} color="#9CA3AF" />
                 <Text style={styles.noResultsText}>No gyms found</Text>
                 <Text style={styles.noResultsSubtext}>Try adjusting your filters</Text>
               </View>

@@ -8,6 +8,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { styles } from '../styles/PersonalizeScreen.styles';
 import authService from '../services/authService';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 type ClimbingType = 'bouldering' | 'rope' | 'both';
 
@@ -43,22 +44,22 @@ export default function PersonalizeScreen({
     }
   };
 
-  const options: { type: ClimbingType; emoji: string; label: string; description: string }[] = [
+  const options: { type: ClimbingType; icon: string; label: string; description: string }[] = [
     {
       type: 'bouldering',
-      emoji: '🧗',
+      icon: 'hiking',
       label: 'Bouldering',
       description: 'Short, powerful climbs without ropes',
     },
     {
       type: 'rope',
-      emoji: '🪢',
+      icon: 'rope',
       label: 'Rope Climbing',
       description: 'Top rope and lead climbing with harnesses',
     },
     {
       type: 'both',
-      emoji: '🏔️',
+      icon: 'terrain',
       label: 'Both',
       description: 'I enjoy all types of climbing',
     },
@@ -69,7 +70,7 @@ export default function PersonalizeScreen({
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={onBack} activeOpacity={0.7}>
-          <Text style={styles.backButtonText}>←</Text>
+          <Ionicons name="arrow-back" size={22} color="#1F2937" />
         </TouchableOpacity>
         <View style={{ flex: 1 }} />
       </View>
@@ -77,7 +78,7 @@ export default function PersonalizeScreen({
       <View style={styles.content}>
         {/* Title */}
         <View style={styles.titleSection}>
-          <Text style={styles.titleEmoji}>🏔️</Text>
+          <MaterialCommunityIcons name="terrain" size={48} color="#FF8C00" />
           <Text style={styles.title}>What type of climbing are you into?</Text>
           <Text style={styles.subtitle}>
             We'll recommend gyms based on your preference
@@ -96,7 +97,11 @@ export default function PersonalizeScreen({
               onPress={() => setClimbingType(option.type)}
               activeOpacity={0.7}
             >
-              <Text style={styles.optionEmoji}>{option.emoji}</Text>
+              <MaterialCommunityIcons
+                name={option.icon as any}
+                size={28}
+                color={climbingType === option.type ? '#FF8C00' : '#6B7280'}
+              />
               <View style={styles.optionInfo}>
                 <Text style={[
                   styles.optionLabel,

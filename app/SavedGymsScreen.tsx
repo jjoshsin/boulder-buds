@@ -14,6 +14,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
 import { styles } from '../styles/SavedGymsScreen.styles';
 import favoritesService, { SavedGym } from '../services/favoritesService';
+import { Ionicons, FontAwesome } from '@expo/vector-icons';
 
 type SavedGymsNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -78,7 +79,7 @@ export default function SavedGymsScreen() {
         />
       ) : (
         <View style={styles.placeholderImage}>
-          <Text style={styles.placeholderText}>🏔️</Text>
+          <Ionicons name="image-outline" size={32} color="#9CA3AF" />
         </View>
       )}
 
@@ -93,14 +94,17 @@ export default function SavedGymsScreen() {
               handleUnsave(savedGym.gym.id);
             }}
           >
-            <Text style={styles.removeButton}>✕</Text>
+            <Ionicons name="close" size={18} color="#9CA3AF" />
           </TouchableOpacity>
         </View>
 
         <View style={styles.gymMeta}>
-          <Text style={styles.gymRating}>
-            ⭐ {savedGym.gym.rating ? savedGym.gym.rating.toFixed(1) : 'New'}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <FontAwesome name="star" size={12} color="#FF8C00" />
+            <Text style={[styles.gymRating, { marginLeft: 3 }]}>
+              {savedGym.gym.rating ? savedGym.gym.rating.toFixed(1) : 'New'}
+            </Text>
+          </View>
           <Text style={styles.gymSeparator}>•</Text>
           <Text style={styles.gymReviews}>
             {savedGym.gym.reviewCount || 0} {savedGym.gym.reviewCount === 1 ? 'review' : 'reviews'}
@@ -142,7 +146,7 @@ export default function SavedGymsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backButton}>←</Text>
+          <Ionicons name="arrow-back" size={22} color="#1F2937" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Saved Gyms</Text>
         <View style={{ width: 40 }} />
@@ -160,7 +164,7 @@ export default function SavedGymsScreen() {
           </>
         ) : (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyStateEmoji}>🏔️</Text>
+            <Ionicons name="bookmark-outline" size={48} color="#9CA3AF" />
             <Text style={styles.emptyStateText}>No saved gyms yet</Text>
             <Text style={styles.emptyStateSubtext}>
               Start saving your favorite gyms to see them here

@@ -3,7 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StatusBar } from 'expo-status-bar';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import AllReviewsScreen from './app/AllReviewsScreen';
 import LandingScreen from './app/LandingScreen';
 import SignUpScreen from './app/SignUpScreen';
@@ -94,7 +94,7 @@ function MainTabs({ onLogout }: { onLogout: () => void }) {
         component={HomeScreen}
         options={{
           tabBarIcon: ({ color }) => (
-            <Text style={{ fontSize: 24, color }}>🏠</Text>
+            <Ionicons name="home" size={24} color={color} />
           ),
         }}
       />
@@ -103,7 +103,7 @@ function MainTabs({ onLogout }: { onLogout: () => void }) {
         component={ExploreScreen}
         options={{
           tabBarIcon: ({ color }) => (
-            <Text style={{ fontSize: 24, color }}>🔍</Text>
+            <Ionicons name="search" size={24} color={color} />
           ),
         }}
       />
@@ -112,7 +112,7 @@ function MainTabs({ onLogout }: { onLogout: () => void }) {
         component={PeopleScreen}
         options={{
           tabBarIcon: ({ color }) => (
-            <Text style={{ fontSize: 24, color }}>👥</Text>
+            <Ionicons name="people" size={24} color={color} />
           ),
         }}
       />
@@ -121,9 +121,7 @@ function MainTabs({ onLogout }: { onLogout: () => void }) {
         component={PostScreen}
         options={{
           tabBarIcon: ({ color }) => (
-            <View style={{ marginTop: -2 }}>
-              <Text style={{ fontSize: 28, color }}>➕</Text>
-            </View>
+            <Ionicons name="add-circle" size={28} color={color} />
           ),
         }}
       />
@@ -131,7 +129,7 @@ function MainTabs({ onLogout }: { onLogout: () => void }) {
         name="Profile"
         options={{
           tabBarIcon: ({ color }) => (
-            <Text style={{ fontSize: 24, color }}>👤</Text>
+            <Ionicons name="person" size={24} color={color} />
           ),
         }}
       >

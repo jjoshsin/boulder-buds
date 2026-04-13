@@ -22,7 +22,7 @@ import * as SecureStore from 'expo-secure-store';
 import PhotoGrid from './components/PhotoGrid';
 import videoService, { Video as VideoType } from '../services/videoService';
 import favoritesService from '../services/favoritesService';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -172,19 +172,23 @@ export default function GymDetailScreen() {
   };
 
   const renderAmenityIcon = (amenity: string) => {
-    const amenityIcons: { [key: string]: string } = {
-      moon_board: '🌙',
-      kilter_board: '🧗',
-      training_area: '💪',
-      spray_wall: '🎨',
-      cafe: '☕',
-      showers: '🚿',
-      parking: '🅿️',
-      yoga: '🧘',
-      weights: '🏋️',
-      lockers: '🔒',
+    const amenityIcons: { [key: string]: { lib: 'mci' | 'ionicons'; name: string } } = {
+      moon_board:    { lib: 'mci',     name: 'moon-waning-crescent' },
+      kilter_board:  { lib: 'mci',     name: 'grid-large' },
+      training_area: { lib: 'mci',     name: 'dumbbell' },
+      spray_wall:    { lib: 'mci',     name: 'spray' },
+      cafe:          { lib: 'mci',     name: 'coffee' },
+      showers:       { lib: 'mci',     name: 'shower' },
+      parking:       { lib: 'mci',     name: 'parking' },
+      yoga:          { lib: 'mci',     name: 'yoga' },
+      weights:       { lib: 'mci',     name: 'weight-lifter' },
+      lockers:       { lib: 'mci',     name: 'locker' },
     };
-    return amenityIcons[amenity] || '✨';
+    const icon = amenityIcons[amenity];
+    if (icon) {
+      return <MaterialCommunityIcons name={icon.name as any} size={20} color="#FF8C00" />;
+    }
+    return <MaterialCommunityIcons name="star-outline" size={20} color="#FF8C00" />;
   };
 
   const getPriceRangeText = (priceRange: number) => {
@@ -216,7 +220,7 @@ export default function GymDetailScreen() {
     style={styles.backButton}
     onPress={() => navigation.goBack()}
   >
-    <Text style={styles.backButtonText}>←</Text>
+    <Ionicons name="arrow-back" size={22} color="#1F2937" />
   </TouchableOpacity>
   <TouchableOpacity
     style={styles.bookmarkButton}
@@ -274,9 +278,12 @@ export default function GymDetailScreen() {
           <Text style={styles.gymName}>{gym.name}</Text>
           
           <View style={styles.ratingRow}>
-            <Text style={styles.rating}>
-              ⭐ {gym.rating ? gym.rating.toFixed(1) : 'New'}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <FontAwesome name="star" size={14} color="#FF8C00" />
+              <Text style={[styles.rating, { marginLeft: 4 }]}>
+                {gym.rating ? gym.rating.toFixed(1) : 'New'}
+              </Text>
+            </View>
             <Text style={styles.reviewCount}>
               ({gym.reviewCount || 0} {gym.reviewCount === 1 ? 'review' : 'reviews'})
             </Text>
@@ -322,7 +329,10 @@ export default function GymDetailScreen() {
             style={styles.deleteGymButton}
             onPress={handleDeleteGym}
           >
-            <Text style={styles.deleteGymButtonText}>🗑️ Delete This Gym</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons name="trash-outline" size={16} color="#EF4444" />
+              <Text style={[styles.deleteGymButtonText, { marginLeft: 6 }]}>Delete This Gym</Text>
+            </View>
           </TouchableOpacity>
         )}
 
@@ -356,7 +366,10 @@ export default function GymDetailScreen() {
             gymName: gym.name 
           })}
         >
-          <Text style={styles.primaryButtonText}>✍️ Write Review</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Ionicons name="create-outline" size={18} color="#FFFFFF" />
+            <Text style={[styles.primaryButtonText, { marginLeft: 6 }]}>Write Review</Text>
+          </View>
         </TouchableOpacity>
 
         {/* Amenities */}
@@ -381,7 +394,7 @@ export default function GymDetailScreen() {
                 
                 return (
                   <View key={index} style={styles.amenityItem}>
-                    <Text style={styles.amenityIcon}>{renderAmenityIcon(amenity)}</Text>
+                    <View style={styles.amenityIcon}>{renderAmenityIcon(amenity)}</View>
                     <Text style={styles.amenityText}>{formattedAmenity}</Text>
                   </View>
                 );
@@ -405,9 +418,10 @@ export default function GymDetailScreen() {
         {/* Reviews Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>
-              ⭐ Reviews ({gym.reviewCount})
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <FontAwesome name="star" size={14} color="#FF8C00" />
+              <Text style={[styles.sectionTitle, { marginLeft: 6 }]}>Reviews ({gym.reviewCount})</Text>
+            </View>
             {gym.reviews && gym.reviews.length > 3 && (
               <TouchableOpacity 
                 onPress={() => navigation.navigate('AllReviews', {
@@ -443,9 +457,12 @@ export default function GymDetailScreen() {
                       </View>
                     </View>
                     <View style={styles.reviewRatingContainer}>
-                      <Text style={styles.reviewRating}>
-                        ⭐ {review.overallRating ? review.overallRating.toFixed(1) : 'N/A'}
-                      </Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <FontAwesome name="star" size={12} color="#FF8C00" />
+                        <Text style={[styles.reviewRating, { marginLeft: 3 }]}>
+                          {review.overallRating ? review.overallRating.toFixed(1) : 'N/A'}
+                        </Text>
+                      </View>
                       {isOwnReview && (
                         <TouchableOpacity
                           style={styles.reviewOptionsButton}
@@ -510,7 +527,7 @@ export default function GymDetailScreen() {
             })
           ) : (
             <View style={styles.emptyReviews}>
-              <Text style={styles.emptyReviewsEmoji}>✍️</Text>
+              <Ionicons name="create-outline" size={48} color="#9CA3AF" />
               <Text style={styles.emptyReviewsText}>No reviews yet</Text>
               <Text style={styles.emptyReviewsSubtext}>Be the first to review!</Text>
             </View>
@@ -521,7 +538,10 @@ export default function GymDetailScreen() {
         {videos && videos.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>🎥 Videos ({videos.length})</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Ionicons name="videocam-outline" size={18} color="#FF8C00" />
+                <Text style={[styles.sectionTitle, { marginLeft: 6 }]}>Videos ({videos.length})</Text>
+              </View>
               {videos.length >= 3 && (
                 <TouchableOpacity 
                   onPress={() => navigation.navigate('AllVideos', {
@@ -553,9 +573,13 @@ export default function GymDetailScreen() {
                     <Text style={styles.playIcon}>▶</Text>
                   </View>
                   <View style={styles.videoInfo}>
-                    <Text style={styles.videoStats}>
-                      👁 {video.views} • ❤️ {video.likeCount}
-                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <Ionicons name="eye-outline" size={12} color="#FFFFFF" />
+                      <Text style={[styles.videoStats, { marginLeft: 3 }]}>{video.views}</Text>
+                      <Text style={[styles.videoStats, { marginHorizontal: 4 }]}>•</Text>
+                      <Ionicons name="heart-outline" size={12} color="#FFFFFF" />
+                      <Text style={[styles.videoStats, { marginLeft: 3 }]}>{video.likeCount}</Text>
+                    </View>
                   </View>
                 </TouchableOpacity>
               ))}
@@ -571,7 +595,10 @@ export default function GymDetailScreen() {
             gymName: gym.name 
           })}
         >
-          <Text style={styles.uploadVideoButtonText}>🎥 Upload Video</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Ionicons name="videocam-outline" size={18} color="#FFFFFF" />
+            <Text style={[styles.uploadVideoButtonText, { marginLeft: 6 }]}>Upload Video</Text>
+          </View>
         </TouchableOpacity>
 
         <View style={styles.bottomPadding} />

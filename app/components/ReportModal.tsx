@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { styles } from '../../styles/ReportModal.styles';
 import reportingService from '../../services/reportingService';
+import { Ionicons } from '@expo/vector-icons';
 
 interface ReportModalProps {
   visible: boolean;
@@ -98,7 +99,7 @@ export default function ReportModal({
       <View style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={onClose}>
-            <Text style={styles.closeButton}>✕</Text>
+            <Ionicons name="close" size={22} color="#1F2937" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{getContentDescription()}</Text>
           <View style={{ width: 40 }} />
