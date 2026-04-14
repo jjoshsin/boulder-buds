@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
   Dimensions,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
@@ -38,6 +39,11 @@ export default function GymDetailScreen() {
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
+  const [showPricingModal, setShowPricingModal] = useState(false);
+  const [pricingDayPass, setPricingDayPass] = useState('');
+  const [pricingMonthly, setPricingMonthly] = useState('');
+  const [pricingStudentDiscount, setPricingStudentDiscount] = useState(false);
+  const [isSavingPricing, setIsSavingPricing] = useState(false);
   const [videos, setVideos] = useState<VideoType[]>([]);
   const [isSaved, setIsSaved] = useState(false);
 
@@ -56,6 +62,10 @@ export default function GymDetailScreen() {
       ]);
       setGym(gymData);
       setVideos(gymVideos);
+      // Pre-fill pricing edit state
+      setPricingDayPass(gymData.dayPassPrice != null ? String(gymData.dayPassPrice) : '');
+      setPricingMonthly(gymData.monthlyMembershipPrice != null ? String(gymData.monthlyMembershipPrice) : '');
+      setPricingStudentDiscount(gymData.studentDiscountAvailable ?? false);
     } catch (error) {
       console.error('Error fetching gym details:', error);
     } finally {
@@ -169,6 +179,24 @@ export default function GymDetailScreen() {
         },
       ]
     );
+  };
+
+  const handleSavePricing = async () => {
+    try {
+      setIsSavingPricing(true);
+      await gymService.updatePricing(gymId, {
+        dayPassPrice: pricingDayPass ? parseFloat(pricingDayPass) : null,
+        monthlyMembershipPrice: pricingMonthly ? parseFloat(pricingMonthly) : null,
+        studentDiscountAvailable: pricingStudentDiscount,
+        studentDiscountDetails: null,
+      });
+      setShowPricingModal(false);
+      fetchGymDetails();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to save pricing');
+    } finally {
+      setIsSavingPricing(false);
+    }
   };
 
   const renderAmenityIcon = (amenity: string) => {
@@ -372,6 +400,46 @@ export default function GymDetailScreen() {
           </View>
         </TouchableOpacity>
 
+        {/* Pricing */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Pricing</Text>
+            <TouchableOpacity onPress={() => setShowPricingModal(true)}>
+              <Text style={styles.editText}>Edit</Text>
+            </TouchableOpacity>
+          </View>
+
+          {gym.dayPassPrice != null || gym.monthlyMembershipPrice != null || gym.studentDiscountAvailable ? (
+            <View style={styles.pricingGrid}>
+              {gym.dayPassPrice != null && (
+                <View style={styles.pricingItem}>
+                  <Text style={styles.pricingLabel}>Day Pass</Text>
+                  <Text style={styles.pricingValue}>${gym.dayPassPrice.toFixed(2)}</Text>
+                </View>
+              )}
+              {gym.monthlyMembershipPrice != null && (
+                <View style={styles.pricingItem}>
+                  <Text style={styles.pricingLabel}>Monthly</Text>
+                  <Text style={styles.pricingValue}>${gym.monthlyMembershipPrice.toFixed(2)}/mo</Text>
+                </View>
+              )}
+              {gym.studentDiscountAvailable && (
+                <View style={styles.pricingDiscountBadge}>
+                  <MaterialCommunityIcons name="school-outline" size={16} color="#10B981" />
+                  <Text style={styles.pricingDiscountText}>
+                    Student Discount
+                    {gym.studentDiscountDetails ? ` — ${gym.studentDiscountDetails}` : ''}
+                  </Text>
+                </View>
+              )}
+            </View>
+          ) : (
+            <TouchableOpacity style={styles.addAmenitiesButton} onPress={() => setShowPricingModal(true)}>
+              <Text style={styles.addAmenitiesText}>+ Add Pricing Info</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
         {/* Amenities */}
         {gym.amenities && gym.amenities.length > 0 && (
           <View style={styles.section}>
@@ -418,10 +486,7 @@ export default function GymDetailScreen() {
         {/* Reviews Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <FontAwesome name="star" size={14} color="#FF8C00" />
-              <Text style={[styles.sectionTitle, { marginLeft: 6 }]}>Reviews ({gym.reviewCount})</Text>
-            </View>
+            <Text style={styles.sectionTitle}>Reviews ({gym.reviewCount})</Text>
             {gym.reviews && gym.reviews.length > 3 && (
               <TouchableOpacity 
                 onPress={() => navigation.navigate('AllReviews', {
@@ -603,6 +668,85 @@ export default function GymDetailScreen() {
 
         <View style={styles.bottomPadding} />
       </ScrollView>
+
+      {/* Pricing Edit Modal */}
+      <Modal visible={showPricingModal} animationType="slide" presentationStyle="pageSheet">
+        <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' }}>
+            <TouchableOpacity onPress={() => setShowPricingModal(false)} style={{ padding: 4 }}>
+              <Ionicons name="close" size={24} color="#1F2937" />
+            </TouchableOpacity>
+            <Text style={[styles.sectionTitle, { flex: 1, textAlign: 'center' }]}>Edit Pricing</Text>
+            <View style={{ width: 32 }} />
+          </View>
+
+          <ScrollView style={{ padding: 20 }}>
+            <View style={{ flexDirection: 'row', gap: 12, marginBottom: 20 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.pricingLabel}>Day Pass ($)</Text>
+                <TextInput
+                  style={styles.pricingInput}
+                  placeholder="e.g. 25"
+                  placeholderTextColor="#9CA3AF"
+                  keyboardType="decimal-pad"
+                  value={pricingDayPass}
+                  onChangeText={setPricingDayPass}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.pricingLabel}>Monthly ($)</Text>
+                <TextInput
+                  style={styles.pricingInput}
+                  placeholder="e.g. 70"
+                  placeholderTextColor="#9CA3AF"
+                  keyboardType="decimal-pad"
+                  value={pricingMonthly}
+                  onChangeText={setPricingMonthly}
+                />
+              </View>
+            </View>
+
+            <Text style={[styles.pricingLabel, { marginBottom: 10 }]}>Student Discount</Text>
+            <View style={{ flexDirection: 'row', gap: 12, marginBottom: 24 }}>
+              <TouchableOpacity
+                style={{
+                  flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: 'center',
+                  borderWidth: 2,
+                  borderColor: pricingStudentDiscount ? '#FF8C00' : '#E5E7EB',
+                  backgroundColor: pricingStudentDiscount ? '#FFF7ED' : '#F9FAFB',
+                }}
+                onPress={() => setPricingStudentDiscount(true)}
+                activeOpacity={0.7}
+              >
+                <Text style={{ fontSize: 15, fontWeight: '600', color: pricingStudentDiscount ? '#FF8C00' : '#6B7280' }}>Yes</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{
+                  flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: 'center',
+                  borderWidth: 2,
+                  borderColor: !pricingStudentDiscount ? '#FF8C00' : '#E5E7EB',
+                  backgroundColor: !pricingStudentDiscount ? '#FFF7ED' : '#F9FAFB',
+                }}
+                onPress={() => setPricingStudentDiscount(false)}
+                activeOpacity={0.7}
+              >
+                <Text style={{ fontSize: 15, fontWeight: '600', color: !pricingStudentDiscount ? '#FF8C00' : '#6B7280' }}>No</Text>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.primaryButtonFull, { marginHorizontal: 0, marginTop: 8 }]}
+              onPress={handleSavePricing}
+              disabled={isSavingPricing}
+            >
+              {isSavingPricing
+                ? <ActivityIndicator color="#FFFFFF" />
+                : <Text style={styles.primaryButtonText}>Save Pricing</Text>
+              }
+            </TouchableOpacity>
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
 
       {/* Amenities Edit Modal */}
       <Modal

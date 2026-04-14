@@ -83,6 +83,27 @@ export class UsersController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Post('me/change-password')
+  async changePassword(
+    @Request() req,
+    @Body() body: { currentPassword: string; newPassword: string },
+  ) {
+    return this.usersService.changePassword(req.user.userId, body.currentPassword, body.newPassword);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me/blocked')
+  async getBlockedUsers(@Request() req) {
+    return this.usersService.getBlockedUsers(req.user.userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('me/blocked/:blockedId')
+  async unblockUser(@Request() req, @Param('blockedId') blockedId: string) {
+    return this.usersService.unblockUser(req.user.userId, blockedId);
+  }
+
+  @UseGuards(JwtAuthGuard)
 @Delete(':id')
 async deleteAccount(
   @Param('id') id: string,

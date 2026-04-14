@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { AuthContext } from './contexts/AuthContext';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -44,7 +45,7 @@ export type RootStackParamList = {
   };
   FollowList: { userId: string; tab: 'followers' | 'following' };
   UserProfile: { userId: string };
-  Settings: { onLogout?: () => void };
+  Settings: undefined;
   AllReviews: { reviews: any[]; currentUserId: string; gymName: string };
   RegisterGym: undefined;
   UploadVideo: { gymId: string; gymName: string };
@@ -198,6 +199,8 @@ export default function App() {
     setCurrentScreen('landing');
   };
 
+  const authContextValue = useMemo(() => ({ onLogout: handleLogout }), []);
+
   if (isLoading) {
     return null;
   }
@@ -208,7 +211,7 @@ export default function App() {
   });
 
   return (
-    <>
+    <AuthContext.Provider value={authContextValue}>
       <NavigationContainer>
         <Stack.Navigator
           screenOptions={{
@@ -337,6 +340,6 @@ export default function App() {
         </Stack.Navigator>
       </NavigationContainer>
       <StatusBar style="dark" />
-    </>
+    </AuthContext.Provider>
   );
 }

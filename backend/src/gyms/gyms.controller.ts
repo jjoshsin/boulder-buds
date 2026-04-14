@@ -1,6 +1,7 @@
-import { Controller, Get, Param, Post, Patch, UseGuards, Body, Request, Query, Delete, BadRequestException, } from '@nestjs/common';
+import { Controller, Get, Param, Post, Patch, UseGuards, Body, Request, Query, Delete, BadRequestException, Res, NotFoundException } from '@nestjs/common';
 import { GymsService } from './gyms.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Response } from 'express';
 
 @Controller('gyms')
 export class GymsController {
@@ -60,6 +61,32 @@ async getNearbyGyms(
       success: true,
       message: 'Started fetching official photos for all gyms',
     };
+  }
+
+  // Force re-fetch photos for every gym, replacing any expired Google URLs with fresh proxy URLs
+  @UseGuards(JwtAuthGuard)
+  @Post('refresh-all-photos')
+  async refreshAllPhotos() {
+    // Run in background — returns immediately
+    this.gymsService.forceRefreshAllPhotos().catch(err =>
+      console.error('Error in forceRefreshAllPhotos:', err),
+    );
+    return { success: true, message: 'Photo refresh started in background' };
+  }
+
+  // Proxy endpoint: fetches a fresh Google photo reference and redirects.
+  // MUST be declared before @Get(':id') so NestJS doesn't swallow it.
+  @Get(':id/photo/:index')
+  async proxyGymPhoto(
+    @Param('id') id: string,
+    @Param('index') index: string,
+    @Res() res: Response,
+  ) {
+    const url = await this.gymsService.getPhotoUrl(id, parseInt(index, 10));
+    if (!url) {
+      return res.status(404).json({ message: 'Photo not found' });
+    }
+    return res.redirect(302, url);
   }
 
   // ':id' route MUST come after all specific routes
@@ -132,6 +159,20 @@ async getGymById(@Param('id') id: string) {
     @Body() body: { amenities: string[] },
   ) {
     return this.gymsService.updateAmenities(id, body.amenities);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/pricing')
+  async updatePricing(
+    @Param('id') id: string,
+    @Body() body: {
+      dayPassPrice?: number | null;
+      monthlyMembershipPrice?: number | null;
+      studentDiscountAvailable?: boolean;
+      studentDiscountDetails?: string | null;
+    },
+  ) {
+    return this.gymsService.updatePricing(id, body);
   }
 
   @Delete(':id')

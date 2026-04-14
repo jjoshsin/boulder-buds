@@ -33,7 +33,7 @@ export default function ExploreScreen() {
 
   // Filter states
   const [selectedState, setSelectedState] = useState<string | null>(null);
-  const [selectedPriceRange, setSelectedPriceRange] = useState<number | null>(null);
+  const [selectedPriceCategory, setSelectedPriceCategory] = useState<'cheap' | 'alright' | 'expensive' | null>(null);
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<'nearest' | 'rating' | 'reviews'>('nearest');
 
@@ -45,10 +45,10 @@ export default function ExploreScreen() {
     'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY',
   ];
 
-  const priceRanges = [
-    { value: 1, label: '$' },
-    { value: 2, label: '$$' },
-    { value: 3, label: '$$$' },
+  const priceCategories: { value: 'cheap' | 'alright' | 'expensive'; label: string; sublabel: string }[] = [
+    { value: 'cheap',     label: 'Cheap',     sublabel: '≤$20' },
+    { value: 'alright',   label: 'Moderate',  sublabel: '$21–$30' },
+    { value: 'expensive', label: 'Expensive', sublabel: '$30+' },
   ];
 
   const amenities = [
@@ -68,7 +68,7 @@ export default function ExploreScreen() {
 
   useEffect(() => {
     applyFilters();
-  }, [searchQuery, selectedState, selectedPriceRange, selectedAmenities, sortBy, gyms]);
+  }, [searchQuery, selectedState, selectedPriceCategory, selectedAmenities, sortBy, gyms]);
 
   const fetchGyms = async () => {
     try {
@@ -99,8 +99,15 @@ export default function ExploreScreen() {
       results = results.filter(gym => gym.state === selectedState);
     }
 
-    if (selectedPriceRange) {
-      results = results.filter(gym => gym.priceRange === selectedPriceRange);
+    if (selectedPriceCategory) {
+      results = results.filter(gym => {
+        const price = gym.dayPassPrice;
+        if (price == null) return false;
+        if (selectedPriceCategory === 'cheap')     return price <= 20;
+        if (selectedPriceCategory === 'alright')   return price >= 21 && price <= 30;
+        if (selectedPriceCategory === 'expensive') return price > 30;
+        return true;
+      });
     }
 
     if (selectedAmenities.length > 0) {
@@ -136,7 +143,7 @@ export default function ExploreScreen() {
 
   const clearFilters = () => {
     setSelectedState(null);
-    setSelectedPriceRange(null);
+    setSelectedPriceCategory(null);
     setSelectedAmenities([]);
     setSortBy('nearest');
   };
@@ -144,7 +151,7 @@ export default function ExploreScreen() {
   const getActiveFilterCount = () => {
     let count = 0;
     if (selectedState) count++;
-    if (selectedPriceRange) count++;
+    if (selectedPriceCategory) count++;
     if (selectedAmenities.length > 0) count++;
     return count;
   };
@@ -451,28 +458,34 @@ export default function ExploreScreen() {
                 </ScrollView>
               </View>
 
-              {/* Price Range Filter */}
+              {/* Price Filter */}
               <View style={styles.filterSection}>
-                <Text style={styles.filterTitle}>Price Range</Text>
+                <Text style={styles.filterTitle}>Day Pass Price</Text>
                 <View style={styles.filterOptions}>
-                  {priceRanges.map(price => (
+                  {priceCategories.map(price => (
                     <TouchableOpacity
                       key={price.value}
                       style={[
                         styles.filterChip,
-                        selectedPriceRange === price.value && styles.filterChipActive,
+                        selectedPriceCategory === price.value && styles.filterChipActive,
                       ]}
                       onPress={() =>
-                        setSelectedPriceRange(
-                          selectedPriceRange === price.value ? null : price.value
+                        setSelectedPriceCategory(
+                          selectedPriceCategory === price.value ? null : price.value
                         )
                       }
                     >
                       <Text style={[
                         styles.filterChipText,
-                        selectedPriceRange === price.value && styles.filterChipTextActive,
+                        selectedPriceCategory === price.value && styles.filterChipTextActive,
                       ]}>
                         {price.label}
+                      </Text>
+                      <Text style={[
+                        styles.filterChipSubtext,
+                        selectedPriceCategory === price.value && styles.filterChipTextActive,
+                      ]}>
+                        {price.sublabel}
                       </Text>
                     </TouchableOpacity>
                   ))}

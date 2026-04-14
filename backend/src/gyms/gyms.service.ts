@@ -22,6 +22,10 @@ async createGym(data: {
   priceRange?: number;
   climbingTypes?: string[];
   userId: string;
+  dayPassPrice?: number;
+  monthlyMembershipPrice?: number;
+  studentDiscountAvailable?: boolean;
+  studentDiscountDetails?: string;
 }) {
   // Validate input lengths
   if (data.name.trim().length < 3) {
@@ -79,6 +83,10 @@ async createGym(data: {
       priceRange: data.priceRange?.toString() || '2',
       climbingTypes: data.climbingTypes || ['bouldering'],
       registeredBy: data.userId,
+      dayPassPrice: data.dayPassPrice ?? null,
+      monthlyMembershipPrice: data.monthlyMembershipPrice ?? null,
+      studentDiscountAvailable: data.studentDiscountAvailable ?? false,
+      studentDiscountDetails: data.studentDiscountDetails ?? null,
     },
   });
 
@@ -116,6 +124,10 @@ async getAllGyms() {
     climbingTypes: gym.climbingTypes,
     rating: this.calculateAverageRating(gym.reviews),
     reviewCount: gym.reviews.length,
+    dayPassPrice: gym.dayPassPrice,
+    monthlyMembershipPrice: gym.monthlyMembershipPrice,
+    studentDiscountAvailable: gym.studentDiscountAvailable,
+    studentDiscountDetails: gym.studentDiscountDetails,
   }));
 }
 
@@ -143,6 +155,10 @@ async getPopularGyms(climbingType?: string) {
       reviewCount: gym.reviews.length,
       tags: gym.amenities.slice(0, 2),
       climbingTypes: gym.climbingTypes,
+      dayPassPrice: gym.dayPassPrice,
+      monthlyMembershipPrice: gym.monthlyMembershipPrice,
+      studentDiscountAvailable: gym.studentDiscountAvailable,
+      studentDiscountDetails: gym.studentDiscountDetails,
     }))
     .sort((a, b) => b.reviewCount - a.reviewCount);
 }
@@ -173,6 +189,10 @@ async getNearbyGyms(climbingType?: string) {
     reviewCount: gym.reviews.length,
     tags: gym.amenities.slice(0, 2),
     climbingTypes: gym.climbingTypes,
+    dayPassPrice: gym.dayPassPrice,
+    monthlyMembershipPrice: gym.monthlyMembershipPrice,
+    studentDiscountAvailable: gym.studentDiscountAvailable,
+    studentDiscountDetails: gym.studentDiscountDetails,
   }));
 }
 
@@ -246,7 +266,11 @@ async getGymById(id: string) {
     rating: this.calculateAverageRating(gym.reviews),
     reviewCount: gym.reviews.length,
     reviews: reviewsWithLikeCount,
-    registeredByUser: gym.registeredByUser,  // Added
+    registeredByUser: gym.registeredByUser,
+    dayPassPrice: gym.dayPassPrice,
+    monthlyMembershipPrice: gym.monthlyMembershipPrice,
+    studentDiscountAvailable: gym.studentDiscountAvailable,
+    studentDiscountDetails: gym.studentDiscountDetails,
   };
 }
 
@@ -303,7 +327,11 @@ async getGymsNearLocation(latitude: number, longitude: number, radiusMiles: numb
       officialPhotos: gym.officialPhotos,
       amenities: gym.amenities,
       climbingTypes: gym.climbingTypes,
-      distance: Math.round(gym.distance * 10) / 10, // Round to 1 decimal
+      distance: Math.round(gym.distance * 10) / 10,
+      dayPassPrice: gym.dayPassPrice,
+      monthlyMembershipPrice: gym.monthlyMembershipPrice,
+      studentDiscountAvailable: gym.studentDiscountAvailable,
+      studentDiscountDetails: gym.studentDiscountDetails,
     };
   });
 
@@ -373,8 +401,9 @@ async getGymsNearLocation(latitude: number, longitude: number, radiusMiles: numb
     };
   }
 
-  // NEW: Automatically fetch and set official photos for a gym
-  async fetchOfficialPhotos(gymId: string): Promise<string[]> {
+  // Fetch and store official photos for a gym.
+  // Pass force=true to re-fetch even if the gym already has photos (e.g. to replace expired URLs).
+  async fetchOfficialPhotos(gymId: string, force = false): Promise<string[]> {
     const gym = await this.prisma.gym.findUnique({
       where: { id: gymId },
     });
@@ -383,16 +412,20 @@ async getGymsNearLocation(latitude: number, longitude: number, radiusMiles: numb
       throw new NotFoundException('Gym not found');
     }
 
-    // Check if gym already has official photos
-    if (gym.officialPhotos && gym.officialPhotos.length > 0) {
-      console.log(`Gym ${gym.name} already has ${gym.officialPhotos.length} official photos`);
+    // Skip if already has proxy URLs and not forcing a refresh
+    const alreadyHasProxyUrls =
+      gym.officialPhotos &&
+      gym.officialPhotos.length > 0 &&
+      !gym.officialPhotos[0].includes('maps.googleapis.com');
+
+    if (!force && alreadyHasProxyUrls) {
+      console.log(`Gym ${gym.name} already has ${gym.officialPhotos.length} proxy photo URLs`);
       return gym.officialPhotos;
     }
 
     console.log(`Fetching official photos for: ${gym.name}`);
 
-    // Fetch photos from Google Places
-    const photoUrls = await this.googlePlacesService.fetchAndSetGymPhotos(
+    const { placeId, photoUrls } = await this.googlePlacesService.fetchAndSetGymPhotos(
       gym.name,
       gym.address,
     );
@@ -402,46 +435,83 @@ async getGymsNearLocation(latitude: number, longitude: number, radiusMiles: numb
       return [];
     }
 
-    // Save photos to database
+    // Store proxy URLs instead of raw Google URLs so they never expire in the DB
+    const baseUrl = process.env.BACKEND_URL || 'http://192.168.1.166:3000';
+    const proxyUrls = photoUrls.map(
+      (_, index) => `${baseUrl}/gyms/${gymId}/photo/${index}`,
+    );
+
     const updatedGym = await this.prisma.gym.update({
       where: { id: gymId },
       data: {
-        officialPhotos: photoUrls,
+        officialPhotos: proxyUrls,
+        ...(placeId ? { placeId } : {}),
       },
     });
 
-    console.log(`Saved ${photoUrls.length} official photos for ${gym.name}`);
-    
+    console.log(`Saved ${proxyUrls.length} proxy photo URLs for ${gym.name}`);
+
     return updatedGym.officialPhotos;
   }
 
-  // NEW: Batch fetch photos for all gyms without official photos
-async fetchAllMissingOfficialPhotos(): Promise<void> {
-  // Get ALL gyms first
-  const allGyms = await this.prisma.gym.findMany();
-  
-  // Filter in JavaScript for gyms without official photos
-  const gyms = allGyms.filter(
-    gym => !gym.officialPhotos || gym.officialPhotos.length === 0
-  );
+  // Returns a fresh Google photo URL for a specific photo index by re-fetching
+  // the photo reference from Google using the stored placeId.
+  async getPhotoUrl(gymId: string, index: number): Promise<string | null> {
+    const gym = await this.prisma.gym.findUnique({
+      where: { id: gymId },
+    });
 
-  console.log(`Found ${gyms.length} gyms without official photos`);
-
-  for (const gym of gyms) {
-    console.log(`\nProcessing: ${gym.name}`);
-    
-    try {
-      await this.fetchOfficialPhotos(gym.id);
-      
-      // Add delay to avoid hitting API rate limits
-      await new Promise(resolve => setTimeout(resolve, 500));
-    } catch (error) {
-      console.error(`Error processing ${gym.name}:`, error);
+    if (!gym || !gym.placeId) {
+      return null;
     }
+
+    const urls = await this.googlePlacesService.getFreshPhotoUrls(gym.placeId, 3);
+    return urls[index] ?? null;
   }
 
-  console.log('\nFinished fetching official photos for all gyms');
-}
+  // Batch fetch photos for all gyms without proxy photo URLs
+  async fetchAllMissingOfficialPhotos(): Promise<void> {
+    const allGyms = await this.prisma.gym.findMany();
+
+    const gyms = allGyms.filter(
+      gym => !gym.officialPhotos || gym.officialPhotos.length === 0,
+    );
+
+    console.log(`Found ${gyms.length} gyms without official photos`);
+
+    for (const gym of gyms) {
+      console.log(`\nProcessing: ${gym.name}`);
+
+      try {
+        await this.fetchOfficialPhotos(gym.id);
+        await new Promise(resolve => setTimeout(resolve, 500));
+      } catch (error) {
+        console.error(`Error processing ${gym.name}:`, error);
+      }
+    }
+
+    console.log('\nFinished fetching official photos for all gyms');
+  }
+
+  // Force re-fetch photos for ALL gyms, replacing any stale/expired Google URLs with fresh proxy URLs
+  async forceRefreshAllPhotos(): Promise<void> {
+    const gyms = await this.prisma.gym.findMany();
+
+    console.log(`Force-refreshing photos for ${gyms.length} gyms`);
+
+    for (const gym of gyms) {
+      console.log(`\nRefreshing: ${gym.name}`);
+
+      try {
+        await this.fetchOfficialPhotos(gym.id, true);
+        await new Promise(resolve => setTimeout(resolve, 500));
+      } catch (error) {
+        console.error(`Error refreshing ${gym.name}:`, error);
+      }
+    }
+
+    console.log('\nFinished force-refreshing all gym photos');
+  }
 
 async getGymsMapData() {
   const gyms = await this.prisma.gym.findMany({
@@ -478,6 +548,26 @@ async getGymsMapData() {
     };
   });
 }
+
+  async updatePricing(gymId: string, data: {
+    dayPassPrice?: number | null;
+    monthlyMembershipPrice?: number | null;
+    studentDiscountAvailable?: boolean;
+    studentDiscountDetails?: string | null;
+  }) {
+    const gym = await this.prisma.gym.findUnique({ where: { id: gymId } });
+    if (!gym) throw new NotFoundException('Gym not found');
+
+    return this.prisma.gym.update({
+      where: { id: gymId },
+      data: {
+        dayPassPrice: data.dayPassPrice,
+        monthlyMembershipPrice: data.monthlyMembershipPrice,
+        studentDiscountAvailable: data.studentDiscountAvailable,
+        studentDiscountDetails: data.studentDiscountDetails,
+      },
+    });
+  }
 
   async updateAmenities(gymId: string, amenities: string[]) {
   const gym = await this.prisma.gym.findUnique({

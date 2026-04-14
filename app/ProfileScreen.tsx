@@ -284,21 +284,6 @@ const renderSavedGym = (savedGym: SavedGym) => (
     }
   };
 
-  const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: onLogout,
-        },
-      ]
-    );
-  };
-
   const handleDeleteReview = async (reviewId: string) => {
     Alert.alert(
       'Delete Review',
@@ -449,7 +434,7 @@ const renderSavedGym = (savedGym: SavedGym) => (
 
           <TouchableOpacity
             style={styles.settingsButton}
-            onPress={() => navigation.navigate('Settings', { onLogout: onLogout })}
+            onPress={() => navigation.navigate('Settings')}
           >
             <Ionicons name="settings-outline" size={22} color="#1F2937" />
           </TouchableOpacity>
@@ -599,11 +584,6 @@ const renderSavedGym = (savedGym: SavedGym) => (
     )
   )}
 </View>
-
-        {/* Logout Button */}
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutButtonText}>Logout</Text>
-        </TouchableOpacity>
 
         <View style={styles.bottomPadding} />
       </ScrollView>

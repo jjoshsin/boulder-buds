@@ -393,6 +393,63 @@ export const styles = StyleSheet.create({
     color: '#9CA3AF',
   },
 
+  // Pricing
+  pricingGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  pricingItem: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    minWidth: 130,
+  },
+  pricingLabel: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    fontWeight: '500',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  pricingValue: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#1F2937',
+  },
+  pricingDiscountBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECFDF5',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    gap: 6,
+    flexShrink: 1,
+  },
+  pricingDiscountText: {
+    fontSize: 14,
+    color: '#065F46',
+    fontWeight: '500',
+    flexShrink: 1,
+  },
+  pricingInput: {
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    fontSize: 16,
+    color: '#1F2937',
+    marginTop: 6,
+  },
+
   // Videos
   videosScroll: {
     marginTop: 12,

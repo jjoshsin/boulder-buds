@@ -299,7 +299,7 @@ if (activity.type === 'review') {
 <View style={styles.section}>
   <View style={styles.sectionHeader}>
     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-      <MaterialCommunityIcons name="fire" size={18} color="#FF8C00" />
+      <MaterialCommunityIcons name="fire" size={22} color="#FF8C00" />
       <Text style={[styles.sectionTitle, { marginLeft: 6 }]}>Popular This Week</Text>
     </View>
     {popularGyms.length > 3 && (
@@ -321,7 +321,7 @@ if (activity.type === 'review') {
 <View style={styles.section}>
   <View style={styles.sectionHeader}>
     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-      <Ionicons name="location-outline" size={18} color="#FF8C00" />
+      <Ionicons name="location-outline" size={22} color="#FF8C00" />
       <Text style={[styles.sectionTitle, { marginLeft: 6 }]}>Near You</Text>
     </View>
     {nearbyGyms.length > 3 && (
@@ -336,7 +336,7 @@ if (activity.type === 'review') {
         {/* Recent Activity */}
         <View style={styles.section}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Ionicons name="people-outline" size={18} color="#FF8C00" />
+            <Ionicons name="people-outline" size={22} color="#FF8C00" />
             <Text style={[styles.sectionTitle, { marginLeft: 6 }]}>Recent Activity</Text>
           </View>
           {recentActivity.length > 0 ? (

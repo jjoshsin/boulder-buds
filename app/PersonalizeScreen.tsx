@@ -53,7 +53,7 @@ export default function PersonalizeScreen({
     },
     {
       type: 'rope',
-      icon: 'rope',
+      icon: 'carabiner',
       label: 'Rope Climbing',
       description: 'Top rope and lead climbing with harnesses',
     },
@@ -101,6 +101,7 @@ export default function PersonalizeScreen({
                 name={option.icon as any}
                 size={28}
                 color={climbingType === option.type ? '#FF8C00' : '#6B7280'}
+                style={{ marginRight: 16 }}
               />
               <View style={styles.optionInfo}>
                 <Text style={[

@@ -25,7 +25,11 @@ export interface Gym {
   registeredByUser?: {
     id: string;
     displayName: string;
-  }
+  };
+  dayPassPrice?: number | null;
+  monthlyMembershipPrice?: number | null;
+  studentDiscountAvailable?: boolean;
+  studentDiscountDetails?: string | null;
 }
 
 export interface CommunityPhoto {
@@ -183,6 +187,23 @@ async getGymsNearLocation(latitude: number, longitude: number, radiusMiles: numb
 
   return response.json();
 }
+  async updatePricing(gymId: string, data: {
+    dayPassPrice?: number | null;
+    monthlyMembershipPrice?: number | null;
+    studentDiscountAvailable?: boolean;
+    studentDiscountDetails?: string | null;
+  }): Promise<void> {
+    const token = await SecureStore.getItemAsync('authToken');
+    const response = await fetch(`${API_URL}/gyms/${gymId}/pricing`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update pricing');
+  }
 }
 
 

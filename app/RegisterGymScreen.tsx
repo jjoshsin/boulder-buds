@@ -31,6 +31,12 @@ export default function RegisterGymScreen() {
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Pricing
+  const [dayPassPrice, setDayPassPrice] = useState('');
+  const [monthlyPrice, setMonthlyPrice] = useState('');
+  const [studentDiscount, setStudentDiscount] = useState(false);
+  const [studentDiscountDetails, setStudentDiscountDetails] = useState('');
+
   // Error states
   const [nameError, setNameError] = useState('');
   const [addressError, setAddressError] = useState('');
@@ -232,6 +238,12 @@ const handleSubmit = async () => {
         state,
         climbingTypes,
         amenities: selectedAmenities,
+        dayPassPrice: dayPassPrice ? parseFloat(dayPassPrice) : undefined,
+        monthlyMembershipPrice: monthlyPrice ? parseFloat(monthlyPrice) : undefined,
+        studentDiscountAvailable: studentDiscount,
+        studentDiscountDetails: studentDiscount && studentDiscountDetails.trim()
+          ? studentDiscountDetails.trim()
+          : undefined,
       }),
     });
 
@@ -463,6 +475,65 @@ const handleSubmit = async () => {
                 </TouchableOpacity>
               ))}
             </View>
+          </View>
+
+          {/* Pricing */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Pricing (Optional)</Text>
+
+            <View style={{ flexDirection: 'row', gap: 12, marginBottom: 12 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.label, { fontSize: 14, marginBottom: 6 }]}>Day Pass ($)</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="e.g. 25"
+                  placeholderTextColor="#9CA3AF"
+                  keyboardType="decimal-pad"
+                  value={dayPassPrice}
+                  onChangeText={setDayPassPrice}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.label, { fontSize: 14, marginBottom: 6 }]}>Monthly ($)</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="e.g. 70"
+                  placeholderTextColor="#9CA3AF"
+                  keyboardType="decimal-pad"
+                  value={monthlyPrice}
+                  onChangeText={setMonthlyPrice}
+                />
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}
+              onPress={() => {
+                setStudentDiscount(!studentDiscount);
+                if (studentDiscount) setStudentDiscountDetails('');
+              }}
+              activeOpacity={0.7}
+            >
+              <View style={{
+                width: 22, height: 22, borderRadius: 4, borderWidth: 2,
+                borderColor: studentDiscount ? '#FF8C00' : '#D1D5DB',
+                backgroundColor: studentDiscount ? '#FF8C00' : '#FFFFFF',
+                justifyContent: 'center', alignItems: 'center', marginRight: 10,
+              }}>
+                {studentDiscount && <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: 'bold' }}>✓</Text>}
+              </View>
+              <Text style={[styles.label, { marginBottom: 0, fontWeight: '500' }]}>Student discount available</Text>
+            </TouchableOpacity>
+
+            {studentDiscount && (
+              <TextInput
+                style={styles.input}
+                placeholder="e.g. 10% off with valid student ID"
+                placeholderTextColor="#9CA3AF"
+                value={studentDiscountDetails}
+                onChangeText={setStudentDiscountDetails}
+              />
+            )}
           </View>
 
           {/* Photos */}

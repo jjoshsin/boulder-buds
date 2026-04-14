@@ -153,6 +153,11 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6B7280',
   },
+  filterChipSubtext: {
+    fontSize: 11,
+    color: '#9CA3AF',
+    marginTop: 2,
+  },
   filterChipTextActive: {
     color: '#1E40AF',
     fontWeight: '600',
