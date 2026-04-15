@@ -13,12 +13,9 @@ export class NotificationsService {
     entityType?: string;
     message: string;
   }) {
-    // Don't create notification if actor is the same as recipient
-    if (data.userId === data.actorId) {
-      return null;
-    }
+    if (data.userId === data.actorId) return null;
 
-    return this.prisma.notification.create({
+    const notification = await this.prisma.notification.create({
       data: {
         userId: data.userId,
         actorId: data.actorId,
@@ -28,6 +25,31 @@ export class NotificationsService {
         message: data.message,
       },
     });
+
+    // Fire-and-forget push notification
+    this.prisma.user
+      .findUnique({ where: { id: data.userId }, select: { expoPushToken: true } })
+      .then(recipient => {
+        if (recipient?.expoPushToken) {
+          this.sendPushNotification(recipient.expoPushToken, 'Boulder Buds', data.message);
+        }
+      })
+      .catch(() => {});
+
+    return notification;
+  }
+
+  private async sendPushNotification(pushToken: string, title: string, body: string) {
+    if (!pushToken?.startsWith('ExponentPushToken')) return;
+    try {
+      await fetch('https://exp.host/--/api/v2/push/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ to: pushToken, title, body, sound: 'default' }),
+      });
+    } catch (err) {
+      console.error('Push notification failed:', err);
+    }
   }
 
   async getUserNotifications(userId: string, limit: number = 50) {

@@ -9,8 +9,13 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../App';
 import { styles } from '../styles/LoginScreen.styles';
 import authService from '../services/authService';
+
+type LoginNav = NativeStackNavigationProp<RootStackParamList>;
 
 interface LoginScreenProps {
   onBack: () => void;
@@ -18,6 +23,7 @@ interface LoginScreenProps {
 }
 
 export default function LoginScreen({ onBack, onLoginSuccess }: LoginScreenProps) {
+  const navigation = useNavigation<LoginNav>();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -141,6 +147,15 @@ export default function LoginScreen({ onBack, onLoginSuccess }: LoginScreenProps
             />
             {touchedFields.password && passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
           </View>
+
+          {/* Forgot password */}
+          <TouchableOpacity
+            style={{ alignSelf: 'flex-end', marginBottom: 24, marginTop: -8 }}
+            onPress={() => navigation.navigate('ForgotPassword')}
+            activeOpacity={0.7}
+          >
+            <Text style={{ fontSize: 14, color: '#FF8C00', fontWeight: '600' }}>Forgot password?</Text>
+          </TouchableOpacity>
 
           {/* Login Button */}
           <TouchableOpacity

@@ -5,23 +5,31 @@ import {
   TouchableOpacity,
   TextInput,
   ScrollView,
-  KeyboardAvoidingView,
   Platform,
   Alert,
   Dimensions,
   Modal,
   Keyboard,
-  Animated
+  Animated,
+  GestureResponderEvent,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
 import { VideoView, useVideoPlayer } from 'expo-video';
-import { useAudioPlayer } from 'expo-audio';
+import { Ionicons } from '@expo/vector-icons';
 import { styles } from '../styles/VideoPlayerScreen.styles';
 import videoService, { VideoDetail, VideoComment } from '../services/videoService';
 import * as SecureStore from 'expo-secure-store';
+
+type HeartAnim = {
+  id: number;
+  x: number;
+  y: number;
+  scale: Animated.Value;
+  opacity: Animated.Value;
+};
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -43,6 +51,9 @@ export default function VideoPlayerScreen() {
   const [editedCaption, setEditedCaption] = useState('');
   const scrollViewRef = useRef<ScrollView>(null);
   const [keyboardHeight] = useState(new Animated.Value(0));
+  const [hearts, setHearts] = useState<HeartAnim[]>([]);
+  const heartIdRef = useRef(0);
+  const lastTapRef = useRef<{ time: number } | null>(null);
 
 
   useEffect(() => {
@@ -109,9 +120,40 @@ export default function VideoPlayerScreen() {
     }
   };
 
-  const handleDoubleTap = () => {
-    if (!isLiked) {
-      handleLike();
+  const spawnHeart = (x: number, y: number) => {
+    const id = heartIdRef.current++;
+    const scale = new Animated.Value(0);
+    const opacity = new Animated.Value(1);
+
+    setHearts(prev => [...prev, { id, x, y, scale, opacity }]);
+
+    Animated.sequence([
+      Animated.spring(scale, {
+        toValue: 1.2,
+        useNativeDriver: true,
+        tension: 60,
+        friction: 5,
+      }),
+      Animated.delay(300),
+      Animated.parallel([
+        Animated.timing(scale, { toValue: 1.6, duration: 300, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 0, duration: 300, useNativeDriver: true }),
+      ]),
+    ]).start(() => {
+      setHearts(prev => prev.filter(h => h.id !== id));
+    });
+  };
+
+  const handleTap = (event: GestureResponderEvent) => {
+    const now = Date.now();
+    const { locationX, locationY } = event.nativeEvent;
+
+    if (lastTapRef.current && now - lastTapRef.current.time < 300) {
+      lastTapRef.current = null;
+      spawnHeart(locationX, locationY);
+      if (!isLiked) handleLike();
+    } else {
+      lastTapRef.current = { time: now };
     }
   };
 
@@ -236,9 +278,16 @@ export default function VideoPlayerScreen() {
               style={styles.commentAction}
               onPress={() => handleCommentLike(comment.id)}
             >
-              <Text style={styles.commentActionText}>
-                {isCommentLiked ? '❤️' : '🤍'} {comment.likeCount}
-              </Text>
+              <View style={styles.commentLikeRow}>
+                <Ionicons
+                  name={isCommentLiked ? 'heart' : 'heart-outline'}
+                  size={14}
+                  color={isCommentLiked ? '#EF4444' : '#6B7280'}
+                />
+                <Text style={[styles.commentActionText, { marginLeft: 4 }]}>
+                  {comment.likeCount}
+                </Text>
+              </View>
             </TouchableOpacity>
             {!isReply && (
               <TouchableOpacity
@@ -280,7 +329,7 @@ export default function VideoPlayerScreen() {
       {/* Video Player */}
       <TouchableOpacity
         activeOpacity={1}
-        onPress={handleDoubleTap}
+        onPress={handleTap}
         style={styles.videoContainer}
       >
         <VideoView
@@ -289,16 +338,35 @@ export default function VideoPlayerScreen() {
           allowsPictureInPicture
           nativeControls
         />
-        
+
+        {/* Double-tap heart animations */}
+        {hearts.map(heart => (
+          <Animated.View
+            key={heart.id}
+            pointerEvents="none"
+            style={[
+              styles.heartOverlay,
+              {
+                left: heart.x - 45,
+                top: heart.y - 45,
+                transform: [{ scale: heart.scale }],
+                opacity: heart.opacity,
+              },
+            ]}
+          >
+            <Ionicons name="heart" size={90} color="#FF4D6D" />
+          </Animated.View>
+        ))}
+
         {/* Top Bar - Close & Options */}
         <View style={styles.topBar}>
           <TouchableOpacity
             style={styles.closeButton}
             onPress={() => navigation.goBack()}
           >
-            <Text style={styles.closeButtonText}>✕</Text>
+            <Ionicons name="close" size={22} color="#FFFFFF" />
           </TouchableOpacity>
-          
+
           {currentUserId === video.userId && (
             <TouchableOpacity
               style={styles.optionsButton}
@@ -321,7 +389,7 @@ export default function VideoPlayerScreen() {
                 );
               }}
             >
-              <Text style={styles.optionsButtonText}>⋯</Text>
+              <Ionicons name="ellipsis-horizontal" size={22} color="#FFFFFF" />
             </TouchableOpacity>
           )}
         </View>
@@ -336,7 +404,7 @@ export default function VideoPlayerScreen() {
             </View>
             <Text style={styles.userName}>{video.user.displayName}</Text>
           </View>
-          
+
           {isEditingCaption ? (
             <View style={styles.captionEditContainer}>
               <TextInput
@@ -368,21 +436,28 @@ export default function VideoPlayerScreen() {
               <Text style={styles.caption}>{video.caption}</Text>
             )
           )}
-          
-          <Text style={styles.gymName}>📍 {video.gym.name}</Text>
+
+          <View style={styles.gymNameRow}>
+            <Ionicons name="location-sharp" size={13} color="#E5E7EB" />
+            <Text style={styles.gymName}>{video.gym.name}</Text>
+          </View>
         </View>
 
         {/* Like/Comment Actions */}
         <View style={styles.actionsBar}>
           <TouchableOpacity style={styles.actionButton} onPress={handleLike}>
-            <Text style={styles.actionIcon}>{isLiked ? '❤️' : '🤍'}</Text>
+            <Ionicons
+              name={isLiked ? 'heart' : 'heart-outline'}
+              size={32}
+              color={isLiked ? '#FF4D6D' : '#FFFFFF'}
+            />
             <Text style={styles.actionCount}>{likeCount}</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.actionButton}
             onPress={() => setShowComments(true)}
           >
-            <Text style={styles.actionIcon}>💬</Text>
+            <Ionicons name="chatbubble-ellipses" size={30} color="#FFFFFF" />
             <Text style={styles.actionCount}>{video.commentCount}</Text>
           </TouchableOpacity>
         </View>
@@ -409,7 +484,7 @@ export default function VideoPlayerScreen() {
       <View style={styles.commentsHeader}>
         <Text style={styles.commentsTitle}>Comments ({video.commentCount})</Text>
         <TouchableOpacity onPress={() => setShowComments(false)}>
-          <Text style={styles.closeCommentsButton}>✕</Text>
+          <Ionicons name="close" size={24} color="#6B7280" />
         </TouchableOpacity>
       </View>
 
@@ -433,7 +508,7 @@ export default function VideoPlayerScreen() {
               Replying to {replyingTo.name}
             </Text>
             <TouchableOpacity onPress={() => setReplyingTo(null)}>
-              <Text style={styles.cancelReply}>✕</Text>
+              <Ionicons name="close" size={18} color="#9CA3AF" />
             </TouchableOpacity>
           </View>
         )}

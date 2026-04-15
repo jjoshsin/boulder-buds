@@ -109,6 +109,16 @@ export default function SettingsScreen() {
         setSelectedClimbingType(userData.climbingType || '');
         setSelectedCity(userData.city || '');
         setSelectedState(userData.state || '');
+
+        // Load isPrivate from backend (source of truth)
+        const token = await SecureStore.getItemAsync('authToken');
+        const res = await fetch(`${API}/users/${userData.id}`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const full = await res.json();
+          setPrivateProfile(full.isPrivate ?? false);
+        }
       }
     } catch (error) {
       console.error('Error loading user:', error);
@@ -144,8 +154,18 @@ export default function SettingsScreen() {
     await SecureStore.setItemAsync('notificationPrefs', JSON.stringify(current));
   };
 
-  const savePrivacyPrefs = async (privateProfile: boolean) => {
-    await SecureStore.setItemAsync('privacyPrefs', JSON.stringify({ privateProfile }));
+  const savePrivacyPrefs = async (isPrivate: boolean) => {
+    await SecureStore.setItemAsync('privacyPrefs', JSON.stringify({ privateProfile: isPrivate }));
+    try {
+      const token = await SecureStore.getItemAsync('authToken');
+      await fetch(`${API}/users/me/privacy`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ isPrivate }),
+      });
+    } catch {
+      // SecureStore still has the value; backend will sync next session
+    }
   };
 
   // ── Handlers ─────────────────────────────────────────────

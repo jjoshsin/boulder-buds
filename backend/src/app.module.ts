@@ -12,6 +12,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { ReportingModule } from './reporting/reporting.module';
 import { BlockingModule } from './blocking/blocking.module';
 import { FavoritesModule } from './favorites/favorites.module';
+import { ClimbLogsModule } from './climb-logs/climb-logs.module';
 
 @Module({
   imports: [
@@ -22,13 +23,13 @@ import { FavoritesModule } from './favorites/favorites.module';
     GymsModule,
     UploadModule,
     ReviewsModule,
-    UsersModule,
     FollowsModule,
     VideosModule,
     NotificationsModule,
     BlockingModule,
     ReportingModule,
     FavoritesModule,
+    ClimbLogsModule,
   ],
 })
 export class AppModule {}

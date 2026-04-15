@@ -208,6 +208,27 @@ class AuthService {
     }
   }
 
+  async forgotPassword(email: string): Promise<void> {
+    await fetch(`${API_URL}/auth/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.trim().toLowerCase() }),
+    });
+    // Always resolves — backend never reveals if email exists
+  }
+
+  async resetPassword(email: string, otp: string, newPassword: string): Promise<void> {
+    const response = await fetch(`${API_URL}/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.trim().toLowerCase(), otp: otp.trim(), newPassword }),
+    });
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.message || 'Invalid or expired code');
+    }
+  }
+
   async checkProfileComplete(userId: string): Promise<boolean> {
     try {
       const token = await this.getStoredToken();

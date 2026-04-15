@@ -290,6 +290,29 @@ export const styles = StyleSheet.create({
   bottomPadding: {
     height: 40,
   },
+  registerBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 8,
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#FF8C00',
+    borderStyle: 'dashed',
+    backgroundColor: '#FFF9F0',
+  },
+  registerBannerTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 2,
+  },
+  registerBannerSubtitle: {
+    fontSize: 12,
+    color: '#6B7280',
+  },
   map: {
     flex: 1,
   },

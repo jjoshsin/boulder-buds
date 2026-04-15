@@ -21,25 +21,56 @@ export class UsersService {
     this.bucketName = process.env.AWS_S3_BUCKET;
   }
 
-  async getUser(userId: string) {
+  async getUser(userId: string, viewerId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
 
-    if (!user) {
-      throw new NotFoundException('User not found');
+    if (!user) throw new NotFoundException('User not found');
+
+    // If private and viewer is not the owner, check follow status
+    if (user.isPrivate && userId !== viewerId) {
+      const isFollowing = await this.prisma.follow.findUnique({
+        where: { followerId_followingId: { followerId: viewerId, followingId: userId } },
+      });
+      if (!isFollowing) {
+        return {
+          id: user.id,
+          displayName: user.displayName,
+          profilePhoto: user.profilePhoto,
+          climbingType: user.climbingType,
+          isPrivate: true,
+          isLocked: true,
+        };
+      }
     }
 
     return {
       id: user.id,
       email: user.email,
       displayName: user.displayName,
+      profilePhoto: user.profilePhoto,
       birthday: user.birthday,
       city: user.city,
       state: user.state,
       climbingLevel: user.climbingLevel,
       climbingType: user.climbingType,
+      isPrivate: user.isPrivate,
+      isLocked: false,
     };
+  }
+
+  private async hasPrivacyAccess(targetUserId: string, viewerId: string): Promise<boolean> {
+    if (targetUserId === viewerId) return true;
+    const user = await this.prisma.user.findUnique({
+      where: { id: targetUserId },
+      select: { isPrivate: true },
+    });
+    if (!user || !user.isPrivate) return true;
+    const follow = await this.prisma.follow.findUnique({
+      where: { followerId_followingId: { followerId: viewerId, followingId: targetUserId } },
+    });
+    return !!follow;
   }
 
   async updateProfile(
@@ -83,7 +114,8 @@ export class UsersService {
     };
   }
 
-  async getUserReviews(userId: string) {
+  async getUserReviews(userId: string, viewerId: string) {
+    if (!(await this.hasPrivacyAccess(userId, viewerId))) return [];
     const reviews = await this.prisma.review.findMany({
       where: { userId },
       include: {
@@ -104,7 +136,8 @@ export class UsersService {
     return reviews;
   }
 
-  async getUserPhotos(userId: string) {
+  async getUserPhotos(userId: string, viewerId: string) {
+    if (!(await this.hasPrivacyAccess(userId, viewerId))) return [];
     const photos = await this.prisma.communityPhoto.findMany({
       where: { userId },
       include: {
@@ -137,7 +170,8 @@ export class UsersService {
     };
   }
 
-  async getFollowers(userId: string) {
+  async getFollowers(userId: string, viewerId: string) {
+    if (!(await this.hasPrivacyAccess(userId, viewerId))) return [];
     const followers = await this.prisma.follow.findMany({
       where: { followingId: userId },
       include: {
@@ -159,7 +193,8 @@ export class UsersService {
     return followers.map(f => f.follower);
   }
 
-  async getFollowing(userId: string) {
+  async getFollowing(userId: string, viewerId: string) {
+    if (!(await this.hasPrivacyAccess(userId, viewerId))) return [];
     const following = await this.prisma.follow.findMany({
       where: { followerId: userId },
       include: {
@@ -182,16 +217,23 @@ export class UsersService {
   }
 
   async searchUsers(query: string, currentUserId: string) {
+    const blocks = await this.prisma.userBlock.findMany({
+      where: { OR: [{ blockerId: currentUserId }, { blockedId: currentUserId }] },
+      select: { blockerId: true, blockedId: true },
+    });
+    const blockedIds = blocks.map(b =>
+      b.blockerId === currentUserId ? b.blockedId : b.blockerId,
+    );
+
     const users = await this.prisma.user.findMany({
       where: {
         AND: [
-          {
-            OR: [
-              { displayName: { contains: query, mode: 'insensitive' } },
-              { email: { contains: query, mode: 'insensitive' } },
-            ],
-          },
+          { OR: [
+            { displayName: { contains: query, mode: 'insensitive' } },
+            { email: { contains: query, mode: 'insensitive' } },
+          ]},
           { id: { not: currentUserId } },
+          ...(blockedIds.length > 0 ? [{ id: { notIn: blockedIds } }] : []),
         ],
       },
       select: {
@@ -206,6 +248,22 @@ export class UsersService {
     });
 
     return users;
+  }
+
+  async savePushToken(userId: string, token: string) {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { expoPushToken: token },
+    });
+    return { success: true };
+  }
+
+  async updatePrivacy(userId: string, isPrivate: boolean) {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { isPrivate },
+    });
+    return { success: true };
   }
 
   async updateProfilePhoto(userId: string, file: Express.Multer.File) {

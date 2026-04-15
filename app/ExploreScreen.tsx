@@ -540,6 +540,20 @@ export default function ExploreScreen() {
               </View>
             )}
 
+            {/* Register a Gym banner */}
+            <TouchableOpacity
+              style={styles.registerBanner}
+              onPress={() => navigation.navigate('RegisterGym')}
+              activeOpacity={0.8}
+            >
+              <MaterialCommunityIcons name="office-building-plus-outline" size={22} color="#FF8C00" />
+              <View style={{ flex: 1, marginLeft: 12 }}>
+                <Text style={styles.registerBannerTitle}>Don't see your gym?</Text>
+                <Text style={styles.registerBannerSubtitle}>Register it and help grow the community</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#FF8C00" />
+            </TouchableOpacity>
+
             <View style={styles.bottomPadding} />
           </ScrollView>
         </>

@@ -99,6 +99,7 @@ export const styles = StyleSheet.create({
     fontSize: 13,
     color: '#E5E7EB',
     fontWeight: '500',
+    marginLeft: 2,
   },
   captionEditContainer: {
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
@@ -151,10 +152,21 @@ export const styles = StyleSheet.create({
   actionButton: {
     alignItems: 'center',
     marginBottom: 24,
+    gap: 4,
   },
-  actionIcon: {
-    fontSize: 32,
-    marginBottom: 4,
+  heartOverlay: {
+    position: 'absolute',
+    zIndex: 20,
+    pointerEvents: 'none',
+  },
+  gymNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  commentLikeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   actionCount: {
     fontSize: 13,

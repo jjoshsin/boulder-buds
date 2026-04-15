@@ -93,13 +93,21 @@ export class FollowsService {
   }
 
   async getFriendActivity(userId: string, limit: number = 10) {
-    // Get list of users that the current user follows
-    const following = await this.prisma.follow.findMany({
-      where: { followerId: userId },
-      select: { followingId: true },
-    });
+    const [following, blocks] = await Promise.all([
+      this.prisma.follow.findMany({ where: { followerId: userId }, select: { followingId: true } }),
+      this.prisma.userBlock.findMany({
+        where: { OR: [{ blockerId: userId }, { blockedId: userId }] },
+        select: { blockerId: true, blockedId: true },
+      }),
+    ]);
 
-    const followingIds = following.map(f => f.followingId);
+    const blockedIds = new Set(
+      blocks.map(b => (b.blockerId === userId ? b.blockedId : b.blockerId)),
+    );
+
+    const followingIds = following
+      .map(f => f.followingId)
+      .filter(id => !blockedIds.has(id));
 
     if (followingIds.length === 0) {
       return [];
