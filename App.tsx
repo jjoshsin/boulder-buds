@@ -14,8 +14,9 @@ import PersonalizeScreen from './app/PersonalizeScreen';
 import HomeScreen from './app/HomeScreen';
 import ExploreScreen from './app/ExploreScreen';
 import PeopleScreen from './app/PeopleScreen';
-import PostScreen from './app/PostScreen';
 import ProfileScreen from './app/ProfileScreen';
+import LogScreen from './app/LogScreen';
+import LogClimbScreen from './app/LogClimbScreen';
 import GymDetailScreen from './app/GymDetailScreen';
 import SettingsScreen from './app/SettingsScreen';
 import WriteReviewScreen from './app/WriteReviewScreen';
@@ -61,6 +62,7 @@ export type RootStackParamList = {
   Notifications: undefined;
   SavedGyms: undefined;
   ForgotPassword: undefined;
+  LogClimb: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -69,7 +71,7 @@ const TAB_ITEMS = [
   { name: 'Home',    icon: 'home'        as const, size: 24 },
   { name: 'Explore', icon: 'search'      as const, size: 24 },
   { name: 'People',  icon: 'people'      as const, size: 24 },
-  { name: 'Post',    icon: 'add-circle'  as const, size: 28 },
+  { name: 'Log',     icon: 'journal-outline' as const, size: 24 },
   { name: 'Profile', icon: 'person'      as const, size: 24 },
 ];
 
@@ -108,7 +110,7 @@ function MainTabs({ onLogout }: { onLogout: () => void }) {
           {visited.has(2) && <PeopleScreen />}
         </View>
         <View key="3" style={{ flex: 1 }}>
-          {visited.has(3) && <PostScreen />}
+          {visited.has(3) && <LogScreen />}
         </View>
         <View key="4" style={{ flex: 1 }}>
           {visited.has(4) && <ProfileScreen onLogout={onLogout} />}
@@ -359,9 +361,14 @@ export default function App() {
                 component={NotificationsScreen}
                 options={{ headerShown: false }}
               />
-              <Stack.Screen 
-                name="SavedGyms" 
+              <Stack.Screen
+                name="SavedGyms"
                 component={SavedGymsScreen}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="LogClimb"
+                component={LogClimbScreen}
                 options={{ headerShown: false }}
               />
             </>
