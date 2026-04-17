@@ -239,6 +239,8 @@ export default function GymDetailScreen() {
     );
   }
 
+  const isOwner = !!currentUserId && gym.registeredByUser?.id === currentUserId;
+
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -404,9 +406,11 @@ export default function GymDetailScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Pricing</Text>
-            <TouchableOpacity onPress={() => setShowPricingModal(true)}>
-              <Text style={styles.editText}>Edit</Text>
-            </TouchableOpacity>
+            {isOwner && (
+              <TouchableOpacity onPress={() => setShowPricingModal(true)}>
+                <Text style={styles.editText}>Edit</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           {gym.dayPassPrice != null || gym.monthlyMembershipPrice != null || gym.studentDiscountAvailable ? (
@@ -433,11 +437,11 @@ export default function GymDetailScreen() {
                 </View>
               )}
             </View>
-          ) : (
+          ) : isOwner ? (
             <TouchableOpacity style={styles.addAmenitiesButton} onPress={() => setShowPricingModal(true)}>
               <Text style={styles.addAmenitiesText}>+ Add Pricing Info</Text>
             </TouchableOpacity>
-          )}
+          ) : null}
         </View>
 
         {/* Amenities */}
@@ -445,9 +449,11 @@ export default function GymDetailScreen() {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Amenities</Text>
-              <TouchableOpacity onPress={() => setShowAmenitiesModal(true)}>
-                <Text style={styles.editText}>Edit</Text>
-              </TouchableOpacity>
+              {isOwner && (
+                <TouchableOpacity onPress={() => setShowAmenitiesModal(true)}>
+                  <Text style={styles.editText}>Edit</Text>
+                </TouchableOpacity>
+              )}
             </View>
             <View style={styles.amenitiesGrid}>
               {gym.amenities.map((amenity, index) => {
@@ -474,12 +480,14 @@ export default function GymDetailScreen() {
         {(!gym.amenities || gym.amenities.length === 0) && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Amenities</Text>
-            <TouchableOpacity 
-              style={styles.addAmenitiesButton}
-              onPress={() => setShowAmenitiesModal(true)}
-            >
-              <Text style={styles.addAmenitiesText}>+ Add Amenities</Text>
-            </TouchableOpacity>
+            {isOwner && (
+              <TouchableOpacity
+                style={styles.addAmenitiesButton}
+                onPress={() => setShowAmenitiesModal(true)}
+              >
+                <Text style={styles.addAmenitiesText}>+ Add Amenities</Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
 

@@ -111,4 +111,8 @@ backButtonText: {
   fontSize: 28,
   color: '#1F2937',
 },
+rightAction: {
+  width: 100,
+  alignItems: 'flex-end',
+},
 });

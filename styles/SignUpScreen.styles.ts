@@ -42,10 +42,9 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
   },
   content: {
-    flex: 1,
-    justifyContent: 'flex-start',
     paddingHorizontal: 32,
     paddingTop: 20,
+    paddingBottom: 40,
   },
   formContainer: {
     marginTop: 10,

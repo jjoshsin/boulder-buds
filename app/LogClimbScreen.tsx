@@ -12,9 +12,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import * as SecureStore from 'expo-secure-store';
 import climbLogService from '../services/climbLogService';
 import gymService, { Gym } from '../services/gymService';
+import { styles } from '../styles/LogClimbScreen.styles';
 
 const BOULDER_GRADES = [
   'VB', 'V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8',
@@ -33,9 +33,9 @@ const ROPE_GRADES = [
 
 const OUTCOMES: { value: 'sent' | 'flash' | 'onsight' | 'project'; label: string; icon: string; color: string }[] = [
   { value: 'sent',    label: 'Sent',    icon: 'checkmark-circle', color: '#10B981' },
-  { value: 'flash',  label: 'Flash',   icon: 'flash',            color: '#F59E0B' },
-  { value: 'onsight',label: 'Onsight', icon: 'eye',              color: '#6366F1' },
-  { value: 'project',label: 'Project', icon: 'time',             color: '#9CA3AF' },
+  { value: 'flash',   label: 'Flash',   icon: 'flash',            color: '#F59E0B' },
+  { value: 'onsight', label: 'Onsight', icon: 'eye',              color: '#6366F1' },
+  { value: 'project', label: 'Project', icon: 'time',             color: '#9CA3AF' },
 ];
 
 export default function LogClimbScreen() {
@@ -57,7 +57,6 @@ export default function LogClimbScreen() {
     loadGyms();
   }, []);
 
-  // Reset grade when switching type since grades are incompatible
   useEffect(() => {
     setSelectedGrade(null);
   }, [climbType]);
@@ -100,62 +99,61 @@ export default function LogClimbScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+    <SafeAreaView style={styles.container}>
       {/* Header */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' }}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={{ width: 36 }}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeButton}>
           <Ionicons name="close" size={24} color="#1F2937" />
         </TouchableOpacity>
-        <Text style={{ flex: 1, textAlign: 'center', fontSize: 17, fontWeight: '700', color: '#1F2937' }}>
-          Log a Climb
-        </Text>
+        <Text style={styles.headerTitle}>Log a Climb</Text>
         <TouchableOpacity
           onPress={handleSave}
           disabled={!canSave || isSaving}
-          style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: canSave ? '#FF8C00' : '#E5E7EB' }}
+          style={[styles.saveButton, { backgroundColor: canSave ? '#FF8C00' : '#E5E7EB' }]}
         >
           {isSaving
             ? <ActivityIndicator size="small" color="#FFFFFF" />
-            : <Text style={{ fontSize: 14, fontWeight: '700', color: canSave ? '#FFFFFF' : '#9CA3AF' }}>Save</Text>
+            : <Text style={[styles.saveButtonText, { color: canSave ? '#FFFFFF' : '#9CA3AF' }]}>Save</Text>
           }
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20 }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
         {/* Gym Picker */}
-        <Text style={{ fontSize: 13, fontWeight: '700', color: '#6B7280', letterSpacing: 0.5, marginBottom: 10, textTransform: 'uppercase' }}>Gym</Text>
+        <Text style={styles.sectionLabel}>Gym</Text>
         <TouchableOpacity
           onPress={() => setShowGymPicker(true)}
-          style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F9FAFB', borderRadius: 12, padding: 14, marginBottom: 24, borderWidth: 1, borderColor: selectedGym ? '#FF8C00' : '#E5E7EB' }}
+          style={[styles.gymPicker, { borderColor: selectedGym ? '#FF8C00' : '#E5E7EB' }]}
         >
           <Ionicons name="location-outline" size={20} color={selectedGym ? '#FF8C00' : '#9CA3AF'} />
-          <Text style={{ flex: 1, marginLeft: 10, fontSize: 15, color: selectedGym ? '#1F2937' : '#9CA3AF', fontWeight: selectedGym ? '600' : '400' }}>
+          <Text style={[styles.gymPickerText, { color: selectedGym ? '#1F2937' : '#9CA3AF', fontWeight: selectedGym ? '600' : '400' }]}>
             {selectedGym ? selectedGym.name : 'Select a gym'}
           </Text>
           <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
         </TouchableOpacity>
 
         {/* Climb Type */}
-        <Text style={{ fontSize: 13, fontWeight: '700', color: '#6B7280', letterSpacing: 0.5, marginBottom: 10, textTransform: 'uppercase' }}>Type</Text>
-        <View style={{ flexDirection: 'row', gap: 10, marginBottom: 24 }}>
+        <Text style={styles.sectionLabel}>Type</Text>
+        <View style={styles.typeRow}>
           {(['boulder', 'rope'] as const).map(type => (
             <TouchableOpacity
               key={type}
               onPress={() => setClimbType(type)}
-              style={{
-                flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-                paddingVertical: 12, borderRadius: 12, gap: 8,
-                backgroundColor: climbType === type ? '#FF8C00' : '#F9FAFB',
-                borderWidth: 1, borderColor: climbType === type ? '#FF8C00' : '#E5E7EB',
-              }}
+              style={[
+                styles.typeButton,
+                {
+                  backgroundColor: climbType === type ? '#FF8C00' : '#F9FAFB',
+                  borderColor: climbType === type ? '#FF8C00' : '#E5E7EB',
+                },
+              ]}
             >
               <MaterialCommunityIcons
                 name={type === 'boulder' ? 'hiking' : 'carabiner'}
                 size={20}
                 color={climbType === type ? '#FFFFFF' : '#6B7280'}
               />
-              <Text style={{ fontSize: 15, fontWeight: '600', color: climbType === type ? '#FFFFFF' : '#374151' }}>
+              <Text style={[styles.typeButtonText, { color: climbType === type ? '#FFFFFF' : '#374151' }]}>
                 {type === 'boulder' ? 'Bouldering' : 'Rope'}
               </Text>
             </TouchableOpacity>
@@ -163,20 +161,22 @@ export default function LogClimbScreen() {
         </View>
 
         {/* Grade Picker */}
-        <Text style={{ fontSize: 13, fontWeight: '700', color: '#6B7280', letterSpacing: 0.5, marginBottom: 10, textTransform: 'uppercase' }}>Grade</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 24 }}>
-          <View style={{ flexDirection: 'row', gap: 8 }}>
+        <Text style={styles.sectionLabel}>Grade</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.gradeScroll}>
+          <View style={styles.gradeList}>
             {grades.map(grade => (
               <TouchableOpacity
                 key={grade}
                 onPress={() => setSelectedGrade(grade)}
-                style={{
-                  paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20,
-                  backgroundColor: selectedGrade === grade ? '#FF8C00' : '#F3F4F6',
-                  borderWidth: 1, borderColor: selectedGrade === grade ? '#FF8C00' : 'transparent',
-                }}
+                style={[
+                  styles.gradeChip,
+                  {
+                    backgroundColor: selectedGrade === grade ? '#FF8C00' : '#F3F4F6',
+                    borderColor: selectedGrade === grade ? '#FF8C00' : 'transparent',
+                  },
+                ]}
               >
-                <Text style={{ fontSize: 14, fontWeight: '600', color: selectedGrade === grade ? '#FFFFFF' : '#374151' }}>
+                <Text style={[styles.gradeChipText, { color: selectedGrade === grade ? '#FFFFFF' : '#374151' }]}>
                   {grade}
                 </Text>
               </TouchableOpacity>
@@ -185,22 +185,24 @@ export default function LogClimbScreen() {
         </ScrollView>
 
         {/* Outcome */}
-        <Text style={{ fontSize: 13, fontWeight: '700', color: '#6B7280', letterSpacing: 0.5, marginBottom: 10, textTransform: 'uppercase' }}>Outcome</Text>
-        <View style={{ flexDirection: 'row', gap: 8, marginBottom: 24 }}>
+        <Text style={styles.sectionLabel}>Outcome</Text>
+        <View style={styles.outcomeRow}>
           {OUTCOMES.map(o => {
             const active = selectedOutcome === o.value;
             return (
               <TouchableOpacity
                 key={o.value}
                 onPress={() => setSelectedOutcome(o.value)}
-                style={{
-                  flex: 1, alignItems: 'center', paddingVertical: 12, borderRadius: 12,
-                  backgroundColor: active ? o.color : '#F9FAFB',
-                  borderWidth: 1, borderColor: active ? o.color : '#E5E7EB',
-                }}
+                style={[
+                  styles.outcomeButton,
+                  {
+                    backgroundColor: active ? o.color : '#F9FAFB',
+                    borderColor: active ? o.color : '#E5E7EB',
+                  },
+                ]}
               >
                 <Ionicons name={o.icon as any} size={20} color={active ? '#FFFFFF' : o.color} />
-                <Text style={{ fontSize: 12, fontWeight: '600', color: active ? '#FFFFFF' : '#374151', marginTop: 4 }}>
+                <Text style={[styles.outcomeLabel, { color: active ? '#FFFFFF' : '#374151' }]}>
                   {o.label}
                 </Text>
               </TouchableOpacity>
@@ -209,9 +211,9 @@ export default function LogClimbScreen() {
         </View>
 
         {/* Notes */}
-        <Text style={{ fontSize: 13, fontWeight: '700', color: '#6B7280', letterSpacing: 0.5, marginBottom: 10, textTransform: 'uppercase' }}>Notes (optional)</Text>
+        <Text style={styles.sectionLabel}>Notes (optional)</Text>
         <TextInput
-          style={{ backgroundColor: '#F9FAFB', borderRadius: 12, padding: 14, fontSize: 15, color: '#1F2937', minHeight: 90, textAlignVertical: 'top', borderWidth: 1, borderColor: '#E5E7EB' }}
+          style={styles.notesInput}
           value={notes}
           onChangeText={setNotes}
           placeholder="Beta, feelings, anything..."
@@ -220,25 +222,25 @@ export default function LogClimbScreen() {
           maxLength={300}
         />
 
-        <View style={{ height: 40 }} />
+        <View style={styles.bottomPadding} />
       </ScrollView>
 
       {/* Gym Picker Modal */}
       <Modal visible={showGymPicker} animationType="slide" presentationStyle="pageSheet">
-        <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' }}>
-            <TouchableOpacity onPress={() => { setShowGymPicker(false); setGymSearch(''); }} style={{ width: 36 }}>
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => { setShowGymPicker(false); setGymSearch(''); }} style={styles.modalCloseButton}>
               <Ionicons name="close" size={24} color="#1F2937" />
             </TouchableOpacity>
-            <Text style={{ flex: 1, textAlign: 'center', fontSize: 17, fontWeight: '700', color: '#1F2937' }}>Select Gym</Text>
-            <View style={{ width: 36 }} />
+            <Text style={styles.modalTitle}>Select Gym</Text>
+            <View style={styles.modalHeaderRight} />
           </View>
 
-          <View style={{ paddingHorizontal: 16, paddingVertical: 12 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F3F4F6', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }}>
+          <View style={styles.searchContainer}>
+            <View style={styles.searchBar}>
               <Ionicons name="search-outline" size={18} color="#9CA3AF" />
               <TextInput
-                style={{ flex: 1, marginLeft: 8, fontSize: 15, color: '#1F2937' }}
+                style={styles.searchInput}
                 value={gymSearch}
                 onChangeText={setGymSearch}
                 placeholder="Search gyms..."
@@ -253,14 +255,14 @@ export default function LogClimbScreen() {
               <TouchableOpacity
                 key={gym.id}
                 onPress={() => { setSelectedGym(gym); setShowGymPicker(false); setGymSearch(''); }}
-                style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#F9FAFB' }}
+                style={styles.gymRow}
               >
-                <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: '#FFF4E6', justifyContent: 'center', alignItems: 'center', marginRight: 14 }}>
+                <View style={styles.gymIcon}>
                   <MaterialCommunityIcons name="office-building-outline" size={20} color="#FF8C00" />
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 15, fontWeight: '600', color: '#1F2937' }}>{gym.name}</Text>
-                  <Text style={{ fontSize: 13, color: '#9CA3AF', marginTop: 2 }}>{gym.city}{gym.state ? `, ${gym.state}` : ''}</Text>
+                <View style={styles.gymRowBody}>
+                  <Text style={styles.gymRowName}>{gym.name}</Text>
+                  <Text style={styles.gymRowMeta}>{gym.city}{gym.state ? `, ${gym.state}` : ''}</Text>
                 </View>
                 {selectedGym?.id === gym.id && <Ionicons name="checkmark-circle" size={20} color="#FF8C00" />}
               </TouchableOpacity>

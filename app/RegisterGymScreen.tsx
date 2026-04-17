@@ -17,6 +17,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
+import { Ionicons } from '@expo/vector-icons';
 
 type RegisterGymNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -540,7 +541,7 @@ const handleSubmit = async () => {
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Photos (Optional)</Text>
             <TouchableOpacity style={styles.addPhotoButton} onPress={pickImages}>
-              <Text style={styles.addPhotoIcon}>📸</Text>
+              <Ionicons name="camera-outline" size={24} color="#6B7280" style={{ marginRight: 10 }} />
               <Text style={styles.addPhotoText}>Add Photos</Text>
             </TouchableOpacity>
 

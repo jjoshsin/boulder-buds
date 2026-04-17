@@ -104,10 +104,6 @@ export const styles = StyleSheet.create({
   borderRadius: 12,
   padding: 20,
 },
-addPhotoIcon: {
-  fontSize: 28,
-  marginRight: 12,
-},
 addPhotoText: {
   fontSize: 16,
   color: '#6B7280',

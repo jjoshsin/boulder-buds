@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, LogBox } from 'react-native';
+
+LogBox.ignoreLogs([
+  'expo-notifications: Android Push notifications',
+  '`expo-notifications` functionality is not fully supported in Expo Go',
+]);
 import { AuthContext } from './contexts/AuthContext';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -27,6 +32,7 @@ import ForgotPasswordScreen from './app/ForgotPasswordScreen';
 import * as Notifications from 'expo-notifications';
 import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
+import OnboardingScreen from './app/OnboardingScreen';
 import RegisterGymScreen from './app/RegisterGymScreen';
 import UploadVideoScreen from './app/UploadVideoScreen';
 import VideoPlayerScreen from './app/VideoPlayerScreen';
@@ -63,6 +69,7 @@ export type RootStackParamList = {
   SavedGyms: undefined;
   ForgotPassword: undefined;
   LogClimb: undefined;
+  Onboarding: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -160,6 +167,7 @@ function MainTabs({ onLogout }: { onLogout: () => void }) {
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [hasCompletedProfile, setHasCompletedProfile] = useState(false);
+  const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
   const [currentScreen, setCurrentScreen] = useState<'landing' | 'signup' | 'login'>('landing');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -181,6 +189,8 @@ export default function App() {
         const profileComplete = await authService.checkProfileComplete(user.id);
         console.log('Profile complete:', profileComplete);
         setHasCompletedProfile(profileComplete);
+        const seenOnboarding = await SecureStore.getItemAsync('hasSeenOnboarding');
+        setHasSeenOnboarding(seenOnboarding === 'true');
         registerPushToken();
       }
     } catch (error) {
@@ -193,6 +203,7 @@ export default function App() {
   const handleSignUpSuccess = async () => {
     setIsAuthenticated(true);
     setHasCompletedProfile(false);
+    setHasSeenOnboarding(false);
   };
 
   const handleLoginSuccess = async () => {
@@ -201,6 +212,8 @@ export default function App() {
       const profileComplete = await authService.checkProfileComplete(user.id);
       console.log('After login - Profile complete:', profileComplete);
       setHasCompletedProfile(profileComplete);
+      const seenOnboarding = await SecureStore.getItemAsync('hasSeenOnboarding');
+      setHasSeenOnboarding(seenOnboarding === 'true');
     }
     setIsAuthenticated(true);
     registerPushToken();
@@ -208,6 +221,12 @@ export default function App() {
 
   const handlePersonalizeComplete = async () => {
     setHasCompletedProfile(true);
+    // hasSeenOnboarding stays false so new users see onboarding next
+  };
+
+  const handleOnboardingFinish = async () => {
+    await SecureStore.setItemAsync('hasSeenOnboarding', 'true');
+    setHasSeenOnboarding(true);
   };
 
   const registerPushToken = async () => {
@@ -233,6 +252,7 @@ export default function App() {
     await authService.logout();
     setIsAuthenticated(false);
     setHasCompletedProfile(false);
+    setHasSeenOnboarding(false);
     setCurrentScreen('landing');
   };
 
@@ -291,6 +311,10 @@ export default function App() {
                 </>
               )}
             </>
+          ) : hasCompletedProfile && !hasSeenOnboarding ? (
+            <Stack.Screen name="Onboarding">
+              {() => <OnboardingScreen onFinish={handleOnboardingFinish} />}
+            </Stack.Screen>
           ) : hasCompletedProfile ? (
             <>
               <Stack.Screen name="MainTabs">

@@ -284,7 +284,7 @@ export default function VideoPlayerScreen() {
                   size={14}
                   color={isCommentLiked ? '#EF4444' : '#6B7280'}
                 />
-                <Text style={[styles.commentActionText, { marginLeft: 4 }]}>
+                <Text style={[styles.commentActionText, styles.commentLikeCount]}>
                   {comment.likeCount}
                 </Text>
               </View>

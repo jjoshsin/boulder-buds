@@ -157,8 +157,9 @@ async getGymById(@Param('id') id: string) {
   async updateAmenities(
     @Param('id') id: string,
     @Body() body: { amenities: string[] },
+    @Request() req,
   ) {
-    return this.gymsService.updateAmenities(id, body.amenities);
+    return this.gymsService.updateAmenities(id, body.amenities, req.user.userId);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -171,8 +172,9 @@ async getGymById(@Param('id') id: string) {
       studentDiscountAvailable?: boolean;
       studentDiscountDetails?: string | null;
     },
+    @Request() req,
   ) {
-    return this.gymsService.updatePricing(id, body);
+    return this.gymsService.updatePricing(id, body, req.user.userId);
   }
 
   @Delete(':id')

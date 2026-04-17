@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import authService from '../services/authService';
+import { styles } from '../styles/ForgotPasswordScreen.styles';
 
 export default function ForgotPasswordScreen() {
   const navigation = useNavigation();
@@ -71,49 +72,35 @@ export default function ForgotPasswordScreen() {
     }
   };
 
-  const inputStyle = {
-    backgroundColor: '#F3F4F6',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: '#1F2937',
-    marginBottom: 16,
-  } as const;
-
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+    <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
+        style={styles.keyboardView}
       >
         {/* Header */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8 }}>
+        <View style={styles.header}>
           <TouchableOpacity
             onPress={() => step === 'reset' ? setStep('email') : navigation.goBack()}
-            style={{ width: 40 }}
+            style={styles.backButton}
           >
             <Ionicons name="arrow-back" size={22} color="#1F2937" />
           </TouchableOpacity>
-          <Text style={{ flex: 1, textAlign: 'center', fontSize: 17, fontWeight: '700', color: '#1F2937' }}>
-            Reset Password
-          </Text>
-          <View style={{ width: 40 }} />
+          <Text style={styles.headerTitle}>Reset Password</Text>
+          <View style={styles.headerRight} />
         </View>
 
-        <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 32 }}>
+        <View style={styles.content}>
           {step === 'email' ? (
             <>
-              <Text style={{ fontSize: 24, fontWeight: '700', color: '#1F2937', marginBottom: 8 }}>
-                Forgot your password?
-              </Text>
-              <Text style={{ fontSize: 15, color: '#6B7280', marginBottom: 32, lineHeight: 22 }}>
+              <Text style={styles.title}>Forgot your password?</Text>
+              <Text style={styles.subtitle}>
                 Enter the email address you signed up with and we'll send you a 6-digit reset code.
               </Text>
 
-              <Text style={{ fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 8 }}>Email</Text>
+              <Text style={styles.label}>Email</Text>
               <TextInput
-                style={inputStyle}
+                style={styles.input}
                 value={email}
                 onChangeText={t => { setEmail(t); setError(''); }}
                 placeholder="you@example.com"
@@ -123,42 +110,32 @@ export default function ForgotPasswordScreen() {
                 autoCorrect={false}
               />
 
-              {error ? (
-                <Text style={{ fontSize: 13, color: '#EF4444', marginBottom: 16, marginTop: -8 }}>{error}</Text>
-              ) : null}
+              {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
               <TouchableOpacity
-                style={{
-                  backgroundColor: '#FF8C00',
-                  borderRadius: 14,
-                  paddingVertical: 16,
-                  alignItems: 'center',
-                  opacity: !email || isLoading ? 0.5 : 1,
-                }}
+                style={[styles.primaryButton, { opacity: !email || isLoading ? 0.5 : 1 }]}
                 onPress={handleSendCode}
                 disabled={!email || isLoading}
                 activeOpacity={0.8}
               >
                 {isLoading
                   ? <ActivityIndicator color="#FFFFFF" />
-                  : <Text style={{ fontSize: 16, fontWeight: '700', color: '#FFFFFF' }}>Send Code</Text>
+                  : <Text style={styles.primaryButtonText}>Send Code</Text>
                 }
               </TouchableOpacity>
             </>
           ) : (
             <>
-              <Text style={{ fontSize: 24, fontWeight: '700', color: '#1F2937', marginBottom: 8 }}>
-                Check your email
-              </Text>
-              <Text style={{ fontSize: 15, color: '#6B7280', marginBottom: 32, lineHeight: 22 }}>
+              <Text style={styles.title}>Check your email</Text>
+              <Text style={styles.subtitle}>
                 We sent a code to{' '}
-                <Text style={{ color: '#1F2937', fontWeight: '600' }}>{email}</Text>.
+                <Text style={styles.subtitleBold}>{email}</Text>.
                 Enter it below along with your new password.
               </Text>
 
-              <Text style={{ fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 8 }}>Reset Code</Text>
+              <Text style={styles.label}>Reset Code</Text>
               <TextInput
-                style={{ ...inputStyle, fontSize: 24, letterSpacing: 10, textAlign: 'center' }}
+                style={styles.otpInput}
                 value={otp}
                 onChangeText={t => { setOtp(t.replace(/\D/g, '').slice(0, 6)); setError(''); }}
                 placeholder="000000"
@@ -167,9 +144,9 @@ export default function ForgotPasswordScreen() {
                 maxLength={6}
               />
 
-              <Text style={{ fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 8 }}>New Password</Text>
+              <Text style={styles.label}>New Password</Text>
               <TextInput
-                style={inputStyle}
+                style={styles.input}
                 value={newPassword}
                 onChangeText={t => { setNewPassword(t); setError(''); }}
                 placeholder="At least 6 characters"
@@ -177,9 +154,9 @@ export default function ForgotPasswordScreen() {
                 secureTextEntry
               />
 
-              <Text style={{ fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 8 }}>Confirm Password</Text>
+              <Text style={styles.label}>Confirm Password</Text>
               <TextInput
-                style={inputStyle}
+                style={styles.input}
                 value={confirmPassword}
                 onChangeText={t => { setConfirmPassword(t); setError(''); }}
                 placeholder="Confirm new password"
@@ -187,34 +164,26 @@ export default function ForgotPasswordScreen() {
                 secureTextEntry
               />
 
-              {error ? (
-                <Text style={{ fontSize: 13, color: '#EF4444', marginBottom: 16, marginTop: -8 }}>{error}</Text>
-              ) : null}
+              {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
               <TouchableOpacity
-                style={{
-                  backgroundColor: '#FF8C00',
-                  borderRadius: 14,
-                  paddingVertical: 16,
-                  alignItems: 'center',
-                  opacity: !otp || !newPassword || !confirmPassword || isLoading ? 0.5 : 1,
-                }}
+                style={[styles.primaryButton, { opacity: !otp || !newPassword || !confirmPassword || isLoading ? 0.5 : 1 }]}
                 onPress={handleResetPassword}
                 disabled={!otp || !newPassword || !confirmPassword || isLoading}
                 activeOpacity={0.8}
               >
                 {isLoading
                   ? <ActivityIndicator color="#FFFFFF" />
-                  : <Text style={{ fontSize: 16, fontWeight: '700', color: '#FFFFFF' }}>Reset Password</Text>
+                  : <Text style={styles.primaryButtonText}>Reset Password</Text>
                 }
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={{ marginTop: 20, alignItems: 'center' }}
+                style={styles.resendButton}
                 onPress={handleSendCode}
                 disabled={isLoading}
               >
-                <Text style={{ fontSize: 14, color: '#FF8C00', fontWeight: '600' }}>Resend Code</Text>
+                <Text style={styles.resendText}>Resend Code</Text>
               </TouchableOpacity>
             </>
           )}

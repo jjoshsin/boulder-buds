@@ -168,6 +168,9 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  commentLikeCount: {
+    marginLeft: 4,
+  },
   actionCount: {
     fontSize: 13,
     fontWeight: '600',
