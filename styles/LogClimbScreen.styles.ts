@@ -124,6 +124,49 @@ export const styles = StyleSheet.create({
   bottomPadding: {
     height: 40,
   },
+  attachVideoButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    borderStyle: 'dashed',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    backgroundColor: '#F9FAFB',
+  },
+  attachVideoText: {
+    flex: 1,
+    fontSize: 15,
+    color: '#6B7280',
+    marginLeft: 10,
+  },
+  videoPreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#FF8C00',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#FFF7ED',
+  },
+  videoPreviewText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FF8C00',
+    marginLeft: 10,
+  },
+  videoPreviewSub: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    marginLeft: 10,
+    marginTop: 2,
+  },
+  removeVideoButton: {
+    padding: 4,
+  },
   // Gym modal
   modalContainer: {
     flex: 1,
@@ -196,6 +239,25 @@ export const styles = StyleSheet.create({
   gymRowMeta: {
     fontSize: 13,
     color: '#9CA3AF',
+    marginTop: 2,
+  },
+  registerGymRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    marginTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+  },
+  registerGymText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  registerGymSub: {
+    fontSize: 13,
+    color: '#FF8C00',
     marginTop: 2,
   },
 });

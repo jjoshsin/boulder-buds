@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 
 export const styles = StyleSheet.create({
   loadingContainer: {
@@ -191,5 +191,205 @@ export const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 20,
+  },
+  // Log detail modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
+  },
+  modalSheet: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingBottom: 40,
+    maxHeight: '85%',
+  },
+  modalHandle: {
+    width: 36,
+    height: 4,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  modalTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#1F2937',
+  },
+  modalEditButton: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#FF8C00',
+  },
+  modalCloseButton: {
+    padding: 4,
+  },
+  modalBody: {
+    padding: 20,
+  },
+  detailGradeBadge: {
+    width: 72,
+    height: 72,
+    borderRadius: 18,
+    backgroundColor: '#FFF4E6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  detailGradeText: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#FF8C00',
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F9FAFB',
+  },
+  detailLabel: {
+    fontSize: 13,
+    color: '#9CA3AF',
+    width: 80,
+  },
+  detailValue: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1F2937',
+    flex: 1,
+  },
+  videoThumb: {
+    marginTop: 16,
+    borderRadius: 14,
+    overflow: 'hidden',
+    height: 180,
+    backgroundColor: '#000',
+  },
+  videoThumbImage: {
+    width: '100%',
+    height: '100%',
+  },
+  videoPlayOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+  },
+  editFieldLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginBottom: 6,
+    marginTop: 14,
+  },
+  editNotesInput: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 15,
+    color: '#1F2937',
+    minHeight: 80,
+    textAlignVertical: 'top',
+    backgroundColor: '#F9FAFB',
+  },
+  editGradeScroll: {
+    marginBottom: 4,
+  },
+  editGradeList: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingVertical: 4,
+  },
+  editGradeChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1.5,
+  },
+  editGradeChipText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  editOutcomeRow: {
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  editOutcomeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    gap: 6,
+  },
+  editOutcomeText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  saveEditButton: {
+    marginTop: 20,
+    backgroundColor: '#FF8C00',
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  saveEditButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  videoIconBadge: {
+    marginLeft: 8,
+  },
+  editVideoAttach: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    borderStyle: 'dashed',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    backgroundColor: '#F9FAFB',
+    gap: 8,
+  },
+  editVideoAttachText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  editVideoPreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#FF8C00',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    backgroundColor: '#FFF7ED',
+    gap: 8,
+  },
+  editVideoText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#FF8C00',
   },
 });

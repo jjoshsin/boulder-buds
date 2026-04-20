@@ -19,6 +19,8 @@ export class VideosService {
     videoUrl: string;
     thumbnailUrl: string;
     caption?: string;
+    climbLogId?: string;
+    isShared?: boolean;
   }) {
     const video = await this.prisma.video.create({
       data: {
@@ -27,6 +29,8 @@ export class VideosService {
         videoUrl: data.videoUrl,
         thumbnailUrl: data.thumbnailUrl,
         caption: data.caption,
+        climbLogId: data.climbLogId,
+        isShared: data.isShared ?? true,
       },
       include: {
         user: {
@@ -49,7 +53,7 @@ export class VideosService {
 
   async getGymVideos(gymId: string, sortBy: SortOption = 'mostRecent', limit?: number) {
     const videos = await this.prisma.video.findMany({
-      where: { gymId },
+      where: { gymId, isShared: true },
       include: {
         user: {
           select: {

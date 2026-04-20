@@ -132,35 +132,93 @@ async getAllGyms() {
 }
 
 async getPopularGyms(climbingType?: string) {
-  const gyms = await this.prisma.gym.findMany({
-    where: climbingType ? {
-      climbingTypes: { has: climbingType },
-    } : {},
-    include: {
-      reviews: {
-        select: { overallRating: true },
-      },
-    },
-    take: 10,
-  });
+  const weekStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+  const gymFilter = climbingType ? { climbingTypes: { has: climbingType } } : {};
+
+  // Fetch all four activity signals in parallel
+  const [gyms, weeklyReviews, weeklyLogs, weeklySaves, weeklyVideoLikes] = await Promise.all([
+    this.prisma.gym.findMany({
+      where: gymFilter,
+      include: { reviews: { select: { overallRating: true } } },
+    }),
+
+    // New reviews this week per gym (10 pts each)
+    this.prisma.review.groupBy({
+      by: ['gymId'],
+      where: { createdAt: { gte: weekStart }, ...(gymFilter.climbingTypes ? {} : {}) },
+      _count: { id: true },
+    }),
+
+    // Climb logs this week per gym (8 pts each)
+    this.prisma.climbLog.groupBy({
+      by: ['gymId'],
+      where: { createdAt: { gte: weekStart } },
+      _count: { id: true },
+    }),
+
+    // Saves this week per gym (5 pts each)
+    this.prisma.savedGym.groupBy({
+      by: ['gymId'],
+      where: { createdAt: { gte: weekStart } },
+      _count: { id: true },
+    }),
+
+    // Video likes this week per gym (3 pts each) — join through videos
+    this.prisma.videoLike.groupBy({
+      by: ['videoId'],
+      where: { createdAt: { gte: weekStart } },
+      _count: { id: true },
+    }).then(async (likesPerVideo) => {
+      if (likesPerVideo.length === 0) return {} as Record<string, number>;
+      const videoIds = likesPerVideo.map(v => v.videoId);
+      const videos = await this.prisma.video.findMany({
+        where: { id: { in: videoIds } },
+        select: { id: true, gymId: true },
+      });
+      const gymLikes: Record<string, number> = {};
+      for (const v of videos) {
+        const entry = likesPerVideo.find(l => l.videoId === v.id);
+        gymLikes[v.gymId] = (gymLikes[v.gymId] || 0) + (entry?._count.id || 0);
+      }
+      return gymLikes;
+    }),
+  ]);
+
+  // Build lookup maps
+  const reviewMap = Object.fromEntries(weeklyReviews.map(r => [r.gymId, r._count.id]));
+  const logMap    = Object.fromEntries(weeklyLogs.map(l => [l.gymId, l._count.id]));
+  const saveMap   = Object.fromEntries(weeklySaves.map(s => [s.gymId, s._count.id]));
 
   return gyms
-    .map(gym => ({
-      id: gym.id,
-      name: gym.name,
-      city: gym.city,
-      state: gym.state,
-      officialPhotos: gym.officialPhotos,
-      rating: this.calculateAverageRating(gym.reviews),
-      reviewCount: gym.reviews.length,
-      tags: gym.amenities.slice(0, 2),
-      climbingTypes: gym.climbingTypes,
-      dayPassPrice: gym.dayPassPrice,
-      monthlyMembershipPrice: gym.monthlyMembershipPrice,
-      studentDiscountAvailable: gym.studentDiscountAvailable,
-      studentDiscountDetails: gym.studentDiscountDetails,
-    }))
-    .sort((a, b) => b.reviewCount - a.reviewCount);
+    .map(gym => {
+      const rating = this.calculateAverageRating(gym.reviews);
+      const weeklyScore =
+        (reviewMap[gym.id]       || 0) * 10 +
+        (logMap[gym.id]          || 0) * 8  +
+        (saveMap[gym.id]         || 0) * 5  +
+        (weeklyVideoLikes[gym.id] || 0) * 3 +
+        (rating || 0) * 2; // small rating boost as tiebreaker
+
+      return {
+        id: gym.id,
+        name: gym.name,
+        city: gym.city,
+        state: gym.state,
+        officialPhotos: gym.officialPhotos,
+        amenities: gym.amenities,
+        rating,
+        reviewCount: gym.reviews.length,
+        climbingTypes: gym.climbingTypes,
+        dayPassPrice: gym.dayPassPrice,
+        monthlyMembershipPrice: gym.monthlyMembershipPrice,
+        studentDiscountAvailable: gym.studentDiscountAvailable,
+        studentDiscountDetails: gym.studentDiscountDetails,
+        weeklyScore,
+      };
+    })
+    .sort((a, b) => b.weeklyScore - a.weeklyScore)
+    .slice(0, 10);
 }
 
 async getNearbyGyms(climbingType?: string) {

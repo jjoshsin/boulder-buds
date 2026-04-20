@@ -11,9 +11,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../App';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import climbLogService from '../services/climbLogService';
 import gymService, { Gym } from '../services/gymService';
+import videoService from '../services/videoService';
 import { styles } from '../styles/LogClimbScreen.styles';
 
 const BOULDER_GRADES = [
@@ -39,7 +43,7 @@ const OUTCOMES: { value: 'sent' | 'flash' | 'onsight' | 'project'; label: string
 ];
 
 export default function LogClimbScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const [climbType, setClimbType] = useState<'boulder' | 'rope'>('boulder');
   const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
@@ -50,6 +54,9 @@ export default function LogClimbScreen() {
   const [gyms, setGyms] = useState<Gym[]>([]);
   const [gymSearch, setGymSearch] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [attachedVideo, setAttachedVideo] = useState<{ uri: string; filename: string } | null>(null);
+  const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'done' | 'error'>('idle');
+  const [uploadResult, setUploadResult] = useState<{ videoUrl: string; thumbnailUrl: string } | null>(null);
 
   const grades = climbType === 'boulder' ? BOULDER_GRADES : ROPE_GRADES;
 
@@ -77,25 +84,112 @@ export default function LogClimbScreen() {
 
   const canSave = selectedGym && selectedGrade && selectedOutcome;
 
+  const handlePickVideo = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission needed', 'Allow access to your photo library to attach a video.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+      videoMaxDuration: 120,
+      videoExportPreset: ImagePicker.VideoExportPreset.H264_1920x1080,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      const asset = result.assets[0];
+      const filename = asset.uri.split('/').pop() || 'video.mp4';
+      setAttachedVideo({ uri: asset.uri, filename });
+      setUploadResult(null);
+
+      // Start uploading immediately in the background
+      setUploadState('uploading');
+      videoService.uploadVideo(asset.uri)
+        .then(res => {
+          setUploadResult(res);
+          setUploadState('done');
+        })
+        .catch(() => {
+          setUploadState('error');
+        });
+    }
+  };
+
   const handleSave = async () => {
     if (!canSave) return;
     setIsSaving(true);
     try {
-      await climbLogService.createLog({
+      const log = await climbLogService.createLog({
         gymId: selectedGym!.id,
         climbType,
         grade: selectedGrade!,
         outcome: selectedOutcome!,
         notes: notes.trim() || undefined,
       });
-      Alert.alert('Logged!', `${selectedGrade} ${selectedOutcome} at ${selectedGym!.name}`, [
-        { text: 'OK', onPress: () => navigation.goBack() },
-      ]);
+
+      if (attachedVideo) {
+        // Use cached upload result; if still uploading wait for it
+        let result = uploadResult;
+        if (!result) {
+          if (uploadState === 'error') {
+            Alert.alert('Upload failed', 'The video failed to upload. Remove it and try again.');
+            return;
+          }
+          // Still in progress — wait (rare since upload started when video was picked)
+          Alert.alert('Please wait', 'Your video is still uploading. Try again in a moment.');
+          return;
+        }
+        const { videoUrl, thumbnailUrl } = result;
+
+        const gymName = selectedGym!.name;
+        Alert.alert(
+          'Share to gym feed?',
+          `Do you want to share this clip to ${gymName}'s video feed so others can see it?`,
+          [
+            {
+              text: 'Share',
+              onPress: async () => {
+                await videoService.createVideo({
+                  gymId: selectedGym!.id,
+                  videoUrl,
+                  thumbnailUrl,
+                  climbLogId: log.id,
+                  isShared: true,
+                });
+                showSuccessAlert(log.grade, log.outcome, gymName);
+              },
+            },
+            {
+              text: 'Keep Private',
+              onPress: async () => {
+                await videoService.createVideo({
+                  gymId: selectedGym!.id,
+                  videoUrl,
+                  thumbnailUrl,
+                  climbLogId: log.id,
+                  isShared: false,
+                });
+                showSuccessAlert(log.grade, log.outcome, gymName);
+              },
+            },
+          ],
+          { cancelable: false },
+        );
+      } else {
+        showSuccessAlert(selectedGrade!, selectedOutcome!, selectedGym!.name);
+      }
     } catch (err: any) {
       Alert.alert('Error', err.message || 'Failed to save log');
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const showSuccessAlert = (grade: string, outcome: string, gymName: string) => {
+    Alert.alert('Logged!', `${grade} ${outcome} at ${gymName}`, [
+      { text: 'OK', onPress: () => navigation.goBack() },
+    ]);
   };
 
   return (
@@ -222,6 +316,35 @@ export default function LogClimbScreen() {
           maxLength={300}
         />
 
+        {/* Attach Video */}
+        <Text style={styles.sectionLabel}>Video (optional)</Text>
+        {attachedVideo ? (
+          <View style={styles.videoPreview}>
+            {uploadState === 'uploading'
+              ? <ActivityIndicator size="small" color="#FF8C00" />
+              : <Ionicons name={uploadState === 'error' ? 'alert-circle' : 'checkmark-circle'} size={22} color={uploadState === 'error' ? '#EF4444' : '#10B981'} />
+            }
+            <View style={{ flex: 1 }}>
+              <Text style={styles.videoPreviewText} numberOfLines={1}>{attachedVideo.filename}</Text>
+              <Text style={styles.videoPreviewSub}>
+                {uploadState === 'uploading' ? 'Uploading...' : uploadState === 'error' ? 'Upload failed — remove and retry' : 'Ready'}
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => { setAttachedVideo(null); setUploadResult(null); setUploadState('idle'); }}
+              style={styles.removeVideoButton}
+            >
+              <Ionicons name="close-circle" size={22} color="#9CA3AF" />
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity style={styles.attachVideoButton} onPress={handlePickVideo}>
+            <Ionicons name="videocam-outline" size={22} color="#9CA3AF" />
+            <Text style={styles.attachVideoText}>Attach a clip of your climb</Text>
+            <Ionicons name="add-circle-outline" size={20} color="#9CA3AF" />
+          </TouchableOpacity>
+        )}
+
         <View style={styles.bottomPadding} />
       </ScrollView>
 
@@ -245,7 +368,7 @@ export default function LogClimbScreen() {
                 onChangeText={setGymSearch}
                 placeholder="Search gyms..."
                 placeholderTextColor="#9CA3AF"
-                autoFocus
+                autoFocus={false}
               />
             </View>
           </View>
@@ -267,6 +390,25 @@ export default function LogClimbScreen() {
                 {selectedGym?.id === gym.id && <Ionicons name="checkmark-circle" size={20} color="#FF8C00" />}
               </TouchableOpacity>
             ))}
+
+            {/* Register gym footer */}
+            <TouchableOpacity
+              style={styles.registerGymRow}
+              onPress={() => {
+                setShowGymPicker(false);
+                setGymSearch('');
+                navigation.navigate('RegisterGym');
+              }}
+            >
+              <View style={[styles.gymIcon, { backgroundColor: '#F3F4F6' }]}>
+                <Ionicons name="add-circle-outline" size={20} color="#6B7280" />
+              </View>
+              <View style={styles.gymRowBody}>
+                <Text style={styles.registerGymText}>Don't see your gym?</Text>
+                <Text style={styles.registerGymSub}>Register it here</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+            </TouchableOpacity>
           </ScrollView>
         </SafeAreaView>
       </Modal>

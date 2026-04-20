@@ -157,6 +157,9 @@ model Video {
   userId       String
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   views        Int      @default(0)
+  isShared     Boolean  @default(true)
+  climbLogId   String?  @unique
+  climbLog     ClimbLog? @relation(fields: [climbLogId], references: [id], onDelete: SetNull)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -293,6 +296,7 @@ model ClimbLog {
   notes     String?
   date      DateTime @default(now())
   createdAt DateTime @default(now())
+  video     Video?
 
   @@index([userId])
   @@index([gymId])

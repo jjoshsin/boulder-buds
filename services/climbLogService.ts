@@ -13,6 +13,7 @@ export interface ClimbLog {
   notes?: string;
   date: string;
   createdAt: string;
+  video?: { id: string; thumbnailUrl: string; videoUrl: string };
 }
 
 export interface FriendClimbLog extends ClimbLog {
@@ -84,6 +85,16 @@ class ClimbLogService {
       headers: await this.getHeaders(),
     });
     if (!response.ok) throw new Error('Failed to fetch logs');
+    return response.json();
+  }
+
+  async updateLog(logId: string, data: { grade?: string; outcome?: string; notes?: string }): Promise<ClimbLog> {
+    const response = await fetch(`${API_URL}/climb-logs/${logId}`, {
+      method: 'PATCH',
+      headers: await this.getHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update log');
     return response.json();
   }
 

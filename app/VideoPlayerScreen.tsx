@@ -52,8 +52,11 @@ export default function VideoPlayerScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const [keyboardHeight] = useState(new Animated.Value(0));
   const [hearts, setHearts] = useState<HeartAnim[]>([]);
+  const [progress, setProgress] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
   const heartIdRef = useRef(0);
-  const lastTapRef = useRef<{ time: number } | null>(null);
+  const lastTapRef = useRef<{ time: number; timer?: ReturnType<typeof setTimeout> } | null>(null);
+  const progressBarWidth = useRef(0);
 
 
   useEffect(() => {
@@ -144,16 +147,50 @@ export default function VideoPlayerScreen() {
     });
   };
 
+  // Poll playback progress every 250ms
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (player.duration > 0) {
+        setProgress(player.currentTime / player.duration);
+      }
+    }, 250);
+    return () => clearInterval(interval);
+  }, [player]);
+
+  const handleSeek = (x: number) => {
+    if (!progressBarWidth.current || !player.duration) return;
+    const ratio = Math.max(0, Math.min(1, x / progressBarWidth.current));
+    const targetTime = ratio * player.duration;
+    player.seekBy(targetTime - player.currentTime);
+  };
+
+  const togglePlayPause = () => {
+    if (isPaused) {
+      player.play();
+      setIsPaused(false);
+    } else {
+      player.pause();
+      setIsPaused(true);
+    }
+  };
+
   const handleTap = (event: GestureResponderEvent) => {
     const now = Date.now();
     const { locationX, locationY } = event.nativeEvent;
 
     if (lastTapRef.current && now - lastTapRef.current.time < 300) {
+      // Double tap — cancel single-tap timer and like
+      if (lastTapRef.current.timer) clearTimeout(lastTapRef.current.timer);
       lastTapRef.current = null;
       spawnHeart(locationX, locationY);
       if (!isLiked) handleLike();
     } else {
-      lastTapRef.current = { time: now };
+      // Wait to confirm it's not a double tap
+      const timer = setTimeout(() => {
+        togglePlayPause();
+        lastTapRef.current = null;
+      }, 300);
+      lastTapRef.current = { time: now, timer };
     }
   };
 
@@ -335,9 +372,31 @@ export default function VideoPlayerScreen() {
         <VideoView
           style={styles.video}
           player={player}
-          allowsPictureInPicture
-          nativeControls
+          nativeControls={false}
         />
+
+        {/* Play icon shown while paused */}
+        {isPaused && (
+          <View pointerEvents="none" style={styles.playPauseOverlay}>
+            <View style={styles.playPauseCircle}>
+              <Ionicons name="play" size={36} color="#FFFFFF" />
+            </View>
+          </View>
+        )}
+
+        {/* Scrubber bar */}
+        <View
+          style={styles.scrubberContainer}
+          onLayout={(e) => { progressBarWidth.current = e.nativeEvent.layout.width; }}
+          onStartShouldSetResponder={() => true}
+          onResponderGrant={(e) => handleSeek(e.nativeEvent.locationX)}
+          onResponderMove={(e) => handleSeek(e.nativeEvent.locationX)}
+        >
+          <View style={styles.scrubberTrack}>
+            <View style={[styles.scrubberFill, { width: `${progress * 100}%` as any }]} />
+          </View>
+          <View style={[styles.scrubberThumb, { left: `${progress * 100}%` as any }]} />
+        </View>
 
         {/* Double-tap heart animations */}
         {hearts.map(heart => (

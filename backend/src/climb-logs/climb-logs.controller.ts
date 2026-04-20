@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Body, Param, Request, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Patch, Body, Param, Request, UseGuards, Query } from '@nestjs/common';
 import { ClimbLogsService } from './climb-logs.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -40,6 +40,15 @@ export class ClimbLogsController {
   @Get('user/:userId')
   async getUserLogs(@Param('userId') userId: string, @Query('limit') limit?: string) {
     return this.climbLogsService.getUserLogs(userId, limit ? parseInt(limit) : 50);
+  }
+
+  @Patch(':id')
+  async updateLog(
+    @Param('id') id: string,
+    @Request() req,
+    @Body() body: { grade?: string; outcome?: string; notes?: string },
+  ) {
+    return this.climbLogsService.updateLog(id, req.user.userId, body);
   }
 
   @Delete(':id')

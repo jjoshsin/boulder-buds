@@ -208,8 +208,8 @@ export const styles = StyleSheet.create({
     marginTop: 16,
   },
   primaryButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '700',
     color: '#FFFFFF',
   },
   uploadVideoButton: {

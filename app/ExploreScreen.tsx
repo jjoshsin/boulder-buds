@@ -241,15 +241,15 @@ export default function ExploreScreen() {
 
         {gym.amenities && gym.amenities.length > 0 && (
           <View style={styles.amenitiesRow}>
-            {gym.amenities.slice(0, 3).map((amenity, index) => (
+            {gym.amenities.slice(0, 2).map((amenity, index) => (
               <View key={index} style={styles.amenityBadge}>
                 <Text style={styles.amenityBadgeText}>
                   {amenity.replace(/_/g, ' ')}
                 </Text>
               </View>
             ))}
-            {gym.amenities.length > 3 && (
-              <Text style={styles.moreAmenities}>+{gym.amenities.length - 3}</Text>
+            {gym.amenities.length > 2 && (
+              <Text style={styles.moreAmenities}>+{gym.amenities.length - 2}</Text>
             )}
           </View>
         )}

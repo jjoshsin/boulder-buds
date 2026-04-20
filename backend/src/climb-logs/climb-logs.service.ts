@@ -35,9 +35,24 @@ export class ClimbLogsService {
       where: { userId },
       include: {
         gym: { select: { id: true, name: true, city: true, state: true } },
+        video: { select: { id: true, thumbnailUrl: true, videoUrl: true } },
       },
       orderBy: { date: 'desc' },
       take: limit,
+    });
+  }
+
+  async updateLog(logId: string, userId: string, data: { grade?: string; outcome?: string; notes?: string }) {
+    const log = await this.prisma.climbLog.findUnique({ where: { id: logId } });
+    if (!log) throw new NotFoundException('Log not found');
+    if (log.userId !== userId) throw new UnauthorizedException('Not your log');
+    return this.prisma.climbLog.update({
+      where: { id: logId },
+      data,
+      include: {
+        gym: { select: { id: true, name: true, city: true, state: true } },
+        video: { select: { id: true, thumbnailUrl: true, videoUrl: true } },
+      },
     });
   }
 

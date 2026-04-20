@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { FontAwesome } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
@@ -96,9 +97,12 @@ const loadNearbyGyms = async () => {
         <Text style={styles.gymName}>{gym.name}</Text>
         
         <View style={styles.gymMeta}>
-          <Text style={styles.gymRating}>
-            ⭐ {gym.rating ? gym.rating.toFixed(1) : 'New'}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <FontAwesome name="star" size={12} color="#FF8C00" />
+            <Text style={styles.gymRating}>
+              {gym.rating ? gym.rating.toFixed(1) : 'New'}
+            </Text>
+          </View>
           <Text style={styles.gymSeparator}>•</Text>
           <Text style={styles.gymReviews}>
             {gym.reviewCount || 0} {gym.reviewCount === 1 ? 'review' : 'reviews'}
@@ -115,15 +119,15 @@ const loadNearbyGyms = async () => {
 
         {gym.amenities && gym.amenities.length > 0 && (
           <View style={styles.amenitiesRow}>
-            {gym.amenities.slice(0, 3).map((amenity, index) => (
+            {gym.amenities.slice(0, 2).map((amenity, index) => (
               <View key={index} style={styles.amenityBadge}>
                 <Text style={styles.amenityBadgeText}>
                   {amenity.replace(/_/g, ' ')}
                 </Text>
               </View>
             ))}
-            {gym.amenities.length > 3 && (
-              <Text style={styles.moreAmenities}>+{gym.amenities.length - 3}</Text>
+            {gym.amenities.length > 2 && (
+              <Text style={styles.moreAmenities}>+{gym.amenities.length - 2}</Text>
             )}
           </View>
         )}

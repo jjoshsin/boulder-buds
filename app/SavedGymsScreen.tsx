@@ -117,15 +117,15 @@ export default function SavedGymsScreen() {
 
         {savedGym.gym.amenities && savedGym.gym.amenities.length > 0 && (
           <View style={styles.amenitiesRow}>
-            {savedGym.gym.amenities.slice(0, 3).map((amenity, index) => (
+            {savedGym.gym.amenities.slice(0, 2).map((amenity, index) => (
               <View key={index} style={styles.amenityBadge}>
                 <Text style={styles.amenityBadgeText}>
                   {amenity.replace(/_/g, ' ')}
                 </Text>
               </View>
             ))}
-            {savedGym.gym.amenities.length > 3 && (
-              <Text style={styles.moreAmenities}>+{savedGym.gym.amenities.length - 3}</Text>
+            {savedGym.gym.amenities.length > 2 && (
+              <Text style={styles.moreAmenities}>+{savedGym.gym.amenities.length - 2}</Text>
             )}
           </View>
         )}

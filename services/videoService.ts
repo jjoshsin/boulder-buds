@@ -97,6 +97,8 @@ async uploadVideo(videoUri: string): Promise<{ videoUrl: string; thumbnailUrl: s
     videoUrl: string;
     thumbnailUrl: string;
     caption?: string;
+    climbLogId?: string;
+    isShared?: boolean;
   }): Promise<Video> {
     const token = await SecureStore.getItemAsync('authToken');
 

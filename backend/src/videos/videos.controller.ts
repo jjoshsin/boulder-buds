@@ -15,6 +15,8 @@ export class VideosController {
       videoUrl: string;
       thumbnailUrl: string;
       caption?: string;
+      climbLogId?: string;
+      isShared?: boolean;
     },
   ) {
     return this.videosService.createVideo({
