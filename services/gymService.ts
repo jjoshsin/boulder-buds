@@ -25,6 +25,7 @@ export interface Gym {
   registeredByUser?: {
     id: string;
     displayName: string;
+    profilePhoto?: string;
   };
   dayPassPrice?: number | null;
   monthlyMembershipPrice?: number | null;
@@ -41,6 +42,7 @@ export interface CommunityPhoto {
   user: {
     id: string;
     displayName: string;
+    profilePhoto?: string;
   };
 }
 
@@ -50,8 +52,16 @@ export interface Review {
   reviewText?: string;
   tags?: string[];
   createdAt: string;
+  userId?: string;
+  setting?: string;
+  difficulty?: string;
+  photos?: string[];
+  likes?: { userId: string }[];
+  likeCount?: number;
   user: {
+    id?: string;
     displayName: string;
+    profilePhoto?: string;
   };
 }
 

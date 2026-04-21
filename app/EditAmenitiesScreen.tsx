@@ -69,12 +69,7 @@ export default function EditAmenitiesScreen({
       );
 
       if (response.ok) {
-        Alert.alert('Success', 'Amenities updated!', [
-          {
-            text: 'OK',
-            onPress: onClose,
-          },
-        ]);
+        onClose();
       } else {
         throw new Error('Failed to update amenities');
       }

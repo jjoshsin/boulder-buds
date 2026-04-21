@@ -31,6 +31,7 @@ async createReview(data: {
         select: {
           id: true,
           displayName: true,
+          profilePhoto: true,
         },
       },
     },
@@ -75,6 +76,7 @@ async updateReview(reviewId: string, userId: string, data: {
         select: {
           id: true,
           displayName: true,
+          profilePhoto: true,
         },
       },
     },

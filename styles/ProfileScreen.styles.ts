@@ -181,48 +181,27 @@ settingsButtonText: {
     fontSize: 13,
     color: '#6B7280',
   },
-  reviewRating: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
+  reviewOptionsButton: {
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  reviewOptionsText: {
+    fontSize: 20,
+    color: '#9CA3AF',
+  },
+  reviewStarsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
   },
   reviewText: {
     fontSize: 15,
     color: '#374151',
     lineHeight: 22,
     marginBottom: 12,
-  },
-  reviewTags: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 12,
-  },
-  reviewFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  reviewDate: {
-    fontSize: 13,
-    color: '#9CA3AF',
-  },
-  reviewActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  reviewActionText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#3B82F6',
-  },
-  reviewActionDelete: {
-    color: '#EF4444',
-  },
-  reviewActionSeparator: {
-    fontSize: 14,
-    color: '#D1D5DB',
-    marginHorizontal: 8,
   },
   photosGrid: {
     flexDirection: 'row',
@@ -306,6 +285,7 @@ reviewTagsRow: {
   flexDirection: 'row',
   gap: 8,
   marginBottom: 12,
+  alignSelf: 'flex-start',
 },
 reviewTag: {
   paddingHorizontal: 12,

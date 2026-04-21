@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
   TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Modal } from 'react-native';
 import { RootStackParamList } from '../App';
@@ -24,6 +24,9 @@ import PhotoGrid from './components/PhotoGrid';
 import videoService, { Video as VideoType } from '../services/videoService';
 import favoritesService from '../services/favoritesService';
 import { FontAwesome, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import OptionsPopover from './components/OptionsPopover';
+import ConfirmDeleteModal from './components/ConfirmDeleteModal';
+import UserAvatar from './components/UserAvatar';
 
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -46,9 +49,21 @@ export default function GymDetailScreen() {
   const [isSavingPricing, setIsSavingPricing] = useState(false);
   const [videos, setVideos] = useState<VideoType[]>([]);
   const [isSaved, setIsSaved] = useState(false);
+  const [showReviewOptions, setShowReviewOptions] = useState(false);
+  const [reviewOptionsAnchor, setReviewOptionsAnchor] = useState<{ x: number; y: number } | null>(null);
+  const [selectedReview, setSelectedReview] = useState<any | null>(null);
+  const [showDeleteReviewConfirm, setShowDeleteReviewConfirm] = useState(false);
+  const [showDeleteGymConfirm, setShowDeleteGymConfirm] = useState(false);
+  const [isDeletingReview, setIsDeletingReview] = useState(false);
+  const [isDeletingGym, setIsDeletingGym] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchGymDetails();
+    }, [gymId])
+  );
 
   useEffect(() => {
-    fetchGymDetails();
     loadCurrentUser();
     checkIfSaved();
   }, [gymId]);
@@ -109,76 +124,47 @@ export default function GymDetailScreen() {
     }
   };
 
-  const handleDeleteReview = async (reviewId: string) => {
-    Alert.alert(
-      'Delete Review',
-      'Are you sure you want to delete this review?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const token = await SecureStore.getItemAsync('authToken');
-              const response = await fetch(`http://192.168.1.166:3000/reviews/${reviewId}`, {
-                method: 'DELETE',
-                headers: {
-                  'Authorization': `Bearer ${token}`,
-                },
-              });
-
-              if (!response.ok) {
-                throw new Error('Failed to delete review');
-              }
-
-              Alert.alert('Success', 'Review deleted');
-              fetchGymDetails();
-            } catch (error) {
-              console.error('Delete review error:', error);
-              Alert.alert('Error', 'Failed to delete review');
-            }
-          },
-        },
-      ]
-    );
+  const confirmDeleteReview = async () => {
+    if (!selectedReview) return;
+    setIsDeletingReview(true);
+    try {
+      const token = await SecureStore.getItemAsync('authToken');
+      const response = await fetch(`http://192.168.1.166:3000/reviews/${selectedReview.id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error('Failed to delete review');
+      setShowDeleteReviewConfirm(false);
+      setSelectedReview(null);
+      fetchGymDetails();
+    } catch (error) {
+      console.error('Delete review error:', error);
+      Alert.alert('Error', 'Failed to delete review');
+    } finally {
+      setIsDeletingReview(false);
+    }
   };
 
-  const handleDeleteGym = async () => {
-    Alert.alert(
-      'Delete Gym',
-      'Are you sure you want to delete this gym? This will permanently remove all reviews, photos, and videos associated with it.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const token = await SecureStore.getItemAsync('authToken');
-              const response = await fetch(`http://192.168.1.166:3000/gyms/${gymId}`, {
-                method: 'DELETE',
-                headers: {
-                  'Authorization': `Bearer ${token}`,
-                },
-              });
-
-              if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || 'Failed to delete gym');
-              }
-
-              Alert.alert('Deleted', 'Gym deleted successfully', [
-                { text: 'OK', onPress: () => navigation.navigate('MainTabs') }
-              ]);
-            } catch (error: any) {
-              console.error('Delete gym error:', error);
-              Alert.alert('Error', error.message || 'Failed to delete gym');
-            }
-          },
-        },
-      ]
-    );
+  const confirmDeleteGym = async () => {
+    setIsDeletingGym(true);
+    try {
+      const token = await SecureStore.getItemAsync('authToken');
+      const response = await fetch(`http://192.168.1.166:3000/gyms/${gymId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to delete gym');
+      }
+      setShowDeleteGymConfirm(false);
+      navigation.navigate('MainTabs');
+    } catch (error: any) {
+      console.error('Delete gym error:', error);
+      Alert.alert('Error', error.message || 'Failed to delete gym');
+    } finally {
+      setIsDeletingGym(false);
+    }
   };
 
   const handleSavePricing = async () => {
@@ -219,8 +205,11 @@ export default function GymDetailScreen() {
     return <MaterialCommunityIcons name="star-outline" size={20} color="#FF8C00" />;
   };
 
-  const getPriceRangeText = (priceRange: number) => {
-    return '$'.repeat(priceRange);
+  const getPriceRangeText = (dayPassPrice?: number | null): string | null => {
+    if (dayPassPrice == null) return null;
+    if (dayPassPrice <= 20) return '$';
+    if (dayPassPrice <= 30) return '$$';
+    return '$$$';
   };
 
   if (isLoading) {
@@ -317,8 +306,12 @@ export default function GymDetailScreen() {
             <Text style={styles.reviewCount}>
               ({gym.reviewCount || 0} {gym.reviewCount === 1 ? 'review' : 'reviews'})
             </Text>
-            <Text style={styles.separator}>•</Text>
-            <Text style={styles.priceRange}>{getPriceRangeText(gym.priceRange || 2)}</Text>
+            {getPriceRangeText(gym.dayPassPrice) && (
+              <>
+                <Text style={styles.separator}>•</Text>
+                <Text style={styles.priceRange}>{getPriceRangeText(gym.dayPassPrice)}</Text>
+              </>
+            )}
           </View>
         </View>
 
@@ -357,7 +350,7 @@ export default function GymDetailScreen() {
         {gym.registeredByUser && gym.registeredByUser.id === currentUserId && (
           <TouchableOpacity
             style={styles.deleteGymButton}
-            onPress={handleDeleteGym}
+            onPress={() => setShowDeleteGymConfirm(true)}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Ionicons name="trash-outline" size={16} color="#EF4444" />
@@ -406,7 +399,7 @@ export default function GymDetailScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Pricing</Text>
-            {isOwner && (
+            {!!currentUserId && (
               <TouchableOpacity onPress={() => setShowPricingModal(true)}>
                 <Text style={styles.editText}>Edit</Text>
               </TouchableOpacity>
@@ -437,7 +430,7 @@ export default function GymDetailScreen() {
                 </View>
               )}
             </View>
-          ) : isOwner ? (
+          ) : !!currentUserId ? (
             <TouchableOpacity style={styles.addAmenitiesButton} onPress={() => setShowPricingModal(true)}>
               <Text style={styles.addAmenitiesText}>+ Add Pricing Info</Text>
             </TouchableOpacity>
@@ -449,7 +442,7 @@ export default function GymDetailScreen() {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Amenities</Text>
-              {isOwner && (
+              {!!currentUserId && (
                 <TouchableOpacity onPress={() => setShowAmenitiesModal(true)}>
                   <Text style={styles.editText}>Edit</Text>
                 </TouchableOpacity>
@@ -480,7 +473,7 @@ export default function GymDetailScreen() {
         {(!gym.amenities || gym.amenities.length === 0) && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Amenities</Text>
-            {isOwner && (
+            {!!currentUserId && (
               <TouchableOpacity
                 style={styles.addAmenitiesButton}
                 onPress={() => setShowAmenitiesModal(true)}
@@ -517,11 +510,11 @@ export default function GymDetailScreen() {
                 <View key={review.id} style={styles.reviewCard}>
                   <View style={styles.reviewHeader}>
                     <View style={styles.reviewUserInfo}>
-                      <View style={styles.reviewAvatar}>
-                        <Text style={styles.reviewAvatarText}>
-                          {review.user.displayName.charAt(0).toUpperCase()}
-                        </Text>
-                      </View>
+                      <UserAvatar
+                        displayName={review.user.displayName}
+                        profilePhoto={review.user.profilePhoto}
+                        size={36}
+                      />
                       <View>
                         <Text style={styles.reviewUserName}>{review.user.displayName}</Text>
                         <Text style={styles.reviewDate}>
@@ -529,44 +522,19 @@ export default function GymDetailScreen() {
                         </Text>
                       </View>
                     </View>
-                    <View style={styles.reviewRatingContainer}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        <FontAwesome name="star" size={12} color="#FF8C00" />
-                        <Text style={[styles.reviewRating, { marginLeft: 3 }]}>
-                          {review.overallRating ? review.overallRating.toFixed(1) : 'N/A'}
-                        </Text>
-                      </View>
-                      {isOwnReview && (
-                        <TouchableOpacity
-                          style={styles.reviewOptionsButton}
-                          onPress={() => {
-                            Alert.alert(
-                              'Review Options',
-                              'What would you like to do?',
-                              [
-                                {
-                                  text: 'Edit',
-                                  onPress: () => navigation.navigate('WriteReview', {
-                                    gymId: gym.id,
-                                    gymName: gym.name,
-                                    reviewId: review.id,
-                                    existingReview: review,
-                                  } as any),
-                                },
-                                {
-                                  text: 'Delete',
-                                  style: 'destructive',
-                                  onPress: () => handleDeleteReview(review.id),
-                                },
-                                { text: 'Cancel', style: 'cancel' },
-                              ]
-                            );
-                          }}
-                        >
-                          <Text style={styles.reviewOptionsText}>⋯</Text>
-                        </TouchableOpacity>
-                      )}
-                    </View>
+                    {isOwnReview && (
+                      <TouchableOpacity
+                        style={styles.reviewOptionsButton}
+                        onPress={(e) => {
+                          const { pageX, pageY } = e.nativeEvent;
+                          setSelectedReview(review);
+                          setReviewOptionsAnchor({ x: pageX, y: pageY });
+                          setShowReviewOptions(true);
+                        }}
+                      >
+                        <Text style={styles.reviewOptionsText}>⋯</Text>
+                      </TouchableOpacity>
+                    )}
                   </View>
 
                   {/* Setting & Difficulty Tags */}
@@ -577,6 +545,19 @@ export default function GymDetailScreen() {
                     <View style={styles.reviewTag}>
                       <Text style={styles.reviewTagText}>{getDifficultyLabel(review.difficulty)}</Text>
                     </View>
+                  </View>
+
+                  {/* Star Rating */}
+                  <View style={styles.reviewStarsRow}>
+                    {Array.from({ length: 5 }, (_, i) => (
+                      <FontAwesome
+                        key={i}
+                        name={i < Math.round(review.overallRating ?? 0) ? 'star' : 'star-o'}
+                        size={15}
+                        color="#FF8C00"
+                        style={{ marginRight: 3 }}
+                      />
+                    ))}
                   </View>
 
                   {review.reviewText && (
@@ -771,6 +752,56 @@ export default function GymDetailScreen() {
           }}
         />
       </Modal>
+
+      {/* Review options popover */}
+      <OptionsPopover
+        visible={showReviewOptions}
+        anchor={reviewOptionsAnchor}
+        onClose={() => setShowReviewOptions(false)}
+        options={[
+          {
+            label: 'Edit Review',
+            onPress: () => {
+              if (!selectedReview) return;
+              navigation.navigate('WriteReview', {
+                gymId: gym.id,
+                gymName: gym.name,
+                reviewId: selectedReview.id,
+                existingReview: selectedReview,
+              } as any);
+            },
+          },
+          {
+            label: 'Delete Review',
+            destructive: true,
+            onPress: () => setShowDeleteReviewConfirm(true),
+          },
+        ]}
+      />
+
+      {/* Delete review confirmation */}
+      <ConfirmDeleteModal
+        visible={showDeleteReviewConfirm}
+        title="Delete Review"
+        message="Are you sure you want to delete this review? This cannot be undone."
+        loading={isDeletingReview}
+        onConfirm={confirmDeleteReview}
+        onCancel={() => {
+          setShowDeleteReviewConfirm(false);
+          setSelectedReview(null);
+        }}
+      />
+
+      {/* Delete gym confirmation */}
+      <ConfirmDeleteModal
+        visible={showDeleteGymConfirm}
+        title="Delete Gym"
+        message="This will permanently remove all reviews, photos, and videos associated with this gym."
+        confirmText="Delete Gym"
+        loading={isDeletingGym}
+        onConfirm={confirmDeleteGym}
+        onCancel={() => setShowDeleteGymConfirm(false)}
+      />
     </SafeAreaView>
   );
 }

@@ -274,16 +274,7 @@ const handleSubmit = async () => {
       await uploadPhotos(selectedImages, data.id);
     }
 
-    Alert.alert(
-      'Success!',
-      'Gym registered successfully',
-      [
-        {
-          text: 'OK',
-          onPress: () => navigation.goBack(),
-        },
-      ]
-    );
+    navigation.goBack();
   } catch (error: any) {
     console.error('Registration error:', error);
     Alert.alert('Error', error.message || 'Failed to register gym');

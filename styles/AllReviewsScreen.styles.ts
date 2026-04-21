@@ -161,15 +161,15 @@ export const styles = StyleSheet.create({
     color: '#9CA3AF',
     marginTop: 2,
   },
-  rating: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
+  starsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
   },
   tagsRow: {
     flexDirection: 'row',
     gap: 8,
-    marginBottom: 12,
+    marginBottom: 10,
   },
   tag: {
     paddingHorizontal: 12,

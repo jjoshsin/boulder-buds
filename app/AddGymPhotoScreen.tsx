@@ -154,7 +154,6 @@ export default function AddGymPhotoScreen({ onClose, preselectedGym }: AddGymPho
         }
       }
 
-      Alert.alert('Success', `Uploaded ${imageUrls.length} photo(s) to ${gyms.find(g => g.id === selectedGym)?.name}`);
       onClose();
     } catch (error) {
       console.error('Upload error:', error);

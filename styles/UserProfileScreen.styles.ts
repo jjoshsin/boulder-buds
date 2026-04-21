@@ -162,10 +162,10 @@ export const styles = StyleSheet.create({
     fontSize: 13,
     color: '#6B7280',
   },
-  reviewRating: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
+  reviewStarsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
   },
   reviewText: {
     fontSize: 15,
@@ -245,6 +245,7 @@ reviewTagsRow: {
   flexDirection: 'row',
   gap: 8,
   marginBottom: 12,
+  alignSelf: 'flex-start',
 },
 reviewTag: {
   paddingHorizontal: 12,

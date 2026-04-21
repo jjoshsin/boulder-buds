@@ -120,9 +120,7 @@ export default function UploadVideoScreen() {
         caption: caption.trim() || undefined,
       });
 
-      Alert.alert('Success', 'Video uploaded successfully!', [
-        { text: 'OK', onPress: () => navigation.goBack() }
-      ]);
+      navigation.goBack();
     } catch (error: any) {
       console.error('❌ Upload error:', error);
       Alert.alert('Error', error.message || 'Failed to upload video. Please try again.');

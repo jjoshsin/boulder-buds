@@ -11,6 +11,7 @@ import {
   Image,
   TextInput,
 } from 'react-native';
+import ConfirmDeleteModal from './components/ConfirmDeleteModal';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -43,7 +44,7 @@ function StatCard({ label, value }: { label: string; value: string | number }) {
   );
 }
 
-function LogCard({ log, onPress, onDelete }: { log: ClimbLog; onPress: () => void; onDelete: (id: string) => void }) {
+function LogCard({ log, onPress, onDeletePress }: { log: ClimbLog; onPress: () => void; onDeletePress: (id: string) => void }) {
   const outcome = OUTCOME_CONFIG[log.outcome];
   const date = new Date(log.date);
   const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -83,10 +84,7 @@ function LogCard({ log, onPress, onDelete }: { log: ClimbLog; onPress: () => voi
         </View>
 
         <TouchableOpacity
-          onPress={() => Alert.alert('Delete', 'Remove this log?', [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Delete', style: 'destructive', onPress: () => onDelete(log.id) },
-          ])}
+          onPress={() => onDeletePress(log.id)}
           style={styles.deleteButton}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
@@ -111,6 +109,8 @@ export default function LogScreen() {
   const [editNotes, setEditNotes] = useState('');
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [editVideo, setEditVideo] = useState<{ uri: string; filename: string } | null>(null);
+  const [logToDelete, setLogToDelete] = useState<string | null>(null);
+  const [isDeletingLog, setIsDeletingLog] = useState(false);
   const [editUploadState, setEditUploadState] = useState<'idle' | 'uploading' | 'done' | 'error'>('idle');
   const [editUploadResult, setEditUploadResult] = useState<{ videoUrl: string; thumbnailUrl: string } | null>(null);
 
@@ -132,14 +132,19 @@ export default function LogScreen() {
 
   useFocusEffect(useCallback(() => { loadData(); }, []));
 
-  const handleDelete = async (logId: string) => {
+  const confirmDeleteLog = async () => {
+    if (!logToDelete) return;
+    setIsDeletingLog(true);
     try {
-      await climbLogService.deleteLog(logId);
-      setLogs(prev => prev.filter(l => l.id !== logId));
+      await climbLogService.deleteLog(logToDelete);
+      setLogs(prev => prev.filter(l => l.id !== logToDelete));
+      setLogToDelete(null);
       const statsData = await climbLogService.getMyStats();
       setStats(statsData);
     } catch {
       Alert.alert('Error', 'Failed to delete log');
+    } finally {
+      setIsDeletingLog(false);
     }
   };
 
@@ -204,44 +209,16 @@ export default function LogScreen() {
       setIsEditing(false);
 
       if (editVideo && editUploadResult) {
-        const gymName = selectedLog.gym.name;
-        Alert.alert(
-          'Share to gym feed?',
-          `Share this clip to ${gymName}'s video feed?`,
-          [
-            {
-              text: 'Share',
-              onPress: async () => {
-                await videoService.createVideo({
-                  gymId: selectedLog.gymId,
-                  videoUrl: editUploadResult.videoUrl,
-                  thumbnailUrl: editUploadResult.thumbnailUrl,
-                  climbLogId: selectedLog.id,
-                  isShared: true,
-                });
-                const refreshed = await climbLogService.getMyLogs();
-                setLogs(refreshed);
-                setSelectedLog(refreshed.find(l => l.id === updated.id) || updated);
-              },
-            },
-            {
-              text: 'Keep Private',
-              onPress: async () => {
-                await videoService.createVideo({
-                  gymId: selectedLog.gymId,
-                  videoUrl: editUploadResult.videoUrl,
-                  thumbnailUrl: editUploadResult.thumbnailUrl,
-                  climbLogId: selectedLog.id,
-                  isShared: false,
-                });
-                const refreshed = await climbLogService.getMyLogs();
-                setLogs(refreshed);
-                setSelectedLog(refreshed.find(l => l.id === updated.id) || updated);
-              },
-            },
-          ],
-          { cancelable: false },
-        );
+        await videoService.createVideo({
+          gymId: selectedLog.gymId,
+          videoUrl: editUploadResult.videoUrl,
+          thumbnailUrl: editUploadResult.thumbnailUrl,
+          climbLogId: selectedLog.id,
+          isShared: true,
+        });
+        const refreshed = await climbLogService.getMyLogs();
+        setLogs(refreshed);
+        setSelectedLog(refreshed.find(l => l.id === updated.id) || updated);
       }
     } catch {
       Alert.alert('Error', 'Failed to save changes');
@@ -320,7 +297,7 @@ export default function LogScreen() {
               {logs.length} {logs.length === 1 ? 'climb' : 'climbs'}
             </Text>
             {logs.map(log => (
-              <LogCard key={log.id} log={log} onPress={() => openDetail(log)} onDelete={handleDelete} />
+              <LogCard key={log.id} log={log} onPress={() => openDetail(log)} onDeletePress={(id) => setLogToDelete(id)} />
             ))}
           </>
         )}
@@ -502,6 +479,15 @@ export default function LogScreen() {
           </View>
         </View>
       </Modal>
+
+      <ConfirmDeleteModal
+        visible={!!logToDelete}
+        title="Delete Log"
+        message="Remove this climb log? This cannot be undone."
+        loading={isDeletingLog}
+        onConfirm={confirmDeleteLog}
+        onCancel={() => setLogToDelete(null)}
+      />
     </SafeAreaView>
   );
 }

@@ -258,10 +258,11 @@ async getGymById(id: string) {
   const gym = await this.prisma.gym.findUnique({
     where: { id },
     include: {
-      registeredByUser: {  // Added
+      registeredByUser: {
         select: {
           id: true,
           displayName: true,
+          profilePhoto: true,
         },
       },
       reviews: {
@@ -270,6 +271,7 @@ async getGymById(id: string) {
             select: {
               id: true,
               displayName: true,
+              profilePhoto: true,
             },
           },
           likes: {
@@ -291,6 +293,7 @@ async getGymById(id: string) {
             select: {
               id: true,
               displayName: true,
+              profilePhoto: true,
             },
           },
         },
@@ -615,7 +618,6 @@ async getGymsMapData() {
   }, userId: string) {
     const gym = await this.prisma.gym.findUnique({ where: { id: gymId } });
     if (!gym) throw new NotFoundException('Gym not found');
-    if (gym.registeredBy !== userId) throw new UnauthorizedException('Only the gym owner can edit pricing');
 
     return this.prisma.gym.update({
       where: { id: gymId },
@@ -631,7 +633,6 @@ async getGymsMapData() {
   async updateAmenities(gymId: string, amenities: string[], userId: string) {
     const gym = await this.prisma.gym.findUnique({ where: { id: gymId } });
     if (!gym) throw new NotFoundException('Gym not found');
-    if (gym.registeredBy !== userId) throw new UnauthorizedException('Only the gym owner can edit amenities');
 
     return this.prisma.gym.update({
       where: { id: gymId },

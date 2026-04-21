@@ -217,11 +217,7 @@ export default function WriteReviewScreen() {
         throw new Error(error.message || 'Failed to submit review');
       }
 
-      Alert.alert(
-        'Success',
-        isEditing ? 'Your review has been updated!' : 'Your review has been posted!',
-        [{ text: 'OK', onPress: () => navigation.goBack() }]
-      );
+      navigation.goBack();
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to submit review');
     } finally {

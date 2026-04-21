@@ -13,6 +13,9 @@ import {
   Animated,
   GestureResponderEvent,
 } from 'react-native';
+import OptionsPopover from './components/OptionsPopover';
+import ConfirmDeleteModal from './components/ConfirmDeleteModal';
+import UserAvatar from './components/UserAvatar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -54,6 +57,13 @@ export default function VideoPlayerScreen() {
   const [hearts, setHearts] = useState<HeartAnim[]>([]);
   const [progress, setProgress] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [showOptionsSheet, setShowOptionsSheet] = useState(false);
+  const [optionsAnchor, setOptionsAnchor] = useState<{ x: number; y: number } | null>(null);
+  const [showDeleteVideoConfirm, setShowDeleteVideoConfirm] = useState(false);
+  const [showDeleteCommentConfirm, setShowDeleteCommentConfirm] = useState(false);
+  const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
+  const [isDeletingVideo, setIsDeletingVideo] = useState(false);
+  const [isDeletingComment, setIsDeletingComment] = useState(false);
   const heartIdRef = useRef(0);
   const lastTapRef = useRef<{ time: number; timer?: ReturnType<typeof setTimeout> } | null>(null);
   const progressBarWidth = useRef(0);
@@ -227,26 +237,24 @@ export default function VideoPlayerScreen() {
     }
   };
 
-  const handleDeleteComment = async (commentId: string) => {
-    Alert.alert(
-      'Delete Comment',
-      'Are you sure you want to delete this comment?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await videoService.deleteComment(commentId);
-              loadVideo();
-            } catch (error) {
-              Alert.alert('Error', 'Failed to delete comment');
-            }
-          },
-        },
-      ]
-    );
+  const handleDeleteComment = (commentId: string) => {
+    setCommentToDelete(commentId);
+    setShowDeleteCommentConfirm(true);
+  };
+
+  const confirmDeleteComment = async () => {
+    if (!commentToDelete) return;
+    setIsDeletingComment(true);
+    try {
+      await videoService.deleteComment(commentToDelete);
+      setShowDeleteCommentConfirm(false);
+      setCommentToDelete(null);
+      loadVideo();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to delete comment');
+    } finally {
+      setIsDeletingComment(false);
+    }
   };
 
   const handleEditCaption = () => {
@@ -259,36 +267,24 @@ export default function VideoPlayerScreen() {
       await videoService.updateCaption(videoId, editedCaption.trim());
       setIsEditingCaption(false);
       loadVideo();
-      Alert.alert('Success', 'Caption updated!');
     } catch (error) {
       console.error('Update caption error:', error);
       Alert.alert('Error', 'Failed to update caption');
     }
   };
 
-  const handleDeleteVideo = () => {
-    Alert.alert(
-      'Delete Video',
-      'Are you sure you want to delete this video? This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await videoService.deleteVideo(videoId);
-              Alert.alert('Deleted', 'Video deleted successfully', [
-                { text: 'OK', onPress: () => navigation.goBack() }
-              ]);
-            } catch (error) {
-              console.error('Delete video error:', error);
-              Alert.alert('Error', 'Failed to delete video');
-            }
-          },
-        },
-      ]
-    );
+  const confirmDeleteVideo = async () => {
+    setIsDeletingVideo(true);
+    try {
+      await videoService.deleteVideo(videoId);
+      setShowDeleteVideoConfirm(false);
+      navigation.goBack();
+    } catch (error) {
+      console.error('Delete video error:', error);
+      Alert.alert('Error', 'Failed to delete video');
+    } finally {
+      setIsDeletingVideo(false);
+    }
   };
 
   const renderComment = (comment: VideoComment, isReply: boolean = false) => {
@@ -297,11 +293,11 @@ export default function VideoPlayerScreen() {
 
     return (
       <View key={comment.id} style={[styles.comment, isReply && styles.reply]}>
-        <View style={styles.commentAvatar}>
-          <Text style={styles.commentAvatarText}>
-            {comment.user.displayName.charAt(0).toUpperCase()}
-          </Text>
-        </View>
+        <UserAvatar
+          displayName={comment.user.displayName}
+          profilePhoto={comment.user.profilePhoto}
+          size={36}
+        />
         <View style={styles.commentContent}>
           <View style={styles.commentHeader}>
             <Text style={styles.commentUserName}>{comment.user.displayName}</Text>
@@ -429,23 +425,10 @@ export default function VideoPlayerScreen() {
           {currentUserId === video.userId && (
             <TouchableOpacity
               style={styles.optionsButton}
-              onPress={() => {
-                Alert.alert(
-                  'Video Options',
-                  'What would you like to do?',
-                  [
-                    {
-                      text: 'Edit Caption',
-                      onPress: handleEditCaption,
-                    },
-                    {
-                      text: 'Delete Video',
-                      style: 'destructive',
-                      onPress: handleDeleteVideo,
-                    },
-                    { text: 'Cancel', style: 'cancel' },
-                  ]
-                );
+              onPress={(e) => {
+                const { pageX, pageY } = e.nativeEvent;
+                setOptionsAnchor({ x: pageX, y: pageY });
+                setShowOptionsSheet(true);
               }}
             >
               <Ionicons name="ellipsis-horizontal" size={22} color="#FFFFFF" />
@@ -456,11 +439,11 @@ export default function VideoPlayerScreen() {
         {/* Video Info Overlay */}
         <View style={styles.videoInfoOverlay}>
           <View style={styles.userInfo}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {video.user.displayName.charAt(0).toUpperCase()}
-              </Text>
-            </View>
+            <UserAvatar
+              displayName={video.user.displayName}
+              profilePhoto={video.user.profilePhoto}
+              size={32}
+            />
             <Text style={styles.userName}>{video.user.displayName}</Text>
           </View>
 
@@ -592,6 +575,46 @@ export default function VideoPlayerScreen() {
     </Animated.View>
   </View>
 </Modal>
+      {/* Video options popover */}
+      <OptionsPopover
+        visible={showOptionsSheet}
+        anchor={optionsAnchor}
+        onClose={() => setShowOptionsSheet(false)}
+        options={[
+          {
+            label: 'Edit Caption',
+            onPress: handleEditCaption,
+          },
+          {
+            label: 'Delete Video',
+            destructive: true,
+            onPress: () => setShowDeleteVideoConfirm(true),
+          },
+        ]}
+      />
+
+      {/* Delete video confirmation */}
+      <ConfirmDeleteModal
+        visible={showDeleteVideoConfirm}
+        title="Delete Video"
+        message="Are you sure you want to delete this video? This cannot be undone."
+        loading={isDeletingVideo}
+        onConfirm={confirmDeleteVideo}
+        onCancel={() => setShowDeleteVideoConfirm(false)}
+      />
+
+      {/* Delete comment confirmation */}
+      <ConfirmDeleteModal
+        visible={showDeleteCommentConfirm}
+        title="Delete Comment"
+        message="Are you sure you want to delete this comment?"
+        loading={isDeletingComment}
+        onConfirm={confirmDeleteComment}
+        onCancel={() => {
+          setShowDeleteCommentConfirm(false);
+          setCommentToDelete(null);
+        }}
+      />
     </SafeAreaView>
   );
 }

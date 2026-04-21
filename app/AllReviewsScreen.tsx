@@ -14,6 +14,8 @@ import { styles } from '../styles/AllReviewsScreen.styles';
 import PhotoGrid from './components/PhotoGrid';
 import * as SecureStore from 'expo-secure-store';
 import { getSettingLabel, getDifficultyLabel } from './utils/reviewLabels';
+import { FontAwesome } from '@expo/vector-icons';
+import UserAvatar from './components/UserAvatar';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -143,11 +145,11 @@ export default function AllReviewsScreen() {
           <View key={review.id} style={styles.reviewCard}>
             <View style={styles.reviewHeader}>
               <View style={styles.userInfo}>
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>
-                    {review.user.displayName.charAt(0).toUpperCase()}
-                  </Text>
-                </View>
+                <UserAvatar
+                  displayName={review.user.displayName}
+                  profilePhoto={review.user.profilePhoto}
+                  size={36}
+                />
                 <View>
                   <Text style={styles.userName}>{review.user.displayName}</Text>
                   <Text style={styles.reviewDate}>
@@ -155,7 +157,6 @@ export default function AllReviewsScreen() {
                   </Text>
                 </View>
               </View>
-              <Text style={styles.rating}>⭐ {review.overallRating.toFixed(1)}</Text>
             </View>
 
             {/* Setting & Difficulty Tags */}
@@ -166,6 +167,19 @@ export default function AllReviewsScreen() {
               <View style={styles.tag}>
                 <Text style={styles.tagText}>{getDifficultyLabel(review.difficulty)}</Text>
               </View>
+            </View>
+
+            {/* Star Rating */}
+            <View style={styles.starsRow}>
+              {Array.from({ length: 5 }, (_, i) => (
+                <FontAwesome
+                  key={i}
+                  name={i < Math.round(review.overallRating ?? 0) ? 'star' : 'star-o'}
+                  size={15}
+                  color="#FF8C00"
+                  style={{ marginRight: 3 }}
+                />
+              ))}
             </View>
 
             {review.reviewText && (

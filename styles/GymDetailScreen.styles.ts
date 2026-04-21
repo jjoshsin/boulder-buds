@@ -335,22 +335,21 @@ export const styles = StyleSheet.create({
     color: '#9CA3AF',
     marginTop: 2,
   },
-  reviewRatingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  reviewRating: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
-  },
   reviewOptionsButton: {
+    width: 32,
+    height: 32,
     marginLeft: 8,
-    padding: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   reviewOptionsText: {
     fontSize: 20,
-    color: '#6B7280',
+    color: '#9CA3AF',
+  },
+  reviewStarsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
   },
   reviewTagsRow: {
     flexDirection: 'row',

@@ -129,67 +129,29 @@ export default function LogClimbScreen() {
       });
 
       if (attachedVideo) {
-        // Use cached upload result; if still uploading wait for it
         let result = uploadResult;
         if (!result) {
           if (uploadState === 'error') {
             Alert.alert('Upload failed', 'The video failed to upload. Remove it and try again.');
             return;
           }
-          // Still in progress — wait (rare since upload started when video was picked)
           Alert.alert('Please wait', 'Your video is still uploading. Try again in a moment.');
           return;
         }
-        const { videoUrl, thumbnailUrl } = result;
-
-        const gymName = selectedGym!.name;
-        Alert.alert(
-          'Share to gym feed?',
-          `Do you want to share this clip to ${gymName}'s video feed so others can see it?`,
-          [
-            {
-              text: 'Share',
-              onPress: async () => {
-                await videoService.createVideo({
-                  gymId: selectedGym!.id,
-                  videoUrl,
-                  thumbnailUrl,
-                  climbLogId: log.id,
-                  isShared: true,
-                });
-                showSuccessAlert(log.grade, log.outcome, gymName);
-              },
-            },
-            {
-              text: 'Keep Private',
-              onPress: async () => {
-                await videoService.createVideo({
-                  gymId: selectedGym!.id,
-                  videoUrl,
-                  thumbnailUrl,
-                  climbLogId: log.id,
-                  isShared: false,
-                });
-                showSuccessAlert(log.grade, log.outcome, gymName);
-              },
-            },
-          ],
-          { cancelable: false },
-        );
-      } else {
-        showSuccessAlert(selectedGrade!, selectedOutcome!, selectedGym!.name);
+        await videoService.createVideo({
+          gymId: selectedGym!.id,
+          videoUrl: result.videoUrl,
+          thumbnailUrl: result.thumbnailUrl,
+          climbLogId: log.id,
+          isShared: true,
+        });
       }
+      navigation.goBack();
     } catch (err: any) {
       Alert.alert('Error', err.message || 'Failed to save log');
     } finally {
       setIsSaving(false);
     }
-  };
-
-  const showSuccessAlert = (grade: string, outcome: string, gymName: string) => {
-    Alert.alert('Logged!', `${grade} ${outcome} at ${gymName}`, [
-      { text: 'OK', onPress: () => navigation.goBack() },
-    ]);
   };
 
   return (

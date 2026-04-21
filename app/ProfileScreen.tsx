@@ -21,6 +21,8 @@ import { getSettingLabel, getDifficultyLabel } from './utils/reviewLabels';
 import videoService from '../services/videoService';
 import { FontAwesome, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import favoritesService, { SavedGym } from '../services/favoritesService';
+import OptionsPopover from './components/OptionsPopover';
+import ConfirmDeleteModal from './components/ConfirmDeleteModal';
 
 
 type ProfileNavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -87,6 +89,11 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
   const [videos, setVideos] = useState<UserVideo[]>([]);
   const [activeTab, setActiveTab] = useState<'reviews' | 'videos' | 'saved'>('reviews');
   const [savedGyms, setSavedGyms] = useState<SavedGym[]>([]);
+  const [selectedReview, setSelectedReview] = useState<UserReview | null>(null);
+  const [showReviewOptions, setShowReviewOptions] = useState(false);
+  const [reviewOptionsAnchor, setReviewOptionsAnchor] = useState<{ x: number; y: number } | null>(null);
+  const [showDeleteReviewConfirm, setShowDeleteReviewConfirm] = useState(false);
+  const [isDeletingReview, setIsDeletingReview] = useState(false);
 
 
   useEffect(() => {
@@ -284,56 +291,58 @@ const renderSavedGym = (savedGym: SavedGym) => (
     }
   };
 
-  const handleDeleteReview = async (reviewId: string) => {
-    Alert.alert(
-      'Delete Review',
-      'Are you sure you want to delete this review?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const token = await SecureStore.getItemAsync('authToken');
-              const response = await fetch(`http://192.168.1.166:3000/reviews/${reviewId}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` },
-              });
-
-              if (response.ok) {
-                Alert.alert('Success', 'Review deleted');
-                loadProfileData();
-              } else {
-                throw new Error('Failed to delete');
-              }
-            } catch (error) {
-              Alert.alert('Error', 'Failed to delete review');
-            }
-          },
-        },
-      ]
-    );
+  const confirmDeleteReview = async () => {
+    if (!selectedReview) return;
+    setIsDeletingReview(true);
+    try {
+      const token = await SecureStore.getItemAsync('authToken');
+      const response = await fetch(`http://192.168.1.166:3000/reviews/${selectedReview.id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        setShowDeleteReviewConfirm(false);
+        setSelectedReview(null);
+        loadProfileData();
+      } else {
+        throw new Error('Failed to delete');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to delete review');
+    } finally {
+      setIsDeletingReview(false);
+    }
   };
 
   const renderReview = (review: UserReview) => (
     <View key={review.id} style={styles.reviewCard}>
-      <TouchableOpacity onPress={() => navigation.navigate('GymDetail', { gymId: review.gym.id })}>
-        <View style={styles.reviewHeader}>
+      {/* Header: gym info + ⋯ */}
+      <View style={styles.reviewHeader}>
+        <TouchableOpacity
+          style={{ flex: 1 }}
+          onPress={() => navigation.navigate('GymDetail', { gymId: review.gym.id })}
+        >
           <View style={styles.reviewGymInfo}>
             <Text style={styles.reviewGymName}>{review.gym.name}</Text>
             <Text style={styles.reviewGymBorough}>
-              {review.gym.city}{review.gym.state ? `, ${review.gym.state}` : ''}
+              {review.gym.city}{review.gym.state ? `, ${review.gym.state}` : ''} · {new Date(review.createdAt).toLocaleDateString()}
             </Text>
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <FontAwesome name="star" size={12} color="#FF8C00" />
-            <Text style={[styles.reviewRating, { marginLeft: 3 }]}>{review.overallRating.toFixed(1)}</Text>
-          </View>
-        </View>
-      </TouchableOpacity>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.reviewOptionsButton}
+          onPress={(e) => {
+            const { pageX, pageY } = e.nativeEvent;
+            setSelectedReview(review);
+            setReviewOptionsAnchor({ x: pageX, y: pageY });
+            setShowReviewOptions(true);
+          }}
+        >
+          <Text style={styles.reviewOptionsText}>⋯</Text>
+        </TouchableOpacity>
+      </View>
 
-      {/* Setting & Difficulty Tags */}
+      {/* Tags */}
       {review.setting && review.difficulty && (
         <View style={styles.reviewTagsRow}>
           <View style={styles.reviewTag}>
@@ -345,41 +354,31 @@ const renderSavedGym = (savedGym: SavedGym) => (
         </View>
       )}
 
+      {/* Star Rating */}
+      <View style={styles.reviewStarsRow}>
+        {Array.from({ length: 5 }, (_, i) => (
+          <FontAwesome
+            key={i}
+            name={i < Math.round(review.overallRating ?? 0) ? 'star' : 'star-o'}
+            size={15}
+            color="#FF8C00"
+            style={{ marginRight: 3 }}
+          />
+        ))}
+      </View>
+
       {review.reviewText && (
         <Text style={styles.reviewText} numberOfLines={3}>
           {review.reviewText}
         </Text>
       )}
 
-      {/* Photo Grid */}
       {review.photos && review.photos.length > 0 && (
-        <SimplePhotoGrid 
-          photos={review.photos} 
+        <SimplePhotoGrid
+          photos={review.photos}
           containerWidth={SCREEN_WIDTH - 40 - 32}
         />
       )}
-
-      <View style={styles.reviewFooter}>
-        <Text style={styles.reviewDate}>
-          {new Date(review.createdAt).toLocaleDateString()}
-        </Text>
-        <View style={styles.reviewActions}>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('WriteReview', {
-              gymId: review.gym.id,
-              gymName: review.gym.name,
-              reviewId: review.id,
-              existingReview: review,
-            } as any)}
-          >
-            <Text style={styles.reviewActionText}>Edit</Text>
-          </TouchableOpacity>
-          <Text style={styles.reviewActionSeparator}>•</Text>
-          <TouchableOpacity onPress={() => handleDeleteReview(review.id)}>
-            <Text style={[styles.reviewActionText, styles.reviewActionDelete]}>Delete</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
     </View>
   );
 
@@ -587,6 +586,43 @@ const renderSavedGym = (savedGym: SavedGym) => (
 
         <View style={styles.bottomPadding} />
       </ScrollView>
+
+      <OptionsPopover
+        visible={showReviewOptions}
+        anchor={reviewOptionsAnchor}
+        onClose={() => setShowReviewOptions(false)}
+        options={[
+          {
+            label: 'Edit Review',
+            onPress: () => {
+              if (!selectedReview) return;
+              navigation.navigate('WriteReview', {
+                gymId: selectedReview.gym.id,
+                gymName: selectedReview.gym.name,
+                reviewId: selectedReview.id,
+                existingReview: selectedReview,
+              } as any);
+            },
+          },
+          {
+            label: 'Delete Review',
+            destructive: true,
+            onPress: () => setShowDeleteReviewConfirm(true),
+          },
+        ]}
+      />
+
+      <ConfirmDeleteModal
+        visible={showDeleteReviewConfirm}
+        title="Delete Review"
+        message="Are you sure you want to delete this review? This cannot be undone."
+        loading={isDeletingReview}
+        onConfirm={confirmDeleteReview}
+        onCancel={() => {
+          setShowDeleteReviewConfirm(false);
+          setSelectedReview(null);
+        }}
+      />
     </SafeAreaView>
   );
 }

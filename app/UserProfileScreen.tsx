@@ -20,6 +20,7 @@ import { getSettingLabel, getDifficultyLabel } from './utils/reviewLabels';
 import videoService from '../services/videoService';
 import blockingService from '../services/blockingService';
 import ReportModal from './components/ReportModal';
+import { FontAwesome } from '@expo/vector-icons';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -211,14 +212,13 @@ export default function UserProfileScreen() {
           <View style={styles.reviewGymInfo}>
             <Text style={styles.reviewGymName}>{review.gym.name}</Text>
             <Text style={styles.reviewGymBorough}>
-              {review.gym.city}{review.gym.state ? `, ${review.gym.state}` : ''}
+              {review.gym.city}{review.gym.state ? `, ${review.gym.state}` : ''} · {new Date(review.createdAt).toLocaleDateString()}
             </Text>
           </View>
-          <Text style={styles.reviewRating}>⭐ {review.overallRating.toFixed(1)}</Text>
         </View>
       </TouchableOpacity>
 
-      {/* Setting & Difficulty Tags */}
+      {/* Tags */}
       {review.setting && review.difficulty && (
         <View style={styles.reviewTagsRow}>
           <View style={styles.reviewTag}>
@@ -230,23 +230,31 @@ export default function UserProfileScreen() {
         </View>
       )}
 
+      {/* Star Rating */}
+      <View style={styles.reviewStarsRow}>
+        {Array.from({ length: 5 }, (_, i) => (
+          <FontAwesome
+            key={i}
+            name={i < Math.round(review.overallRating ?? 0) ? 'star' : 'star-o'}
+            size={15}
+            color="#FF8C00"
+            style={{ marginRight: 3 }}
+          />
+        ))}
+      </View>
+
       {review.reviewText && (
         <Text style={styles.reviewText} numberOfLines={3}>
           {review.reviewText}
         </Text>
       )}
 
-      {/* Photo Grid */}
       {review.photos && review.photos.length > 0 && (
-        <SimplePhotoGrid 
-          photos={review.photos} 
+        <SimplePhotoGrid
+          photos={review.photos}
           containerWidth={SCREEN_WIDTH - 40 - 32}
         />
       )}
-
-      <Text style={styles.reviewDate}>
-        {new Date(review.createdAt).toLocaleDateString()}
-      </Text>
     </View>
   );
 

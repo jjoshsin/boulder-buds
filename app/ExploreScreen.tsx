@@ -87,12 +87,24 @@ export default function ExploreScreen() {
     let results = [...gyms];
 
     if (searchQuery.trim()) {
-      results = results.filter(gym =>
-        gym.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        gym.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        gym.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        gym.state?.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      const q = searchQuery.toLowerCase().trim();
+
+      const score = (gym: typeof gyms[0]) => {
+        const name = gym.name.toLowerCase();
+        if (name === q)                   return 100; // exact match
+        if (name.startsWith(q))           return 75;  // starts with
+        if (name.includes(q))             return 50;  // name contains
+        if (gym.city?.toLowerCase().includes(q))    return 10;
+        if (gym.state?.toLowerCase().includes(q))   return 10;
+        if (gym.address?.toLowerCase().includes(q)) return 5;
+        return 0;
+      };
+
+      results = results
+        .map(gym => ({ gym, score: score(gym) }))
+        .filter(({ score }) => score > 0)
+        .sort((a, b) => b.score - a.score)
+        .map(({ gym }) => gym);
     }
 
     if (selectedState) {
